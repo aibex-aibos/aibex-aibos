@@ -57,6 +57,9 @@
          printf '  - name: %s\n    type: %s\n    description: %s\n' "$P" "${P%%-*}" "$P" >> "$H/aios-index/index.yaml"
       done
       G -C "$H/aios-index" init -q && G -C "$H/aios-index" add -A && G -C "$H/aios-index" commit -q -m index
+      for T in $(G -C "$H/skill-video-analyse" tag -l 'v0.3*' 'v0.4*' 'v1*'); do   # the test is about 0.2.0 -> 0.2.1;
+         G -C "$H/skill-video-analyse" tag -d "$T" >/dev/null                    # later releases stay out (v0.6.6)
+      done
       mkdir -p "$SB/home/bin" "$SB/opt" "$SB/fake"
       export HOME="$SB/home" AIOS_PREFIX="$SB/opt" AIOS_CLAUDE_DIR="$SB/home/.claude"
       export AIOS_SUDO="$SB/fake/no-sudo" AIOS_PIP=true
