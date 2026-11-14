@@ -29,7 +29,7 @@ LOCAL_HEAD = "# written by AIOS (workspace), do not edit\n"
 CLOUD = ("Library/CloudStorage", "Library/Mobile Documents", "Dropbox")   # spec 06, Schlüssel sync:
 USAGE = ("usage: aios --workspace attach <repo> [<vault-folder>] | attach <path> | sync [<path>] [--group <g> | --only]"
          " [--accept-deletion <path>] | history <path> [--deleted] | restore <path> [--at <time>]"
-         " | detach [<path>] | status [<path>] | freeze [<path>]")
+         " | detach [<path>] | remove <path> | status [<path>] | freeze [<path>]")
 
 
 @dataclass
@@ -137,6 +137,110 @@ def under(item, rel):
         return True
     p, r = Path(item.path), Path(rel)
     return p == r or r in p.parents
+
+
+def removed_entries(root):
+    """Entries of removed: in workspace.yaml (spec 06, remove; F239, F244)."""
+    import yaml
+    f = Path(root) / FILE
+    if not f.is_file():
+        return []
+    try:
+        data = yaml.safe_load(f.read_text(encoding="utf-8")) or {}
+    except yaml.YAMLError:
+        return []
+    return [e for e in data.get("removed") or [] if isinstance(e, dict) and e.get("path")]
+
+
+def removed(root):
+    """Paths (relative, posix) removed from the workspace."""
+    return [str(e["path"]) for e in removed_entries(root)]
+
+
+def move_entries(root, rel, to_removed, message):
+    """Move the entries at or below rel between projects: and removed: of workspace.yaml and commit
+    only it (F239, F242, F244). The file is written anew; comments in it are not kept (F257)."""
+    import yaml
+    f = Path(root) / FILE
+    old = f.read_text(encoding="utf-8")
+    data = yaml.safe_load(old) or {}
+    src, dst = ("projects", "removed") if to_removed else ("removed", "projects")
+    moving = [e for e in data.get(src) or [] if under(Item("", "", "", str(e.get("path", ""))), rel)]
+    if not moving:
+        return []
+    data[src] = [e for e in data.get(src) or [] if e not in moving]
+    today = datetime.date.today().isoformat()
+    for e in moving:
+        e = dict(e)
+        if to_removed:
+            e["since"] = today
+        else:
+            e.pop("since", None)
+        data.setdefault(dst, [])
+        data[dst] = (data[dst] or []) + [e]
+    if not data.get("removed"):
+        data.pop("removed", None)
+    body = yaml.safe_dump(data, sort_keys=False, allow_unicode=True, default_flow_style=False)
+    f.write_text(body, encoding="utf-8")
+    try:
+        load(root)
+    except Abort as e:
+        f.write_text(old, encoding="utf-8")
+        raise Abort(f"{FILE} not changed: the result could not be read ({e})")
+    git(root, "add", "--", str(FILE))
+    r = git(root, "commit", "-q", "-m", message, "--", str(FILE))
+    if r.returncode:
+        warn(f"commit in {root} failed ({(r.stderr or r.stdout).strip()}); commit workspace.yaml by hand")
+    return moving
+
+
+def removed_upstream(root):
+    """Paths of removed: in workspace.yaml at the upstream of the vault root: a removal on another
+    computer counts in the same sync that brings it (F241). Fetching is what sync does anyway."""
+    if not origin_of(root) or git(root, "rev-parse", "--abbrev-ref", "@{upstream}").returncode:
+        return []
+    git(root, "fetch", "-q", "origin")
+    r = git(root, "show", f"@{{upstream}}:{FILE.as_posix()}")
+    if r.returncode:
+        return []
+    import yaml
+    try:
+        data = yaml.safe_load(r.stdout) or {}
+    except yaml.YAMLError:
+        return []
+    return [str(e["path"]) for e in data.get("removed") or [] if isinstance(e, dict) and e.get("path")]
+
+
+def removed_here(root, rel=".", gone=(), dropped=None):
+    """Paths of removed: (here or at the upstream) whose folder is still on this machine, at or
+    below rel, outermost only."""
+    out = []
+    if dropped is None:
+        dropped = set(removed(root)) | set(removed_upstream(root))
+    for p in sorted(dropped, key=lambda x: len(Path(x).parts)):
+        if not (Path(root) / p).exists() or is_detached(p, gone):
+            continue
+        if not under(Item("", "", "", p), rel) or any(is_detached(p, [o]) for o in out):
+            continue
+        out.append(p)
+    return out
+
+
+def remove_steps(plan, root, rel, gone, dropped=None):
+    """Step 1 of sync: a project removed on another computer goes here too, after the check of
+    detach (F241, F245); with obstacles it stays and is named."""
+    for p in removed_here(root, rel, gone, dropped):
+        d = Path(root) / p
+        found = check_all(d)
+        if found:
+            why = "; ".join(f"{Path(r).relative_to(root).as_posix()}: {', '.join(w)}" for r, w in found.items())
+            plan.add(f"note: {p}: removed from the workspace on another computer, kept here: {why}")
+            continue
+
+        def run(d=d, p=p):
+            target = to_trash(d)
+            report(p, "removed (removed on another computer)", f"moved to {target}")
+        plan.add(f"remove {p} (removed on another computer), checked: nothing is lost", run)
 
 
 # ---------------------------------------------------------------------------
@@ -586,8 +690,11 @@ def scan(root, remotes, listed, names, rel=".", gone=()):
     names = set(names)
     folders = {}
     entries, hints = [], []
+    dropped = removed(root)
     for r in repos(root, gone):
         if not (rel in ("", ".") or under(Item("", "", "", r), rel)):
+            continue
+        if is_detached(r, dropped):                 # F241: never added again, no hints
             continue
         d = root / r
         folders.setdefault(Path(r).name, []).append(r)
@@ -821,9 +928,11 @@ def plan_only(plan, root, rel, accept=()):
 
 def plan_sync(plan, root, rel=".", groups=(), accept=()):
     """Add the steps of sync for the projects of root at or below rel to plan (spec 06, sync)."""
-    items = [i for i in selected(load(root), groups) if under(i, rel)]
+    dropped = set(removed(root)) | set(removed_upstream(root))
+    items = [i for i in selected(load(root), groups) if under(i, rel) and not is_detached(i.path, dropped)]
     gone = detached(root)
     cloned, kept, failed = [], {}, []
+    remove_steps(plan, root, rel, gone, dropped)        # step 1: removed on another computer
     for item in items:                                  # step 1: clone what is missing
         d = root / item.path
         if is_detached(item.path, gone):
@@ -1114,6 +1223,9 @@ def status(path=None):
     rows = [("Project", "Path", "Branch", "Revision", "Remote", "Changes")]
     for item in load(root):
         rows.append((item.name, item.path, *state(item, root / item.path, gone)))
+    for e in removed_entries(root):                   # F243: removed, the folder is still here
+        if (root / str(e["path"])).exists() and not is_detached(str(e["path"]), gone):
+            rows.append((str(e.get("name", "")), str(e["path"]), "—", "removed", "—", "—"))
     mode, why = sync_mode(root)
     print(f"Workspace {root.name} — {datetime.date.today().isoformat()} — sync: {mode}")
     print()
@@ -1168,6 +1280,8 @@ def command(args):
         raise Abort(USAGE)
     if sub == "detach" and len(rest) <= 1 and not groups:
         return detach(rest[0] if rest else None)
+    if sub == "remove" and len(rest) == 1 and not groups:
+        return remove(rest[0])
     if sub == "sync" and len(rest) <= 1:
         return do_sync(rest[0] if rest else None, groups, accept, opts.get("only", False))
     if sub == "history" and len(rest) == 1 and not groups:
@@ -1485,12 +1599,95 @@ def detach_all(root):
     return 0
 
 
+def remove(path):
+    """aios --workspace remove <path>: remove a project with its subprojects from the workspace, on
+    every computer; the repo at the remote stays (spec 06, remove; F239-F243)."""
+    start = Path(os.path.abspath(path))
+    root = root_of(start.parent if not start.exists() else start)
+    activated(root)
+    if start == root:
+        raise Abort("the vault root cannot be removed from its workspace; detach it from this machine "
+                    "with: aios --workspace detach")
+    rel = start.relative_to(root).as_posix()
+    if rel not in {i.path for i in load(root)}:
+        if rel in removed(root):
+            raise Abort(f"{rel} is removed from the workspace already; take it back with: "
+                        f"aios --workspace attach {start}")
+        raise Abort(f"{rel} is not a project of {root / FILE}; remove takes a project of the workspace")
+    names = [i.path for i in load(root) if under(i, rel)]
+    out = detached(root)
+    plan = Plan()
+    if is_detached(rel, out):                           # F240: only the placeholder is here
+        entries = local_entries(root)
+
+        def drop_placeholder():
+            if start.exists():
+                target = to_trash(start)
+                report(rel, "placeholder removed", f"moved to {target}")
+            write_local(root, [e for e in entries if not is_detached(e["path"], [rel])])
+        plan.add(f"move the placeholder of {rel} to the trash; its entry in {LOCAL} goes", drop_placeholder)
+    elif start.exists():
+        found = check_all(start)
+        if found:
+            lines = [f"{Path(r).relative_to(root).as_posix() or '.'}: {'; '.join(w)}" for r, w in found.items()]
+            raise Abort("nothing removed, something would be lost:\n      " + "\n      ".join(lines)
+                        + "\n   (aios --workspace sync saves open changes and pushes them; secrets stay)")
+
+        def drop():
+            target = to_trash(start)
+            report(rel, "removed", f"moved to {target}")
+        plan.add(f"move {rel} with {len(repos_in(start))} repo(s) to the trash (~/.Trash), checked: "
+                 f"nothing is lost", drop)
+
+    def manifest():
+        moved = move_entries(root, rel, True, f"AIOS: {rel} aus dem Workspace entfernt")
+        report(".", "workspace.yaml", f"{len(moved)} project(s) moved to removed:")
+    plan.add(f"workspace.yaml: move {', '.join(names)} to removed:; commit only workspace.yaml "
+             f"(the next sync pushes it)", manifest)
+    plan.add(f"the repos at the remote stay; the line /{rel}/ in the .gitignore above stays")
+    if ui.MODE != "yes":
+        say(f"=> remove {rel} from the workspace {root.name}, on every computer")
+    ui.confirm(plan, "go on?", "cancelled")
+    say(f"=> {rel} removed from the workspace; other computers follow with their next sync; "
+        f"take it back with: aios --workspace attach {start}")
+    return 0
+
+
+def attach_removed(root, start, rel):
+    """attach <path> for a path of removed: take the project back into the workspace (F242)."""
+    plan = Plan()
+    cloned, failed = [], []
+    back = [e for e in removed_entries(root) if under(Item("", "", "", str(e["path"])), rel)]
+
+    def manifest():
+        move_entries(root, rel, False, f"AIOS: {rel} wieder in den Workspace aufgenommen")
+        report(".", "workspace.yaml", f"{len(back)} project(s) back in projects:")
+    plan.add(f"workspace.yaml: move {', '.join(str(e['path']) for e in back)} back to projects:; "
+             f"commit only workspace.yaml", manifest)
+    missing = [e for e in back if not (root / str(e["path"])).exists()]
+    for e in sorted(missing, key=lambda e: len(Path(str(e["path"])).parts)):
+        plan.add(f"clone {e['path']} ({e.get('revision')})",
+                 lambda e=e: try_clone(next(i for i in load(root) if i.path == str(e["path"])),
+                                       root / str(e["path"]), cloned, failed))
+    if missing:
+        plan.add("make the cloned projects runnable (aios --fetch, registration)",
+                 lambda: [runnable(d) for d in cloned])
+    if ui.MODE != "yes":
+        say(f"=> take {rel} back into the workspace {root.name}")
+    ui.confirm(plan, "go on?", "cancelled")
+    say(f"=> {rel} is back in the workspace; the next sync pushes workspace.yaml")
+    return 0
+
+
 def attach_path(path):
-    """aios --workspace attach <path>: get a detached subtree back (F162, F167)."""
+    """aios --workspace attach <path>: get a detached subtree back (F162, F167), or take a removed
+    project back (F242)."""
     start = Path(os.path.abspath(path))
     root = root_of(start.parent if not start.exists() else start)
     activated(root)
     rel = start.relative_to(root).as_posix()
+    if rel in removed(root):
+        return attach_removed(root, start, rel)
     entries = local_entries(root)
     if not any(e["path"] == rel for e in entries):
         raise Abort(f"{rel} is not detached on this machine ({root / LOCAL})")

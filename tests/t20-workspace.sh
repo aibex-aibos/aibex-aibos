@@ -544,3 +544,71 @@ This vault is an AIBOS workspace with sync: auto." "block with sync: auto"
    assert_contains "$(A "$V" --workspace history "$V/libs/lib-a/Fünf-Acht" --deleted)" "Größe und Maß.md  deleted" "B34: history names it unescaped"
    A "$V" --workspace restore "$F" --yes >/dev/null
    assert_eq "$(cat "$F")" "eins" "B34: restored"
+
+#===============================================================================
+# remove: a project with its subprojects out of the workspace, on every computer; removed:,
+# second computer, kept with obstacles, hook, attach takes it back (spec 06, remove; V0.6,
+# memos 226, 228: F239-F246)
+#===============================================================================
+
+   RR="$U/§R"; mkdir -p "$RR/.aios" "$RR/@"; printf 'aios: %s\n' "$VER" > "$RR/.aios/config.yaml"
+   cp "$SRC/templates/gitignore" "$RR/.gitignore"; printf '/pa/\n/pb/\n' >> "$RR/.gitignore"
+   git -C "$RR" init -q -b main; git -C "$RR" add -A; git -C "$RR" commit -qm vault
+   git clone -q --bare "$RR" "$RM/rroot"; git -C "$RR" remote add origin "file://$RM/rroot"; git -C "$RR" fetch -q origin; git -C "$RR" branch -q -u origin/main
+   repo pa @/README.md; printf '/paa/\n' >> "$SANDBOX/src/pa/.gitignore"; git -C "$SANDBOX/src/pa" commit -qam "exclude paa"; git -C "$SANDBOX/src/pa" push -q origin main
+   repo paa @/README.md; repo pb @/README.md
+   git clone -q "file://$RM/pa" "$RR/pa"; git clone -q "file://$RM/paa" "$RR/pa/paa"; git clone -q "file://$RM/pb" "$RR/pb"
+   A "$RR" --workspace sync --yes >/dev/null
+   assert_contains "$(cat "$RR/.aios/workspace.yaml")" "path: pa/paa" "remove: workspace with pa, pa/paa, pb"
+   A "$U" --workspace attach "file://$RM/rroot" "$U/§R2" --yes >/dev/null
+   R2="$U/§R2"
+   [ -d "$R2/pa/paa/.git" ] && ok || fail "remove: second computer has pa/paa"
+
+   OUT="$(A "$RR" --workspace remove "$RR" --plan 2>&1)"; assert_contains "$OUT" "the vault root cannot be removed" "F240: not the vault root"
+   OUT="$(A "$RR" --workspace remove "$RR/nix" --plan 2>&1)"; assert_contains "$OUT" "nix is not a project of" "remove: only a project of the workspace"
+   OUT="$(A "$RR" --workspace remove "$RR/pa" --plan)"
+   assert_contains "$OUT" "remove pa from the workspace §R, on every computer" "remove: plan head"
+   assert_contains "$OUT" "move pa with 2 repo(s) to the trash" "remove: trash with the subproject"
+   assert_contains "$OUT" "workspace.yaml: move pa, pa/paa to removed:" "remove: manifest"
+   [ -d "$RR/pa" ] && ok || fail "remove --plan writes nothing"
+   OUT="$(A "$RR" --workspace remove "$RR/pa" --yes)"
+   [ ! -e "$RR/pa" ] && ok || fail "F239: pa moved away"
+   ls "$HOME/.Trash" | grep -q '^pa ' && ok || fail "F239: pa in the trash"
+   assert_contains "$(cat "$RR/.aios/workspace.yaml")" "removed:" "F244: removed: written"
+   assert_eq "$(A "$RR" --context --id >/dev/null; python3 -c "import yaml;d=yaml.safe_load(open('$RR/.aios/workspace.yaml'));print(' '.join(e['path']+'/'+e['revision']+'/'+str('since' in e) for e in d['removed']))")" "pa/main/True pa/paa/main/True" "F244: entries with revision and since"
+   assert_eq "$(git -C "$RR" log -1 --format=%s)" "AIOS: pa aus dem Workspace entfernt" "F239: commit of only workspace.yaml"
+   assert_contains "$(cat "$RR/.gitignore")" "/pa/" "FG20/4: the line in .gitignore stays"
+   assert_eq "$(git -C "$RR" status --porcelain)" "" "F239: nothing else changed"
+   [ "$(git -C "$RR" rev-parse HEAD)" != "$(git -C "$RR" rev-parse origin/main)" ] && ok || fail "F239: remove does not push"
+   OUT="$(A "$RR" --workspace sync --yes)"
+   assert_not_contains "$OUT" "pa: cloned" "F241: sync does not clone a removed project"
+   [ ! -e "$RR/pa" ] && ok || fail "F241: pa stays away"
+   assert_eq "$(git -C "$RM/rroot" log -1 --format=%s main)" "AIOS: pa aus dem Workspace entfernt" "F239: the next sync pushes it"
+
+   echo x > "$R2/pb/x.md"
+   OUT="$(A "$R2" --workspace sync --plan)"
+   assert_contains "$OUT" "remove pa (removed on another computer), checked: nothing is lost" "F241: second computer removes it too"
+   assert_not_contains "$OUT" "remove pa/paa" "F241: only the outermost path"
+   OUT="$(A "$R2" --workspace sync --yes)"
+   assert_contains "$OUT" "pa: removed (removed on another computer)" "F241: report"
+   [ ! -e "$R2/pa" ] && ok || fail "F241: pa removed on the second computer"
+   assert_eq "$(git -C "$R2/pb" status --porcelain)" "" "F241: pb saved as usual"
+   assert_not_contains "$(cat "$R2/.aios/workspace.yaml")" "name: pa
+    remote" "F245: no commit of workspace.yaml for the removal there"
+
+   A "$R2" --workspace sync --yes >/dev/null; A "$RR" --workspace sync --yes >/dev/null
+   echo y > "$R2/pb/y.md"                            # pb removed on the first, changed on the second
+   A "$RR" --workspace remove "$RR/pb" --yes >/dev/null; A "$RR" --workspace sync --yes >/dev/null
+   OUT="$(A "$R2" --workspace sync --yes)"
+   assert_contains "$OUT" "pb: removed from the workspace on another computer, kept here" "F245: kept with obstacles"
+   [ -f "$R2/pb/y.md" ] && ok || fail "F245: pb stays"
+   assert_eq "$(git -C "$R2/pb" status --porcelain)" "?? y.md" "F245: a kept removed project is not saved"
+   assert_contains "$(A "$R2" --workspace status)" "removed" "F243: status shows removed"
+   assert_not_contains "$(cat "$R2/.aios/workspace.yaml" | sed -n '/^projects:/,/^removed:/p')" "path: pb" "F241: not entered again"
+   assert_contains "$(S "$R2/pb")" "AIOS-SYNC: pb was removed from the workspace on another computer" "F246: hook names it"
+
+   OUT="$(A "$RR" --workspace attach "$RR/pa" --yes)"
+   [ -d "$RR/pa/paa/.git" ] && ok || fail "F242: attach clones pa and pa/paa again"
+   assert_eq "$(git -C "$RR" log -1 --format=%s)" "AIOS: pa wieder in den Workspace aufgenommen" "F242: commit"
+   assert_eq "$(python3 -c "import yaml;d=yaml.safe_load(open('$RR/.aios/workspace.yaml'));print(sorted(e['path'] for e in d['projects']), sorted(e['path'] for e in d.get('removed') or []))")" "['pa', 'pa/paa'] ['pb']" "F242: back in projects, pb stays removed"
+   OUT="$(A "$RR" --workspace remove "$RR/pa" --plan 2>&1)"; assert_contains "$OUT" "move pa with 2 repo(s)" "remove again possible"

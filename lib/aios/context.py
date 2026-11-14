@@ -252,6 +252,13 @@ def sync_message(ctx):
     if info is None or info[1] != "auto" or info[2] or ctx.project is None:
         return None
     d = Path(ctx.project)
+    try:
+        rel = d.relative_to(info[0]).as_posix()
+    except ValueError:
+        rel = None
+    if rel and rel != "." and workspace.is_detached(rel, workspace.removed(info[0])):   # F241, F246
+        return (f"AIOS-SYNC: {d.name} was removed from the workspace on another computer. Tell the user "
+                f"before your first work and offer /aios-sync, which removes it here after a check.")
     if not (d / ".git").exists() or not workspace.origin_of(d):
         return None
     name = d.name
