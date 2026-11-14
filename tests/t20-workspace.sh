@@ -612,3 +612,15 @@ This vault is an AIBOS workspace with sync: auto." "block with sync: auto"
    assert_eq "$(git -C "$RR" log -1 --format=%s)" "AIOS: pa wieder in den Workspace aufgenommen" "F242: commit"
    assert_eq "$(python3 -c "import yaml;d=yaml.safe_load(open('$RR/.aios/workspace.yaml'));print(sorted(e['path'] for e in d['projects']), sorted(e['path'] for e in d.get('removed') or []))")" "['pa', 'pa/paa'] ['pb']" "F242: back in projects, pb stays removed"
    OUT="$(A "$RR" --workspace remove "$RR/pa" --plan 2>&1)"; assert_contains "$OUT" "move pa with 2 repo(s)" "remove again possible"
+
+#===============================================================================
+# kernel skills: aios-sync with R34 and --only, aios-detach with remove (spec 03; V0.6, memos 226, 227)
+#===============================================================================
+
+   OUT="$(A "$RR" --skill aios-sync)"
+   assert_contains "$OUT" "**immer zuerst**, ohne Ausnahme: auch für den ganzen Workspace" "R34: plan first, also for the whole workspace"
+   assert_contains "$OUT" "[--only] --plan" "H42: the skill knows --only"
+   assert_contains "$OUT" "no upstream" "B36: the skill names the hint"
+   OUT="$(A "$RR" --skill aios-detach)"
+   assert_contains "$OUT" "--workspace remove \"<pfad>\" --plan" "remove: the skill calls remove"
+   assert_contains "$OUT" "**Entfernen** gilt für alle Rechner" "remove: the skill tells detach and remove apart"
