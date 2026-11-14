@@ -440,6 +440,30 @@ This vault is an AIBOS workspace with sync: auto." "block with sync: auto"
    assert_contains "$(A "$V" --context --load "$V" 2>/dev/null; cat "$HOME"/.aios/cache/*/part-1.md 2>/dev/null)" "offer /aios-sync for the project" "B33: rule of the workspace names the project"
 
 #===============================================================================
+# H42: sync --only, one project without its subprojects (spec 06, sync; V0.6, memos 222, 227)
+#===============================================================================
+
+   A "$V" --workspace sync --yes >/dev/null
+   echo r > "$V/only-root.md"; echo d > "$V/docs/only-docs.md"; echo s > "$V/libs/lib-a/sub/only-sub.md"
+   OUT="$(A "$V" --workspace sync --only --plan)"
+   assert_contains "$OUT" "(only this project, without subprojects)" "H42: plan names --only"
+   assert_contains "$OUT" "save .:" "H42: the vault root is saved"
+   assert_contains "$OUT" "fetch and merge 1 project: ." "H42: only the vault root is fetched"
+   assert_not_contains "$OUT" "save docs" "H42: no other project saved"
+   assert_not_contains "$OUT" "clone " "H42: nothing cloned"
+   OUT="$(A "$V" --workspace sync --only --yes)"
+   assert_eq "$(git -C "$V" status --porcelain -- only-root.md)" "" "H42: root file saved"
+   assert_eq "$(git -C "$V/docs" status --porcelain -- only-docs.md)" "?? only-docs.md" "H42: docs untouched"
+   OUT="$(A "$V/libs/lib-a/sub/@" --workspace sync --only --plan)"
+   assert_contains "$OUT" "sync the workspace $V at libs/lib-a/sub (only this project" "H42: without a path the project of the working directory"
+   OUT="$(A "$V/libs/lib-a" --workspace sync --only --plan)"
+   assert_not_contains "$OUT" "libs/lib-a/sub" "H42: the subproject stays out"
+   OUT="$(A "$V" --workspace sync --only --group x --plan 2>&1)"; RC=$?
+   assert_eq "$RC" "1" "H42: --only with --group: exit 1"
+   assert_contains "$OUT" "--only and --group exclude each other" "H42: --only with --group: message"
+   A "$V" --workspace sync --yes >/dev/null
+
+#===============================================================================
 # L38, drive model: conflict copy, deleted against changed, secrets, large deletion, history,
 # restore (spec 06, sync and Zurückholen; V0.6, memos 204, 205: F225-F237)
 #===============================================================================

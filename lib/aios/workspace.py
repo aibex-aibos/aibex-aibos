@@ -27,7 +27,7 @@ FILE = Path(".aios") / "workspace.yaml"
 LOCAL = Path(".aios") / "workspace.local.yaml"
 LOCAL_HEAD = "# written by AIOS (workspace), do not edit\n"
 CLOUD = ("Library/CloudStorage", "Library/Mobile Documents", "Dropbox")   # spec 06, Schlüssel sync:
-USAGE = ("usage: aios --workspace attach <repo> [<vault-folder>] | attach <path> | sync [<path>] [--group <g>]"
+USAGE = ("usage: aios --workspace attach <repo> [<vault-folder>] | attach <path> | sync [<path>] [--group <g> | --only]"
          " [--accept-deletion <path>] | history <path> [--deleted] | restore <path> [--at <time>]"
          " | detach [<path>] | status [<path>] | freeze [<path>]")
 
@@ -799,6 +799,26 @@ def try_clone(item, d, cloned, failed):
     report(item.path, "cloned", item.revision)
 
 
+def plan_only(plan, root, rel, accept=()):
+    """sync --only (H42): steps 2, 3 and 6 for the one repo at rel, step 5 only at the vault root;
+    no clone, no runnable, no subprojects (spec 06, sync; V0.6, memo 227)."""
+    kept = {}
+    if rel in ("", "."):
+        targets = [root_item(root)] if origin_of(root) else []
+    else:
+        item = next((i for i in load(root) if i.path == rel), None)
+        if item is None or not (root / rel).exists():
+            raise Abort(f"--only: {rel} is no project of {root / FILE} on this machine")
+        if is_detached(rel, detached(root)):
+            raise Abort(f"--only: {rel} is detached on this machine")
+        targets = [item]
+    sync_steps(plan, root, targets, kept, accept)
+    if rel in ("", "."):
+        manifest_steps(plan, root, load(root), ".", detached(root))
+    push_steps(plan, root, targets, kept)
+    return targets
+
+
 def plan_sync(plan, root, rel=".", groups=(), accept=()):
     """Add the steps of sync for the projects of root at or below rel to plan (spec 06, sync)."""
     items = [i for i in selected(load(root), groups) if under(i, rel)]
@@ -847,25 +867,28 @@ def project_of(root, start):
     return root
 
 
-def do_sync(path=None, groups=(), accept=()):
-    """aios --workspace sync [<path>] [--group <g>…] (spec 06, sync)."""
+def do_sync(path=None, groups=(), accept=(), only=False):
+    """aios --workspace sync [<path>] [--group <g>… | --only] (spec 06, sync)."""
+    if only and groups:
+        raise Abort("--only and --group exclude each other (spec 06, sync)")
     start = Path(os.path.realpath(path or paths.cwd()))
     if find_root(start) is None and config.vault_root(start) == start:
         return sync_new(start)
     root = root_of(start)
     activated(root)
     refuse_off(root)
-    if path is None:
+    if path is None or only:
         start = project_of(root, start)                 # B33: the project, at the vault root all
     rel = start.relative_to(root).as_posix() if start != root else "."
     plan = Plan()
     accept = [Path(os.path.realpath(a)).relative_to(root).as_posix() if os.path.isabs(a) or os.path.exists(a)
               else a for a in accept]
-    items = plan_sync(plan, root, rel, groups, accept)
-    if not items and rel != ".":
+    items = plan_only(plan, root, rel, accept) if only else plan_sync(plan, root, rel, groups, accept)
+    if not items and rel != "." and not only:
         raise Abort(f"no project of {root / FILE} at or below {start}")
     if ui.MODE != "yes":
-        say(f"=> sync the workspace {root}" + ("" if rel == "." else f" at {rel}"))
+        say(f"=> sync the workspace {root}" + ("" if rel == "." else f" at {rel}")
+            + (" (only this project, without subprojects)" if only else ""))
     ui.confirm(plan, "go on?", "cancelled")
     unchanged_line()
     report_notes(plan)
@@ -1131,6 +1154,10 @@ def command(args):
             opts["deleted"] = True
             i += 1
             continue
+        if args[i] == "--only":
+            opts["only"] = True
+            i += 1
+            continue
         rest.append(args[i])
         i += 1
     if sub == "attach" and 1 <= len(rest) <= 2 and not groups:
@@ -1142,7 +1169,7 @@ def command(args):
     if sub == "detach" and len(rest) <= 1 and not groups:
         return detach(rest[0] if rest else None)
     if sub == "sync" and len(rest) <= 1:
-        return do_sync(rest[0] if rest else None, groups, accept)
+        return do_sync(rest[0] if rest else None, groups, accept, opts.get("only", False))
     if sub == "history" and len(rest) == 1 and not groups:
         return history(rest[0], opts.get("deleted", False))
     if sub == "restore" and len(rest) == 1 and not groups:
