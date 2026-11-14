@@ -64,6 +64,28 @@
    fi
 
 #===============================================================================
+# the working directory is gone: the first absolute path, else a message (V0.6, memo 204: H34)
+#===============================================================================
+
+   if ! pwd -P >/dev/null 2>&1 || [ ! -d "$PWD" ]; then
+      ABS=""
+      for A in "$@"; do
+         case "$A" in
+            /*) if [ -d "$A" ]; then ABS="$A"; elif [ -d "$(dirname "$A")" ]; then ABS="$(dirname "$A")"; fi ;;
+         esac
+         [ -n "$ABS" ] && break
+      done
+      if [ -n "$ABS" ]; then
+         cd "$ABS" 2>/dev/null || exit 1
+      elif [ "$1" == "--context" ]; then          # hooks: no output (spec 02)
+         exit 0
+      else
+         echo "*** aios: the current directory no longer exists; change to an existing one (e.g. cd ~) or give an absolute path" >&2
+         exit 1
+      fi
+   fi
+
+#===============================================================================
 # master context: aios --context [<option>] [<args>]  (spec 02; without loading the CLI, for the hooks)
 #===============================================================================
 

@@ -37,7 +37,26 @@
 # forwarder: own options, arguments passed unchanged
 #===============================================================================
 
-   assert_eq "$(aios ---version)" "0.4.2" "---version"
+   assert_eq "$(aios ---version)" "0.4.3" "---version"
+
+#===============================================================================
+# the working directory is gone (V0.6, memo 204: H34)
+#===============================================================================
+
+   gone() { local G="$SANDBOX/gone.$RANDOM"; mkdir -p "$G"; (cd "$G" && rmdir "$G" && "$@" 2>&1) | grep -v "error retrieving current directory"; return "${PIPESTATUS[0]}"; }
+   OUT="$(gone aios --workspace sync --plan)"; RC=$?
+   assert_eq "$RC" "1" "H34: no directory, no path: exit 1"
+   assert_contains "$OUT" "the current directory no longer exists; change to an existing one (e.g. cd ~) or give an absolute path" "H34: message"
+   assert_not_contains "$OUT" "Traceback" "H34: no Python error"
+   OUT="$(gone aios --workspace sync "$V/Garten" --plan)"; RC=$?
+   assert_eq "$RC" "0" "H34: absolute path: goes on"
+   assert_contains "$OUT" "aios --workspace sync $V/Garten --plan" "H34: absolute path: forwarded unchanged"
+   OUT="$(gone aios --workspace sync Garten --plan)"; RC=$?
+   assert_eq "$RC" "1" "H34: relative path: exit 1"
+   assert_eq "$(gone aios --context --session 2>/dev/null)" "" "H34: hook: no output"
+   assert_contains "$(gone aios --context --id)" "files=0" "H34: --id: no master context"
+   assert_contains "$(gone aios --context --id)" "mode=none" "H34: --id: mode none"
+
    assert_exit 1 aios ---help
    assert_contains "$(aios ---help)" "aios ---which" "---help names the tool"
 

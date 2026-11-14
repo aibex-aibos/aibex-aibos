@@ -1,4 +1,4 @@
-# Stand der Umsetzung AIOS v0.6.4
+# Stand der Umsetzung AIOS v0.6.4 bis v0.6.6
 
 v0.6.4 macht Workspaces zuverlässig auf mehreren Rechnern: `attach`, `sync`, `detach` (mit Teilauslagerung), Namensschema am Remote, `@Secret/`, Schlüssel `sync:`, drei Kernel-Skills. Verkürzte Form ohne eigenen Implementierungsplan: die Schritte stehen in Memo 176 in `AIBOS-AA-AIbex-AIOS/@Memo/V0.6/` (Skizze Memo 171; Spec freigegeben in Memo 176, ergänzt in Memo 177). Jeder Schritt wird im selben Commit `v0.6.4 Schritt N: …` abgehakt, der ihn abschließt. Diese Datei enthält alle Schritte von Anfang an (F102).
 
@@ -25,3 +25,11 @@ Das Repo liegt seit 2026-11-05 im Konzeptprojekt unter `~/Workspace/§AIBOS/A-AI
 | 6g | **B34, H39–H41, F238 aus den Schritten 9–15;** Kandidat `0.6.4-rc8` (Memo 211) | B34: `project.git` mit `core.quotePath=false`, `project.unquote()` für Pfade in Anführungszeichen (Umlaute, Leerzeichen); H39: „push <pfad> after saving" im Plan; H40: Gesichertes zählt nicht als unverändert; H41: Geheimnisse nicht als neu gezählt; F238: `detach` verweist auf `sync`; Spec 06; t20: 189 Prüfungen (+9); 1572 Prüfungen grün; `0.6.4-rc8` | 06 | ☑ abgeschlossen |
 | 7 | **Abnahme** nach Spec 01 (Vorabnahme im zweiten Benutzer, Abnahme auf dem Notebook), danach Veröffentlichen | abgenommen auf `0.6.4-rc8` (Konzept-Repo V0.6, Memo 214): Schritte 0–18 bestanden; `VERSION` 0.6.4 | 01 | ☑ abgenommen |
 | 8 | **Patch v0.6.5: B35** (Memos 218–220) | `add_entries()` übernimmt die Einrückung der `workspace.yaml` und prüft sie vor dem Commit; t20: 191 Prüfungen; 1574 grün; abgenommen auf `0.6.5-rc1` | — | ☑ abgenommen |
+| 9 | **Patch v0.6.6** (Memos 221, 225–230): Spec freigegeben (`86e7c89`, `5ed7e28`, Memo 230); Ausgangsprüfung 1574 grün (mit einem `python3` mit PyYAML vorn im `PATH`, weil dem `python3` von Homebrew PyYAML fehlt) | Schritte 9.1–9.7 | 01–06 | ◐ |
+| 9.1 | **H34:** ohne gültiges Arbeitsverzeichnis | Weiterleiter 0.4.3 und `bin/aios`: mit absolutem Pfad dorthin wechseln und weiterarbeiten, sonst `*** aios: the current directory no longer exists; …`, Exit 1; `--context` ohne Ausgabe (Weiterleiter: Log); `VERSION` und `manifest.yaml` `0.6.6-dev`; t01 +5, t02 +9; 1588 Prüfungen grün | 04 | ☑ abgeschlossen |
+| 9.2 | **H33:** kurzer Paketabgleich im sync | | 06 | ☐ |
+| 9.3 | **B36:** Hinweis mit `--push`, Hinweis ohne Upstream | | 06 | ☐ |
+| 9.4 | **H42:** `sync --only` | | 04, 06 | ☐ |
+| 9.5 | **remove** mit `removed` (sync, attach, status, Hook) | | 02, 06 | ☐ |
+| 9.6 | **Skills** `aios-sync` (R34, `--only`), `aios-detach` (remove) | | 03 | ☐ |
+| 9.7 | **Tutorial, README; Kandidat** `0.6.6-rc1`, Live-Tests | | 01 | ☐ |

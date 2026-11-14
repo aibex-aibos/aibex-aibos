@@ -12,7 +12,8 @@
       echo '          version; aios --install distribution-*: always the highest installed'
       echo '          version, at least 0.5; aios --remove-version and aios --vaults: always the highest'
       echo '          installed version; aios --context with a version below 0.5: its aios-context;'
-      echo '          aios --workspace <cmd> <path>: the binding of the vault at <path>'
+      echo '          aios --workspace <cmd> <path>: the binding of the vault at <path>;'
+      echo '          the working directory is gone: the first absolute path, else a message'
       echo '   see also: aios, ai-brain'
       exit 1
    fi
@@ -22,7 +23,7 @@
 #===============================================================================
 
    if [ "$*" == "---version" ]; then
-      echo "0.4.2"; exit 0
+      echo "0.4.3"; exit 0
    fi
 
 #===============================================================================
@@ -109,7 +110,7 @@
 
    log() {                                          # errors outside an A/W only into the log (spec 02)
       mkdir -p "$HOME/.aios/log" 2>/dev/null && \
-         echo "$(date '+%Y-%m-%dT%H:%M:%S') forwarder cwd=$(pwd -P) $*" >> "$HOME/.aios/log/context.log"
+         echo "$(date '+%Y-%m-%dT%H:%M:%S') forwarder cwd=$(pwd -P 2>/dev/null || echo "$PWD") $*" >> "$HOME/.aios/log/context.log"
    }
 
    choose() {                                       # set KIND, TARGET, WHY (ARG1, ARG2: the first arguments)
@@ -160,6 +161,30 @@
    }
 
    ARG1="$1"; ARG2="$2"
+
+#===============================================================================
+# the working directory is gone: the first absolute path, else a message (V0.6, memo 204: H34)
+#===============================================================================
+
+   if ! pwd -P >/dev/null 2>&1 || [ ! -d "$PWD" ]; then
+      ABS=""
+      for A in "$@"; do
+         case "$A" in
+            /*) if [ -d "$A" ]; then ABS="$A"; elif [ -d "$(dirname "$A")" ]; then ABS="$(dirname "$A")"; fi ;;
+         esac
+         [ -n "$ABS" ] && break
+      done
+      if [ -n "$ABS" ]; then
+         cd "$ABS" 2>/dev/null || exit 1
+      elif [ "$1" == "--context" ]; then          # hooks: never output, only the log (spec 02)
+         log "the current directory no longer exists"
+         [ "$2" == "--id" ] && echo "id=- files=0 cwd=$PWD mode=none"
+         exit 0
+      else
+         echo "*** aios: the current directory no longer exists; change to an existing one (e.g. cd ~) or give an absolute path" >&2
+         exit 1
+      fi
+   fi
 
 #===============================================================================
 # aios --context [--load|--id|--list] <path>: the version follows <path>

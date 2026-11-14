@@ -64,6 +64,15 @@ print(aios.version()); print(p.prefix()); print(p.user_dir()); print(p.claude_di
    assert_eq "$("$SRC/bin/aios" --version)" "$(cat "$SRC/VERSION")" "aios --version"
    assert_exit 1 "$SRC/bin/aios" --deploy memo-6.0.0
 
+   G="$SANDBOX/gone"; mkdir -p "$G" "$SANDBOX/da"           # H34: the working directory is gone
+   OUT="$(cd "$G" && rmdir "$G" && "$SRC/bin/aios" --workspace status 2>&1)"; RC=$?
+   assert_eq "$RC" "1" "H34: bin/aios without directory and path: exit 1"
+   assert_contains "$OUT" "the current directory no longer exists" "H34: bin/aios: message"
+   assert_not_contains "$OUT" "Traceback" "H34: bin/aios: no Python error"
+   mkdir -p "$G"; OUT="$(cd "$G" && rmdir "$G" && "$SRC/bin/aios" --workspace status "$SANDBOX/da" 2>&1)"
+   assert_contains "$OUT" "no .aios/workspace.yaml at or above" "H34: bin/aios with an absolute path: goes on"
+   assert_not_contains "$OUT" "Traceback" "H34: bin/aios with a path: no Python error"
+
 #===============================================================================
 # v0.4: no library in the kernel; manifest.yaml of the kernel (spec 04, 06)
 #===============================================================================
