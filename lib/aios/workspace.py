@@ -577,7 +577,7 @@ def manifest_steps(plan, root, items, rel, gone):
     if entries:
         plan.add(f"workspace.yaml: add {', '.join(e['path'] for e in entries)}; commit only workspace.yaml",
                  lambda: add_entries(root, entries))
-    for h in hints:
+    for h in (root_hints(root) if rel in ("", ".") else []) + hints:
         plan.add(f"note: {h}")
 
 
@@ -599,11 +599,14 @@ def scan(root, remotes, listed, names, rel=".", gone=()):
             else:
                 name = schema_name(root, d)
                 owner = owner_of(origin_of(root))
-                cmd = (f"; gh repo create {owner}/{name} --private --source {r} --remote origin"
-                       if owner else "")
+                cmd = (f"; gh repo create {owner}/{name} --private --source {r} --remote origin --push"
+                       if owner else "")                # B36: --push sets the upstream
                 hints.append(f"{r}: no remote; suggested name {name}{cmd}")
             continue
         name = Path(url.rstrip("/")).name.removesuffix(".git")
+        h = upstream_hint(d, r)
+        if h:
+            hints.append(h)
         if (d / "@").is_dir() and not pkg and name != schema_name(root, d):
             hints.append(f"{r}: remote {name} differs from the schema ({schema_name(root, d)})")
         if r in listed:
@@ -622,6 +625,22 @@ def scan(root, remotes, listed, names, rel=".", gone=()):
             hints.append(f"the folder name {folder} occurs {len(where)} times ({', '.join(where)}); "
                          "the schema gives no unique name")
     return entries, hints
+
+
+def upstream_hint(d, shown):
+    """B36: a repo with origin whose branch has no upstream is never pushed (F217); say how."""
+    if not origin_of(d) or not git(d, "rev-parse", "--abbrev-ref", "@{upstream}").returncode:
+        return None
+    branch = git(d, "rev-parse", "--abbrev-ref", "HEAD").stdout.strip() or "main"
+    if branch == "HEAD" or branch.startswith("ws/"):     # a fixed revision has no upstream by design
+        return None
+    return f"{shown}: no upstream; git -C {shown} push -u origin {branch}"
+
+
+def root_hints(root):
+    """Hints for the vault root itself (B36)."""
+    h = upstream_hint(root, str(root))
+    return [h] if h else []
 
 
 def new_workspace(plan, root):
@@ -849,8 +868,17 @@ def do_sync(path=None, groups=(), accept=()):
         say(f"=> sync the workspace {root}" + ("" if rel == "." else f" at {rel}"))
     ui.confirm(plan, "go on?", "cancelled")
     unchanged_line()
+    report_notes(plan)
     say(f"=> workspace {root.name} synchronized")
     return 0
+
+
+def report_notes(plan):
+    """With --yes the plan is not shown: the report names its notes (spec 06, sync, step 5; B36)."""
+    if ui.MODE == "yes":
+        for text, action in plan.steps:
+            if text and not action and text.startswith("note: "):
+                say(f"   {text}")
 
 
 def sync_new(root):
@@ -868,6 +896,7 @@ def sync_new(root):
         say(f"=> make {root} a workspace and sync it")
     ui.confirm(plan, "go on?", "cancelled")
     unchanged_line()
+    report_notes(plan)
     say(f"=> workspace {root.name} created and synchronized")
     return 0
 
@@ -1068,6 +1097,16 @@ def status(path=None):
     widths = [max(len(r[i]) for r in rows) + 2 for i in range(5)]
     for r in rows:
         print("".join(f"{c:<{w}}" for c, w in zip(r[:5], widths)) + r[5])
+    import yaml                                     # hints of sync, step 5 (spec 06, status; B36)
+    data = yaml.safe_load((root / FILE).read_text(encoding="utf-8")) or {}
+    items = load(root)
+    _, hints = scan(root, data.get("remotes") or {}, {i.path for i in items}, {i.name for i in items}, ".", gone)
+    hints = root_hints(root) + hints
+    if hints:
+        print()
+        print("Notes")
+        for h in hints:
+            print(f"- {h}")
     return 0
 
 
