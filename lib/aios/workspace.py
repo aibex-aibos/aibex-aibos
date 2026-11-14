@@ -10,7 +10,9 @@ commit is checked out as the local branch ws/<revision>, never as a detached HEA
 
 from __future__ import annotations
 
+import contextlib
 import datetime
+import io
 import os
 import re
 import subprocess
@@ -508,10 +510,18 @@ def runnable(d):
     ui.MODE = "yes"
     try:
         if (d / ".aios" / "lock.yaml").is_file():
+            buf = io.StringIO()                     # H33: one line per project, like H31
             try:
-                fetch.sync(str(d))
+                with contextlib.redirect_stdout(buf):
+                    fetch.sync(str(d))
             except (Abort, ui.Cancelled, ui.PlanOnly) as e:
                 warn(f"{d}: packages not reconciled ({e}); run aios --fetch there")
+            else:
+                n = len(fetch.read_lock(d).get("packages") or {})
+                if "nothing to do" in buf.getvalue():
+                    say(f"   {d.name}: packages match lock.yaml ({n} package(s))")
+                else:
+                    say(f"   {d.name}: packages reconciled with lock.yaml ({n} package(s))")
         try:
             registry.register(str(d), yes=True, brief=True)
         except (Abort, ui.Cancelled, ui.PlanOnly) as e:

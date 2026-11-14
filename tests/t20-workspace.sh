@@ -373,6 +373,24 @@ This vault is an AIBOS workspace with sync: auto." "block with sync: auto"
    assert_not_contains "$OUT" "      new      aios-status" "H31: no line per skill in sync"
    assert_contains "$(A "$V/bare" --integrity)" "@/ holds no tracked file" "B32: integrity names the untracked @/"
    cp "$SANDBOX/ws.bak" "$V/.aios/workspace.yaml"; git -C "$V" checkout -q -- .gitignore
+   export AIOS_HUBS="$("$SRC/tests/hub/build" "$SANDBOX/hubs")"   # H33: packages in one line
+   repo pk @/README.md
+   printf '  - name: pk\n    repo: file://%s/pk\n    revision: main\n    path: pk\n' "$RM" >> "$V/.aios/workspace.yaml"
+   printf '/pk/\n' >> "$V/.gitignore"
+   A "$V" --workspace sync --yes >/dev/null
+   A "$V/pk" --fetch aibex-aios/knowledge-orion --yes >/dev/null
+   [ -f "$V/pk/.aios/lock.yaml" ] && ok || fail "H33: lock.yaml written by fetch"
+   mkdir -p "$SANDBOX/src/pk/.aios"; cp "$V/pk/.aios/config.yaml" "$V/pk/.aios/lock.yaml" "$SANDBOX/src/pk/.aios/"
+   git -C "$SANDBOX/src/pk" add -A; git -C "$SANDBOX/src/pk" commit -qm "packages"; git -C "$SANDBOX/src/pk" push -q origin main
+   rm -rf "$V/pk"
+   OUT="$(A "$V" --workspace sync --yes)"
+   assert_contains "$OUT" "pk: cloned (main)" "H33: pk cloned again"
+   assert_contains "$OUT" "pk: packages reconciled with lock.yaml (1 package(s))" "H33: one line for the packages"
+   assert_not_contains "$OUT" "knowledge-orion 0." "H33: no line per package in sync"
+   assert_contains "$OUT" "pk: skills up to date" "H33: registration without changes in one line"
+   assert_not_contains "$OUT" "=> skills of" "H33: no long line of the registration"
+   [ -d "$V/pk/@/@!Package/knowledge-orion" ] && ok || fail "H33: package fetched in the clone"
+   cp "$SANDBOX/ws.bak" "$V/.aios/workspace.yaml"; git -C "$V" checkout -q -- .gitignore; rm -rf "$V/pk"
    F="$SANDBOX/fake"; mkdir -p "$F/bin"
    printf '#!/bin/sh\necho "fake 0.6.4-rc9: $* in $(pwd)"\n' > "$F/bin/aios"; chmod +x "$F/bin/aios"
    printf 'v0.6.4-rc9: %s\n' "$F" >> "$HOME/.aios/installations.yaml"

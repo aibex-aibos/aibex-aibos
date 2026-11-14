@@ -335,7 +335,7 @@ def register(cwd, yes=False, brief=False):
     for p in s.problems:
         warn(p)
     if not s:
-        say(f"=> skills of {ctx.cwd} are up to date")
+        say(f"   {ctx.cwd.name}: skills up to date" if brief else f"=> skills of {ctx.cwd} are up to date")
         return 0
     if brief:                                       # H31: one line per project in sync/attach
         s.apply()

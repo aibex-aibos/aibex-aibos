@@ -27,7 +27,7 @@ Das Repo liegt seit 2026-11-05 im Konzeptprojekt unter `~/Workspace/§AIBOS/A-AI
 | 8 | **Patch v0.6.5: B35** (Memos 218–220) | `add_entries()` übernimmt die Einrückung der `workspace.yaml` und prüft sie vor dem Commit; t20: 191 Prüfungen; 1574 grün; abgenommen auf `0.6.5-rc1` | — | ☑ abgenommen |
 | 9 | **Patch v0.6.6** (Memos 221, 225–230): Spec freigegeben (`86e7c89`, `5ed7e28`, Memo 230); Ausgangsprüfung 1574 grün (mit einem `python3` mit PyYAML vorn im `PATH`, weil dem `python3` von Homebrew PyYAML fehlt) | Schritte 9.1–9.7 | 01–06 | ◐ |
 | 9.1 | **H34:** ohne gültiges Arbeitsverzeichnis | Weiterleiter 0.4.3 und `bin/aios`: mit absolutem Pfad dorthin wechseln und weiterarbeiten, sonst `*** aios: the current directory no longer exists; …`, Exit 1; `--context` ohne Ausgabe (Weiterleiter: Log); `VERSION` und `manifest.yaml` `0.6.6-dev`; t01 +5, t02 +9; 1588 Prüfungen grün | 04 | ☑ abgeschlossen |
-| 9.2 | **H33:** kurzer Paketabgleich im sync | | 06 | ☐ |
+| 9.2 | **H33:** kurzer Paketabgleich im sync | `runnable()` fängt die Ausgabe von `fetch.sync` ab und meldet eine Zeile je Projekt (`packages reconciled with lock.yaml`, `packages match lock.yaml`, mit Zahl der Pakete); Registrierung ohne Änderung kurz (`<name>: skills up to date`); t20: 198 Prüfungen (+7), Gegenprobe ohne Änderung: 3 Fehler; 1595 Prüfungen grün | 06 | ☑ abgeschlossen |
 | 9.3 | **B36:** Hinweis mit `--push`, Hinweis ohne Upstream | | 06 | ☐ |
 | 9.4 | **H42:** `sync --only` | | 04, 06 | ☐ |
 | 9.5 | **remove** mit `removed` (sync, attach, status, Hook) | | 02, 06 | ☐ |
