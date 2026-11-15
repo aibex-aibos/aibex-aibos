@@ -211,6 +211,30 @@ def removed_upstream(root):
     return [str(e["path"]) for e in data.get("removed") or [] if isinstance(e, dict) and e.get("path")]
 
 
+def dropped_paths(root):
+    """Paths removed from the workspace for this sync: removed: here and at the upstream of the vault
+    root (F258); a local, unpushed change of workspace.yaml wins for the paths it lists in projects:
+    (B37: a project taken back with attach is not removed again before its commit is pushed)."""
+    up = set(removed_upstream(root))
+    if up and git(root, "log", "--format=%h", "@{upstream}..HEAD", "--", FILE.as_posix()).stdout.strip():
+        up -= {i.path for i in load(root)}
+    return set(removed(root)) | up
+
+
+def late_clones(root, rel, groups, known, dropped, gone):
+    """B38: after step 3 the merged workspace.yaml may name projects that were not in the plan
+    (added or taken back on another computer): clone them now and make them runnable."""
+    cloned, failed = [], []
+    for item in selected(load(root), groups):
+        if item.path in known or not under(item, rel) or is_detached(item.path, gone):
+            continue
+        if is_detached(item.path, removed(root)) or (root / item.path).exists():
+            continue
+        try_clone(item, root / item.path, cloned, failed)
+    for d in cloned:
+        runnable(d)
+
+
 def removed_here(root, rel=".", gone=(), dropped=None):
     """Paths of removed: (here or at the upstream) whose folder is still on this machine, at or
     below rel, outermost only."""
@@ -672,12 +696,13 @@ def owner_of(url):
     return m.group(1) if m else None
 
 
-def manifest_steps(plan, root, items, rel, gone):
+def manifest_steps(plan, root, items, rel, gone, dropped=None):
     """Step 4 of sync: entries for repos with origin that are missing, hints for the rest."""
     import yaml
     data = yaml.safe_load((root / FILE).read_text(encoding="utf-8")) or {}
     remotes = data.get("remotes") or {}
-    entries, hints = scan(root, remotes, {i.path for i in load(root)}, {i.name for i in load(root)}, rel, gone)
+    entries, hints = scan(root, remotes, {i.path for i in load(root)}, {i.name for i in load(root)}, rel, gone,
+                          dropped)
     if entries:
         plan.add(f"workspace.yaml: add {', '.join(e['path'] for e in entries)}; commit only workspace.yaml",
                  lambda: add_entries(root, entries))
@@ -685,12 +710,12 @@ def manifest_steps(plan, root, items, rel, gone):
         plan.add(f"note: {h}")
 
 
-def scan(root, remotes, listed, names, rel=".", gone=()):
+def scan(root, remotes, listed, names, rel=".", gone=(), dropped=None):
     """(entries, hints): repos with origin missing in workspace.yaml, notes for the rest (step 4)."""
     names = set(names)
     folders = {}
     entries, hints = [], []
-    dropped = removed(root)
+    dropped = removed(root) if dropped is None else list(dropped)   # H44: as in step 1
     for r in repos(root, gone):
         if not (rel in ("", ".") or under(Item("", "", "", r), rel)):
             continue
@@ -928,7 +953,7 @@ def plan_only(plan, root, rel, accept=()):
 
 def plan_sync(plan, root, rel=".", groups=(), accept=()):
     """Add the steps of sync for the projects of root at or below rel to plan (spec 06, sync)."""
-    dropped = set(removed(root)) | set(removed_upstream(root))
+    dropped = dropped_paths(root)
     items = [i for i in selected(load(root), groups) if under(i, rel) and not is_detached(i.path, dropped)]
     gone = detached(root)
     cloned, kept, failed = [], {}, []
@@ -948,7 +973,8 @@ def plan_sync(plan, root, rel=".", groups=(), accept=()):
     if any(not (root / i.path).exists() for i in items if not is_detached(i.path, gone)):
         plan.add("make the newly cloned projects runnable (aios --fetch, registration)",
                  lambda: [runnable(d) for d in cloned])
-    manifest_steps(plan, root, items, rel, gone)        # step 5
+    plan.add(None, lambda: late_clones(root, rel, groups, {i.path for i in items}, dropped, gone))   # B38
+    manifest_steps(plan, root, items, rel, gone, dropped)   # step 5
     push_steps(plan, root, targets, kept)               # step 6
     for d in gone:
         if under(Item("", "", "", d), rel):

@@ -276,7 +276,7 @@ YAML
    S() { (cd "$1" && printf '{"source":"%s","session_id":"t20"}' "${2:-startup}" | "$SRC/bin/aios" --context --session 2>&1); }
    assert_contains "$(A "$V" --context)" "<aios-workspace>
 This vault is an AIBOS workspace with sync: auto." "block with sync: auto"
-   assert_contains "$(A "$D" --context)" "This vault lies in a cloud folder (CloudStorage)" "block in a cloud folder"
+   assert_contains "$(A "$D" --context)" "This vault is a Cloud-Drive: it lies in a cloud folder (CloudStorage) that the cloud service replicates" "block in a cloud folder"
    echo 2 >> "$SANDBOX/src/sub/@/README.md"; git -C "$SANDBOX/src/sub" commit -qam "sub 2"; git -C "$SANDBOX/src/sub" push -q origin main
    OUT="$(S "$V/libs/lib-a/sub")"
    assert_contains "$OUT" "AIOS-SYNC: sub updated from origin/main (1 commits)." "hook: update at startup"
@@ -589,6 +589,7 @@ This vault is an AIBOS workspace with sync: auto." "block with sync: auto"
    OUT="$(A "$R2" --workspace sync --plan)"
    assert_contains "$OUT" "remove pa (removed on another computer), checked: nothing is lost" "F241: second computer removes it too"
    assert_not_contains "$OUT" "remove pa/paa" "F241: only the outermost path"
+   assert_not_contains "$OUT" "note: pa: " "H44: no hints for a project removed in the same sync"
    OUT="$(A "$R2" --workspace sync --yes)"
    assert_contains "$OUT" "pa: removed (removed on another computer)" "F241: report"
    [ ! -e "$R2/pa" ] && ok || fail "F241: pa removed on the second computer"
@@ -611,6 +612,12 @@ This vault is an AIBOS workspace with sync: auto." "block with sync: auto"
    [ -d "$RR/pa/paa/.git" ] && ok || fail "F242: attach clones pa and pa/paa again"
    assert_eq "$(git -C "$RR" log -1 --format=%s)" "AIOS: pa wieder in den Workspace aufgenommen" "F242: commit"
    assert_eq "$(python3 -c "import yaml;d=yaml.safe_load(open('$RR/.aios/workspace.yaml'));print(sorted(e['path'] for e in d['projects']), sorted(e['path'] for e in d.get('removed') or []))")" "['pa', 'pa/paa'] ['pb']" "F242: back in projects, pb stays removed"
+   OUT="$(A "$RR" --workspace sync --yes)"           # the commit of attach is not pushed yet
+   [ -d "$RR/pa/paa/.git" ] && ok || fail "B37: sync does not remove a project taken back with attach"
+   assert_not_contains "$OUT" "removed on another computer" "B37: the local change of workspace.yaml wins"
+   OUT="$(A "$R2" --workspace sync --yes)"
+   assert_contains "$OUT" "pa: cloned (main)" "B38: the second computer clones a taken back project in the same sync"
+   [ -d "$R2/pa/paa/.git" ] && ok || fail "B38: with its subproject"
    OUT="$(A "$RR" --workspace remove "$RR/pa" --plan 2>&1)"; assert_contains "$OUT" "move pa with 2 repo(s)" "remove again possible"
 
 #===============================================================================

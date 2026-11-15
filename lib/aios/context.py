@@ -194,8 +194,9 @@ WORKSPACE_TEXT = {                                  # spec 02, Regel des Workspa
              "project at once so that the remote holds a backup (push only after the user's yes). Name commits that are not "
              "pushed when you finish."),
     "manual": "This vault is an AIBOS workspace with sync: manual. /aios-sync synchronizes it with its remotes on request.",
-    "cloud": ("This vault lies in a cloud folder ({cloud}); the workspace sync of AIBOS is off. Plain git "
-              "(commit, push, pull) stays allowed on the user's request."),
+    "cloud": ("This vault is a Cloud-Drive: it lies in a cloud folder ({cloud}) that the cloud service "
+              "replicates; the workspace sync of AIBOS is off. Plain git (commit, push, pull) stays allowed "
+              "on the user's request."),                # F249, B39
 }
 
 
