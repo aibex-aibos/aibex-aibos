@@ -35,7 +35,7 @@ Memos und ToDos im Projekt `~/Workspace/§AIBOS/A-AIOS/AA-AIbex-AIOS/` (Regeln `
 
 1. Die Memos der laufenden Version lesen (`@Memo/V0.6/`, die neuesten zuerst) und daraus die Phase des Workflows bestimmen (Konzept, Bewertung, Konsolidierung, Spec, Freigabe, Implementierung, Abnahme). Für den Hintergrund die Abnahme und den Rückblick der Vorversion (V0.5, Memos 94, 96).
 2. Gibt es einen freigegebenen Implementierungsplan: ihn lesen, dann `STATUS.md`; der nächste Schritt ist der erste mit ☐. Zur Kontrolle `git log --oneline`: Jeder abgeschlossene Schritt hat einen Commit `Schritt N: …`. Ohne Plan wird am Code noch nicht gearbeitet.
-3. Vor Arbeit am Code `tests/run` als Ausgangsprüfung, alle Tests müssen grün sein.
+3. Vor Arbeit am Code `tests/run` als Ausgangsprüfung, alle Tests müssen grün sein. Zu Beginn jeder Version laufen auch die Live-Tests (`tests/live/`) einmal; Abweichungen der Testumgebung (fehlende Repos, Python ohne PyYAML, fehlende Programme) werden behoben, bevor der erste Schritt beginnt (V0.6, Memos 242, 243: R40).
 4. Dem User die Phase und den nächsten Schritt nennen und dann beginnen.
 
 ## Memos schreiben
@@ -56,7 +56,7 @@ Das Memo wird im Versionsordner der laufenden Version angelegt (`AA-AIbex-AIOS/@
 - **Tests im Sandkasten:** `tests/run` vor jedem Commit; Tests verändern nie den echten Rechner. Einzelne Testdateien nur mit `tests/run <präfix>` (z. B. `tests/run t22`), nie direkt mit `bash tests/tNN-….sh`: ohne Sandkasten liefen sie gegen das echte `HOME` (V0.6, Memo 66); jede Datei bricht dann ab.
 - **Ein Schritt, ein Commit:** jeder Schritt des Plans endet mit grünen Tests und einem Commit `Schritt N: …` (bei einem Patch `v<x.y.z> Schritt N: …`), danach Push. Im selben Commit wird der Schritt in `STATUS.md` abgehakt (☐ → ☑, Ergebnis nachgetragen).
 - **Das Arbeitsverzeichnis nicht wechseln:** `git -C <repo>` und absolute Pfade verwenden, damit der Masterspace der Session gültig bleibt.
-- **Der Arbeitsrechner wird erst im Abnahmeschritt umgestellt**; bis dahin bleiben er und die Vaults auf der letzten veröffentlichten Version (derzeit v0.6.3). Entwicklungsstände nur im Sandkasten und über `AIOS_HOME`.
+- **Der Arbeitsrechner wird erst im Abnahmeschritt umgestellt**; bis dahin bleiben er und die Vaults auf der letzten veröffentlichten Version (derzeit v0.6.6). Entwicklungsstände nur im Sandkasten und über `AIOS_HOME`.
 - **Paket-Repos und Hubs:** Paket-Repos entstehen lokal unter `~/git/AIbex/<paket>/` und werden lokal getaggt; in die Hubs gepusht wird erst in der Abnahme (V0.5, Memos 30, 45). Tests holen Pakete nur aus Test-Hubs unter `file://` (`AIOS_HUBS`, `tests/hub/`) und Wheels nur aus `AIOS_PIP_FIND_LINKS`; kein Test erreicht das Netz außer `tests/live/`.
 - **Zweige:** v0.6.4 entsteht auf `main`; Spec 08 und Änderungen an 01–07 für Wissen (v0.8) nur auf dem Zweig `v0.8`, den die Arbeit an Wissen auf `main` nachzieht (V0.6, Memos 119, 121: F88).
 - **Push:** nach jedem Schritt nur mit Rückfrage (V0.5, Memo 45, Q5), vorher die Commits zeigen, die hinausgehen (`git log origin/main..main`), und fremde nennen (V0.6, Memo 114, R9). Ein gepushter Tag wird nie bewegt; eine neue Version entsteht auf `main` über dem letzten Tag (V0.5, Memo 75, U2).
