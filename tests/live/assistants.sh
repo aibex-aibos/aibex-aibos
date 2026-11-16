@@ -5,7 +5,7 @@
    exec </dev/null                                  # nothing waits for input (V0.7, memo 26: H55)
 
    if [ "$*" == "-?" ] || [ "$*" == "--help" ]; then
-      echo '   usage: tests/live/assistants.sh [<model>]   # headless sessions A1-A6, default model haiku'
+      echo '   usage: tests/live/assistants.sh [<model>]   # headless sessions A1-A6, default model sonnet (haiku varies, V0.7, memo 39)'
       echo '          tests/live/assistants.sh --version   # print version'
       echo '   not part of tests/run: needs a logged-in claude CLI and uses tokens;'
       echo '   copies the demo assistants of the test hub (tests/hub/aibex-aibos/assistant-*) into a sandbox'
@@ -18,7 +18,7 @@
 #===============================================================================
 
    if [ "$*" == "--version" ]; then
-      echo "0.4.1"; exit 0
+      echo "0.5.0"; exit 0
    fi
 
 #===============================================================================
@@ -26,7 +26,7 @@
 #===============================================================================
 
    if [ "$2" == "" ]; then
-      MODEL="${1:-haiku}"
+      MODEL="${1:-sonnet}"
       . "$(dirname "$0")/lib.sh"
       LIB="$REPO/tests/hub/aibex-aibos"
       V="$SB/§Live"; G="$V/Garten"; O="$G/@/@!Assistant/gaertner"; A="$V/@/@!Assistant/astronom"
