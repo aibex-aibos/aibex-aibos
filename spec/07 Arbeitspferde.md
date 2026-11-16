@@ -2,7 +2,7 @@
 title: "Arbeitspferde"
 date: 2026-11-16
 author: iHux
-status: Entwurf
+status: Spec
 tags: [spec, aibos, v0.7, arbeitspferde]
 number: 07
 related:
