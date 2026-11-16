@@ -572,7 +572,7 @@ Ein Rechner mit dem Prototyp von `aios` (Kopie nach `~/bin`, Konfiguration in `~
 
 ### Umstieg auf v0.7
 
-Der Umstieg eines Rechners mit v0.6 läuft in zwei Schritten, jeder mit Plan und eigener Rückfrage (V0.7, Memos 04, 05, 07, 09, 13–15: F267–F272, F276, F281, FL6–FL8):
+Der Umstieg eines Rechners mit v0.6 läuft in zwei Schritten, jeder mit Plan und eigener Rückfrage (V0.7, Memos 04, 05, 07, 09, 13–15: F267–F272, F276, F281, FL6–FL8). In beiden Schritten ist der Umstieg ein **eigener erster Plan** mit eigenem Ja, der mit `(then: the plan of the installation in ~/.aibos)` bzw. `(then: the plan of the activation)` endet; erst danach plant der Befehl wie gewohnt, schon auf dem umgestellten Stand. Mit `--plan` erscheint nur der erste Plan, mit `--yes` laufen beide (V0.7, Memos 25, 26: FL30, FL32; Vorbild: `aibos --install distribution-…` auf einem frischen Rechner):
 
 | # | Schritt | Wirkung |
 |---|---|---|

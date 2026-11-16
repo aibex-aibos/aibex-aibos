@@ -126,10 +126,14 @@ except package.ManifestError as e:
 
    OUT="$(at "$SANDBOX" "$K66/bin/aios" --install v0.6.6 --yes)"; RC=$?
    [ "$RC" == "0" ] && [ -x "$HOME/.aios/bin/aios" ] && [ -d "$HOME/.aios/versions/v0.6.6" ] && ok || fail "0.6.6 installed: $OUT"
-   V="$SANDBOX/work/§Sechs"; mkdir -p "$V/PA"
+   V="$SANDBOX/work/§Sechs"; mkdir -p "$V/P-Alpha"
    at "$SANDBOX" "$HOME/.aios/bin/aios" --activate v0.6.6 "$V" --yes >/dev/null
-   at "$V/PA" "$HOME/.aios/bin/aios" --init --yes >/dev/null
-   assert_contains "$(at "$V/PA" "$HOME/.aios/bin/aios" --context --id)" "mode=aios-0.6.6" "before: vault on 0.6.6"
+   at "$V/P-Alpha" "$HOME/.aios/bin/aios" --init --yes >/dev/null
+   printf 'assistant: none\n' > "$V/P-Alpha/.aios/config.yaml" 2>/dev/null || { mkdir -p "$V/P-Alpha/.aios"; printf 'assistant: none\n' > "$V/P-Alpha/.aios/config.yaml"; }
+   G -C "$V/P-Alpha" add .aios/config.yaml; G -C "$V/P-Alpha" commit -q -m "config of PA"     # a project of 0.6.6 with .aios/
+   at "$V/P-Alpha" "$HOME/.aios/bin/aios" --register --yes >/dev/null
+   [ -f "$V/P-Alpha/.aios/registry" ] && [ -d "$V/P-Alpha/.claude/skills/aios-status" ] && ok || fail "PA: wrappers aios-* of 0.6.6"
+   assert_contains "$(at "$V/P-Alpha" "$HOME/.aios/bin/aios" --context --id)" "mode=aios-0.6.6" "before: vault on 0.6.6"
 
    OUT="$(at "$SANDBOX" "$K07/bin/aibos" --install v0.7.0 --plan)"; RC=$?
    assert_eq "$RC" "0" "changeover: --plan exit 0"
@@ -147,9 +151,9 @@ except package.ManifestError as e:
    assert_eq "$(grep -c "$HOME/.aibos/bin/aibos --context --" <<< "$SETTINGS")" "3" "three hooks with ~/.aibos/bin/aibos"
    assert_not_contains "$SETTINGS" "/.aios/bin/aios --context" "hooks of 0.6.6 replaced in place (F269)"
 
-   assert_contains "$(at "$V/PA" "$HOME/.aibos/bin/aibos" --context --id)" "mode=aios-0.6.6" "after: the Altbindung runs with 0.6.6 (P19)"
-   assert_contains "$(at "$V/PA" "$HOME/.aios/bin/aios" --context --id)" "mode=aios-0.6.6" "after: wrappers of 0.6.6 (~/.aios/bin/aios) still work"
-   assert_contains "$(at "$V/PA" "$HOME/.aios/bin/aios" --skill aios-status)" "# Projektstatus" "after: a kernel skill of 0.6.6"
+   assert_contains "$(at "$V/P-Alpha" "$HOME/.aibos/bin/aibos" --context --id)" "mode=aios-0.6.6" "after: the Altbindung runs with 0.6.6 (P19)"
+   assert_contains "$(at "$V/P-Alpha" "$HOME/.aios/bin/aios" --context --id)" "mode=aios-0.6.6" "after: wrappers of 0.6.6 (~/.aios/bin/aios) still work"
+   assert_contains "$(at "$V/P-Alpha" "$HOME/.aios/bin/aios" --skill aios-status)" "# Projektstatus" "after: a kernel skill of 0.6.6"
    assert_eq "$(at "$SANDBOX" "$HOME/.aibos/bin/aibos" --version)" "0.7.0" "aibos without binding: the highest version"
 
    assert_contains "$(at "$SANDBOX" "$K07/bin/aibos" --install v0.7.0 --yes)" "nothing to do" "second install: nothing to do (I8)"
@@ -160,3 +164,66 @@ except package.ManifestError as e:
    OUT="$(at "$SANDBOX" env HOME="$SANDBOX/both" "$K07/bin/aibos" --install v0.7.0 --plan)"; RC=$?
    [ "$RC" != "0" ] && ok || fail "~/.aios and ~/.aibos both: abort"
    assert_contains "$OUT" "both exist" "~/.aios and ~/.aibos both: message"
+
+#===============================================================================
+# step 6: binding the vault to 0.7 changes it over (.aios/ -> .aibos/, aios: -> aibos:, one commit
+# per project); a second computer on 0.6.6 sees the vault as unbound (FL8) and follows the
+# upstream when it changes over (FL7) (spec 04, Umstieg auf v0.7, step 2; FL32)
+#===============================================================================
+
+   A_HOME="$HOME"; RM="$SANDBOX/remotes"; mkdir -p "$RM"
+   for P in "$V" "$V/P-Alpha"; do                       # remotes for the root and PA, pushed from 0.6.6
+      N="$(basename "$P")"; G init -q --bare "$RM/$N.git"
+      G -C "$P" remote add origin "$RM/$N.git"; G -C "$P" push -q -u origin main
+   done
+   B="$SANDBOX/b"; B_HOME="$SANDBOX/home6"; mkdir -p "$B" "$B_HOME"            # computer B on 0.6.6
+   export HOME="$B_HOME" AIBOS_CLAUDE_DIR="$B_HOME/.claude" AIOS_CLAUDE_DIR="$B_HOME/.claude"
+   at "$SANDBOX" "$K66/bin/aios" --install v0.6.6 --yes >/dev/null
+   G clone -q "$RM/§Sechs.git" "$B/§Sechs"; G clone -q "$RM/P-Alpha.git" "$B/§Sechs/P-Alpha"
+   assert_contains "$(at "$B/§Sechs/P-Alpha" "$HOME/.aios/bin/aios" --context --id)" "mode=aios-0.6.6" "B: the clone runs with 0.6.6"
+
+   export HOME="$A_HOME" AIBOS_CLAUDE_DIR="$A_HOME/.claude" AIOS_CLAUDE_DIR="$A_HOME/.claude"   # computer A
+   OUT="$(at "$SANDBOX" "$HOME/.aibos/bin/aibos" --activate v0.7.0 "$V" --plan)"; RC=$?
+   assert_eq "$RC" "0" "changeover of the vault: --plan exit 0"
+   assert_contains "$OUT" "change over 2 projects of $V (., P-Alpha): .aios/ -> .aibos/, aios: -> aibos: 0.7.0" "plan names the projects"
+   assert_contains "$OUT" "then: the plan of the activation" "the second plan is named (FL32)"
+   [ -d "$V/.aios" ] && [ ! -e "$V/.aibos" ] && ok || fail "--plan writes nothing"
+   OUT="$(at "$SANDBOX" "$HOME/.aibos/bin/aibos" --activate v0.7.0 "$V" --yes)"; RC=$?
+   assert_eq "$RC" "0" "changeover of the vault: exit 0"
+   [ ! -e "$V/.aios" ] && [ ! -e "$V/P-Alpha/.aios" ] && [ -f "$V/.aibos/config.yaml" ] && [ -d "$V/P-Alpha/.aibos" ] && ok || fail ".aios/ -> .aibos/ in both projects"
+   assert_eq "$(cat "$V/.aibos/config.yaml")" "aibos: 0.7.0" "binding aibos: 0.7.0"
+   assert_eq "$(git -C "$V" log -1 --format=%s) | $(git -C "$V/P-Alpha" log -1 --format=%s)" "AIBOS: auf AIBOS v0.7 umgestellt | AIBOS: auf AIBOS v0.7 umgestellt" "one commit per project"
+   assert_eq "$(git -C "$V" status --porcelain)" "" "root: nothing left uncommitted"
+   [ -d "$V/P-Alpha/.claude/skills/aibos-status" ] && [ ! -e "$V/P-Alpha/.claude/skills/aios-status" ] && ok || fail "wrappers aibos-* instead of aios-* (F271)"
+   assert_contains "$(at "$V/P-Alpha" "$HOME/.aibos/bin/aibos" --context --id)" "mode=aibos-0.7.0" "the vault runs with 0.7"
+   assert_contains "$(cd "$V/P-Alpha" && echo '{}' | "$HOME/.aibos/bin/aibos" --context --session 2>&1)" "<aibos-context" "master context with <aibos-context>"
+   for P in "$V" "$V/P-Alpha"; do G -C "$P" push -q; done
+
+   export HOME="$B_HOME" AIBOS_CLAUDE_DIR="$B_HOME/.claude" AIOS_CLAUDE_DIR="$B_HOME/.claude"   # computer B
+   G -C "$B/§Sechs" pull -q
+   assert_contains "$(at "$B/§Sechs" "$HOME/.aios/bin/aios" --context --id)" "mode=none" "B on 0.6.6: the changed-over vault is unbound (FL8)"
+   at "$SANDBOX" "$K07/bin/aibos" --install v0.7.0 --yes >/dev/null
+   OUT="$(at "$SANDBOX" "$HOME/.aibos/bin/aibos" --activate v0.7.0 "$B/§Sechs" --plan)"
+   assert_contains "$OUT" "bring $B/§Sechs/P-Alpha forward to its upstream" "B: PA follows its upstream (FL7)"
+   assert_not_contains "$OUT" "change over" "B: nothing renamed twice"
+   OUT="$(at "$SANDBOX" "$HOME/.aibos/bin/aibos" --activate v0.7.0 "$B/§Sechs" --yes)"; RC=$?
+   assert_eq "$RC" "0" "B: exit 0"
+   [ ! -e "$B/§Sechs/.aios" ] && [ ! -e "$B/§Sechs/P-Alpha/.aios" ] && [ -d "$B/§Sechs/P-Alpha/.aibos" ] && ok || fail "B: no .aios/ left"
+   assert_eq "$(git -C "$B/§Sechs/P-Alpha" rev-parse HEAD)" "$(git -C "$V/P-Alpha" rev-parse HEAD)" "B: PA at the commit of A, no own commit"
+   assert_contains "$(at "$B/§Sechs/P-Alpha" "$HOME/.aibos/bin/aibos" --context --id)" "mode=aibos-0.7.0" "B: the vault runs with 0.7"
+   export HOME="$A_HOME" AIBOS_CLAUDE_DIR="$A_HOME/.claude" AIOS_CLAUDE_DIR="$A_HOME/.claude"
+
+   OUT="$(PY "$SANDBOX" "from aibos import changeover
+print(changeover.rewrite('''remotes:
+  aibex-aios: https://github.com/aibex-aios
+projects:
+  - repo: git@github.com:aibex-aios/x.git
+    remote: aibex-aios
+  - repo: file:///srv/aibex-aios/y.git
+hubs:
+  - aibex-aios
+  - aibex-aios-test
+packages:
+  k: {hub: aibex-aios}'''))")"
+   assert_eq "$OUT" $'remotes:\n  aibex-aibos: https://github.com/aibex-aibos\nprojects:\n  - repo: git@github.com:aibex-aibos/x.git\n    remote: aibex-aibos\n  - repo: file:///srv/aibex-aios/y.git\nhubs:\n  - aibex-aibos\n  - aibex-aios-test\npackages:\n  k: {hub: aibex-aibos}' \
+      "rewrite: GitHub and hub names only (F281)"

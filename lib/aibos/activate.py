@@ -6,7 +6,7 @@ import os
 import re
 from pathlib import Path
 
-from . import aibosinit, config, install, migrate, paths, semver
+from . import aibosinit, changeover, config, install, migrate, paths, semver
 from .ui import Abort, Plan, confirm, extra, say, warn
 
 
@@ -192,6 +192,17 @@ def activate(version, path=None):
     if not config.VERSION.match(tag):
         raise Abort(f"{version} is not a version (v<MAJOR.MINOR.PATCH>)")
     p = target(path)
+    known = install.installations()
+    if config.vault_root(p) == p and tag in known and known[tag][0].is_dir():
+        steps = changeover.plan(p, tag[1:])         # own plan first: the next one sees .aibos/ (FL32)
+        if steps:
+            first = Plan()
+            for text, action in steps:
+                first.add(text, action)
+            first.add("then: the plan of the activation")
+            say(f"=> changeover of {p} from AIbex AIOS to AIbex AIBOS (spec 04, Umstieg auf v0.7)")
+            if not confirm(first, "change over?", "changeover cancelled"):
+                return 1
     plan = Plan()
     bound = plan_activation(tag, p, plan)
     registers = config.is_aibos(tag[1:]) and plan_registration(p, plan)

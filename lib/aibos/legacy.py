@@ -14,7 +14,7 @@ OLD_ORG, NEW_ORG = "aibex-aios", "aibex-aibos"      # GitHub organisation (F264)
 OLD_PREFIX, NEW_PREFIX = "AIOS_", "AIBOS_"          # environment (F268)
 OLD_DIR, NEW_DIR = ".aios", ".aibos"                # vaults and projects (F270)
 OLD_KEY, NEW_KEY = "aios", "aibos"                  # binding, requires (F272)
-GITHUB_ORG = re.compile(r"((?:https?://|ssh://git@)github\.com[/:]|git@github\.com:)" + re.escape(OLD_ORG) + r"(?=/)")
+GITHUB_ORG = re.compile(r"((?:https?://|ssh://git@)github\.com[/:]|git@github\.com:)" + re.escape(OLD_ORG) + r"(?=[/\s\"']|$)", re.M)
 
 _noted = set()
 
