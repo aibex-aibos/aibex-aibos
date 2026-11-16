@@ -20,8 +20,9 @@ KINDS = ("skills", "assistants", "commands", "knowledge")
 
 def marker(d):
     """Fields of the marker of a package folder, None without marker."""
-    f = Path(d) / MARKER
-    if not f.is_file():
+    from . import legacy
+    f = legacy.marker_file(d)
+    if f is None:
         return None
     out = {}
     for line in f.read_text(encoding="utf-8").splitlines():

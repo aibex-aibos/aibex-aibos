@@ -311,7 +311,7 @@ class Fetch:
         installs = self.workers(plan if machine is None else machine, picks, machine is not None)
         base = package_dir(self.project, "")
         for d in sorted(base.iterdir()) if base.is_dir() else []:
-            if d.name not in picks and (d / MARKER).is_file():
+            if d.name not in picks and legacy.marker_file(d) is not None:
                 plan.add(f"remove     {d.name} -> {d}", lambda d=d: d.exists() and (make_writable(d), shutil.rmtree(d)))
                 moved.append(d)
         if packages != self.packages:

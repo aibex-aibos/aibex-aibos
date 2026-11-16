@@ -11,7 +11,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from . import config, elements, paths, registry, ui
+from . import config, elements, legacy, paths, registry, ui
 from .ui import Abort, Plan, say
 
 MARKER = ".aibos-deploy"
@@ -26,11 +26,11 @@ def files_of(d):
     (skills deployed into an assistant with --assistant) belong to their own deployment (spec 03)."""
     out = {}
     for root, dirs, files in os.walk(d):
-        dirs[:] = [x for x in dirs if not (Path(root) / x / MARKER).is_file()]
+        dirs[:] = [x for x in dirs if legacy.marker_file(Path(root) / x) is None]
         for f in files:
             p = Path(root) / f
             rel = p.relative_to(d).as_posix()
-            if rel != MARKER:
+            if rel not in (MARKER, legacy.OLD_MARKER):
                 out[rel] = p.read_bytes()
     return out
 
@@ -46,8 +46,8 @@ def digest_of(d):
 
 
 def read_marker(d):
-    f = d / MARKER
-    if not f.is_file():
+    f = legacy.marker_file(d)
+    if f is None:
         return None
     out = {}
     for line in f.read_text(encoding="utf-8").splitlines():

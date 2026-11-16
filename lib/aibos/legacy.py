@@ -9,11 +9,13 @@ and is not part of this transition (V0.7, memo 22: FL23).
 import os
 import re
 import sys
+from pathlib import Path
 
 OLD_ORG, NEW_ORG = "aibex-aios", "aibex-aibos"      # GitHub organisation (F264)
 OLD_PREFIX, NEW_PREFIX = "AIOS_", "AIBOS_"          # environment (F268)
 OLD_DIR, NEW_DIR = ".aios", ".aibos"                # vaults and projects (F270)
 OLD_KEY, NEW_KEY = "aios", "aibos"                  # binding, requires (F272)
+OLD_MARKER, NEW_MARKER = ".aios-deploy", ".aibos-deploy"   # marker of a fetched package (V0.7, memo 43: B50)
 GITHUB_ORG = re.compile(r"((?:https?://|ssh://git@)github\.com[/:]|git@github\.com:)" + re.escape(OLD_ORG) + r"(?=[/\s\"']|$)", re.M)
 
 _noted = set()
@@ -43,6 +45,15 @@ def package_env(**values):
         if name.startswith(NEW_PREFIX):
             out[OLD_PREFIX + name[len(NEW_PREFIX):]] = value
     return out
+
+
+def marker_file(d):
+    """The marker of a package folder: .aibos-deploy, else .aios-deploy of AIOS 0.6 (B50); None without."""
+    for name in (NEW_MARKER, OLD_MARKER):
+        f = Path(d) / name
+        if f.is_file():
+            return f
+    return None
 
 
 def hub(name):

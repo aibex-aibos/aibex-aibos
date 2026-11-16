@@ -3,7 +3,8 @@ Umstieg auf v0.7, step 2; V0.7, memos 05, 09, 13-15, 26: F270-F272, F281, FL7, F
 
 In every project of the vault: .aios/ becomes .aibos/, the binding aios: becomes aibos:, the
 organisation aibex-aios becomes aibex-aibos in workspace.yaml, lock.yaml, config.yaml and the
-origin, the lines of .gitignore follow; one commit per project. A project whose upstream is already
+origin, the lines of .gitignore follow, the markers @!Package/*/.aios-deploy become .aibos-deploy
+(V0.7, memo 43: B50); one commit per project of only the paths that git can take (B51). A project whose upstream is already
 changed over (another computer) is brought forward instead (FL7). This module goes away with 0.8
 together with legacy.py (FL24, FL31).
 """
@@ -70,7 +71,8 @@ def plan(root, version):
         steps.append((f"change over {len(rename)} projects of {root} ({names}): {legacy.OLD_DIR}/ -> "
                        f"{legacy.NEW_DIR}/, {legacy.OLD_KEY}: -> {legacy.NEW_KEY}: {version}, "
                        f"{legacy.OLD_ORG} -> {legacy.NEW_ORG} in workspace.yaml, lock.yaml, hubs: and "
-                       f"origin; one commit each ({MESSAGE})",
+                       f"origin, {legacy.OLD_MARKER} -> {legacy.NEW_MARKER} in @!Package; one commit "
+                       f"each ({MESSAGE})",
                       lambda: [change(p, root, version) for p in rename]))
     return steps
 
@@ -85,8 +87,23 @@ def follow(p):
     carry(p)
 
 
+def markers(p):
+    """Rename the markers .aios-deploy of the fetched packages in p to .aibos-deploy (B50); the
+    paths relative to p, old and new, for the commit."""
+    base = p / "@" / "@!Package"
+    out = []
+    for d in sorted(base.iterdir()) if base.is_dir() else []:
+        old, new = d / legacy.OLD_MARKER, d / legacy.NEW_MARKER
+        if old.is_file() and not new.exists():
+            os.rename(old, new)
+            out += [str(old.relative_to(p)), str(new.relative_to(p))]
+    return out
+
+
 def carry(p):
-    """Move what is left in .aios/ (ignored files) into .aibos/ without overwriting, then drop .aios/."""
+    """Move what is left in .aios/ (ignored files) into .aibos/ without overwriting, then drop .aios/;
+    rename markers that are still old (B50)."""
+    markers(p)
     old, new = p / legacy.OLD_DIR, p / legacy.NEW_DIR
     if not old.is_dir():
         return
@@ -120,13 +137,16 @@ def change(p, root, version):
         if new_text != text:
             gi.write_text(new_text, encoding="utf-8")
             paths.append(".gitignore")
+    paths += markers(p)
     if not git:
         return
     url = project.git(p, "remote", "get-url", "origin")
     if url.returncode == 0 and legacy.url(url.stdout.strip()) != url.stdout.strip():
         project.git(p, "remote", "set-url", "origin", legacy.url(url.stdout.strip()))
-    project.git(p, "add", "-A", "--", *paths)
-    if project.git(p, "diff", "--cached", "--quiet", "--", *paths).returncode:
-        r = project.git(p, "commit", "-q", "-m", MESSAGE, "--", *paths)
+    for path in paths:                              # one by one: a path with only ignored files fails alone (B51)
+        project.git(p, "add", "-A", "--", path)
+    staged = [x for x in project.git(p, "diff", "--cached", "--no-renames", "--name-only", "-z", "--", *paths).stdout.split("\0") if x]
+    if staged:
+        r = project.git(p, "commit", "-q", "-m", MESSAGE, "--", *staged)
         if r.returncode:
             warn(f"commit in {p} failed ({(r.stderr or r.stdout).strip()}); commit .aibos/ by hand")

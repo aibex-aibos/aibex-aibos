@@ -116,8 +116,9 @@ def agents_hints(p):
         return []
     registered = registry.read_registry(p)
     hints = []
-    for d in sorted(x for x in base.iterdir() if (x / ".aibos-deploy").is_file()):
-        marker = registry.read_manifest_marker(d / ".aibos-deploy")
+    from . import legacy
+    for d in sorted(x for x in base.iterdir() if legacy.marker_file(x) is not None):
+        marker = registry.read_manifest_marker(legacy.marker_file(d))
         name, ver = marker.get("name") or d.name, marker.get("version", "?")
         if name not in registered:
             hints.append(f"outdated copy .agents/skills/{d.name} ({name} {ver}): skill not registered here")

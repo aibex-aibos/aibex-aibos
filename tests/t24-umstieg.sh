@@ -227,3 +227,28 @@ packages:
   k: {hub: aibex-aios}'''))")"
    assert_eq "$OUT" $'remotes:\n  aibex-aibos: https://github.com/aibex-aibos\nprojects:\n  - repo: git@github.com:aibex-aibos/x.git\n    remote: aibex-aibos\n  - repo: file:///srv/aibex-aios/y.git\nhubs:\n  - aibex-aibos\n  - aibex-aios-test\npackages:\n  k: {hub: aibex-aibos}' \
       "rewrite: GitHub and hub names only (F281)"
+
+#===============================================================================
+# step 6b: a vault filled by 0.6.6 (V0.7, memos 40, 43: B50, B51): the marker .aios-deploy of a
+# fetched package becomes .aibos-deploy and is read until 0.8; a project whose .aios/ holds only
+# ignored files (registry) is committed without error, its .gitignore included
+#===============================================================================
+
+   W="$SANDBOX/work/§Alt66"; mkdir -p "$W/P-Gamma" "$W/P-Delta"
+   at "$SANDBOX" "$HOME/.aios/bin/aios" --activate v0.6.6 "$W" --yes >/dev/null
+   for P in P-Gamma P-Delta; do at "$W/$P" "$HOME/.aios/bin/aios" --init --yes >/dev/null; done
+   [ -f "$W/P-Delta/.aios/registry" ] && [ -z "$(git -C "$W/P-Delta" ls-files .aios)" ] && ok || fail "P-Delta: .aios/ with only ignored files"
+   K="$W/P-Gamma/@/@!Package/skill-x"; mk "$K/manifest.yaml" $'name: skill-x\nversion: 1.0.0\n'
+   printf '# written by aios --fetch, do not edit\nname: skill-x\nversion: 1.0.0\nhub: aibex-aios\n' > "$K/.aios-deploy"
+   G -C "$W/P-Gamma" add -A; G -C "$W/P-Gamma" commit -q -m "skill-x of 0.6.6"
+   assert_eq "$(PY "$SANDBOX" "from aibos import deploy; from pathlib import Path; print(deploy.read_marker(Path('$K')).get('version'))")" "1.0.0" "the old marker is read (B50)"
+   OUT="$(PY "$SANDBOX" "from aibos import changeover; from pathlib import Path
+for p in ('P-Gamma', 'P-Delta'): changeover.change(Path('$W') / p, Path('$W'), '0.7.0')" 2>&1)"
+   assert_not_contains "$OUT" "failed" "no failed commit (B51)"
+   [ -f "$K/.aibos-deploy" ] && [ ! -e "$K/.aios-deploy" ] && ok || fail "marker renamed (B50)"
+   assert_eq "$(git -C "$W/P-Gamma" status --porcelain)" "" "P-Gamma: renamed marker committed"
+   assert_eq "$(git -C "$W/P-Gamma" ls-files "@/@!Package/skill-x")" $'@/@!Package/skill-x/.aibos-deploy\n@/@!Package/skill-x/manifest.yaml' "P-Gamma: only the new marker in git"
+   assert_eq "$(git -C "$W/P-Delta" status --porcelain)" "" "P-Delta: nothing left uncommitted (B51)"
+   assert_eq "$(git -C "$W/P-Delta" log -1 --format=%s)" "AIBOS: auf AIBOS v0.7 umgestellt" "P-Delta: one commit"
+   assert_contains "$(git -C "$W/P-Delta" show --stat HEAD)" ".gitignore" "P-Delta: the .gitignore is in the commit"
+   [ -f "$W/P-Delta/.aibos/registry" ] && ok || fail "P-Delta: registry moved into .aibos/"
