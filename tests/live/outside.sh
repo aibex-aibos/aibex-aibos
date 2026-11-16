@@ -6,7 +6,7 @@
       echo '   usage: tests/live/outside.sh [<model>]   # headless sessions O1-O3, default model haiku'
       echo '          tests/live/outside.sh --version   # print version'
       echo '   not part of tests/run: needs a logged-in claude CLI and uses tokens'
-      echo '   see also: tests/live/permit.sh, aios --skill'
+      echo '   see also: tests/live/permit.sh, aibos --skill'
       exit 1
    fi
 
@@ -26,8 +26,8 @@
       MODEL="${1:-haiku}"
       . "$(dirname "$0")/lib.sh"
       V="$SB/§Live"; G="$V/Garten"; OUT="$SB/Draussen"
-      mkdir -p "$V/.aios" "$V/@/@Rule" "$G/@" "$OUT"
-      printf 'aios: 0.6.0\n' > "$V/.aios/config.yaml"
+      mkdir -p "$V/.aibos" "$V/@/@Rule" "$G/@" "$OUT"
+      printf 'aibos: 0.6.0\n' > "$V/.aibos/config.yaml"
       printf '# Stil\nSchreib kurz.\n' > "$V/@/@Rule/stil.md"
       (cd "$G" && "$FWD" --register --yes >/dev/null 2>&1)   # wrappers only in the vault (V0.6, F18)
       HOOKS="$(hooks)"
@@ -39,20 +39,20 @@
 
       A="$(cd "$OUT" && "$FWD" --context --session </dev/null 2>&1)"
       check "O0 hooks outside print nothing (no tokens)" "[$A]" "[]"
-      A="$(cd "$OUT" && "$FWD" --skill aios-status 2>&1)"
-      check "O0 aios --skill outside: no A/W (no tokens)" "$A" "Kein AIBOS-Workspace: $OUT"
+      A="$(cd "$OUT" && "$FWD" --skill aibos-status 2>&1)"
+      check "O0 aibos --skill outside: no A/W (no tokens)" "$A" "Kein AIBOS-Workspace: $OUT"
 
-      A="$(ask "$OUT" "Enthält dein Kontext Anweisungen oder Texte von AIOS oder AIBOS (z. B. aios-context, AIOS-CONTEXT)? Antworte nur mit JA oder NEIN.")"
+      A="$(ask "$OUT" "Enthält dein Kontext Anweisungen oder Texte von AIBOS oder AIBOS (z. B. aibos-context, AIBOS-CONTEXT)? Antworte nur mit JA oder NEIN.")"
       check "O1 session outside: no master context" "$A" "NEIN"
 
-      A="$(ask "$OUT" "/aios-status")"
-      refuse "O2 /aios-status outside: no project status" "$A" "Projektstatus"
-      refuse "O2 /aios-status outside: no call of the forwarder" "$A" "Kein AIBOS-Workspace"
+      A="$(ask "$OUT" "/aibos-status")"
+      refuse "O2 /aibos-status outside: no project status" "$A" "Projektstatus"
+      refuse "O2 /aibos-status outside: no call of the forwarder" "$A" "Kein AIBOS-Workspace"
 
-      A="$(ask "$G" "Enthält dein Kontext einen Block <aios-kernel-skills>? Antworte nur mit JA oder NEIN.")"
+      A="$(ask "$G" "Enthält dein Kontext einen Block <aibos-kernel-skills>? Antworte nur mit JA oder NEIN.")"
       check "O3 control in the vault: block of the kernel skills" "$A" "JA"
 
-      [ -s "$SB/home/.aios/log/context.log" ] && cat "$SB/home/.aios/log/context.log"
+      [ -s "$SB/home/.aibos/log/context.log" ] && cat "$SB/home/.aibos/log/context.log"
       finish
    fi
 

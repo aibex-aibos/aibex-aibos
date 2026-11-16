@@ -1,0 +1,11 @@
+name: worker-test
+version: 0.1.1
+type: worker
+description: Testpaket Arbeitspferd mit kind python (Test-Wheel aibos-test-tool 1.1.0)
+requires:
+  aibos: ">=0.5,<0.8"
+worker:
+  kind: python
+  requirements: worker/requirements.lock
+  programs: [aibos-test-tool]
+  check: aibos-test-tool --check

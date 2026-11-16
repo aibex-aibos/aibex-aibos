@@ -1,0 +1,19 @@
+---
+name: aibos-integrity
+description: Prüft die Integrität eines AIbex-AIBOS-Projekts und aller seiner Unterprojekte (Struktur S1–S4 und Commit-Stand, Hinweise zu Push-Stand und Namensregel) und bietet für fehlende Teile der Struktur aibos --init an. Verwenden bei "/aibos-integrity", "Integrität", "Integrität prüfen".
+allowed-tools: Bash(aibos --integrity *), Bash(aibos --init *)
+---
+
+# Integrität prüfen
+
+Ein AIBOS-Skill von AIbex AIBOS (Spec 05, *Integrität*). Die Prüfung schreibt nichts.
+
+**Arbeitsverzeichnis:** Führe alle Befehle dieses Skills im Arbeitsverzeichnis der Session aus und wechsle nie mit `cd`; AIBOS bestimmt das Projekt der Session aus dem aktuellen Verzeichnis. Andere Orte nur als ausdrücklichen Pfad angeben. Rufe `aibos …` immer als einzelnen Befehl auf, ohne `;`, `&&`, `|`, Umleitung oder vorangestelltes `cd`; nur so gibt AIBOS den Aufruf ohne Rückfrage frei.
+
+## Ablauf
+
+1. **Prüfen:** Führe `aibos --integrity "<pfad>"` über das Bash-Werkzeug aus, mit dem absoluten Pfad (Standard: das Arbeitsverzeichnis der Session). Zeige den Bericht unverändert im Chat. Exit 1 heißt nur, dass nicht alle Projekte integer sind; endet der Befehl mit einer Fehlermeldung (`*** aibos --integrity: …`), nenne sie und beende.
+2. **Init ergänzen:** Gibt es Projekte mit `missing: …` in der Spalte *Init*, führe für jedes davon `aibos --init "<projekt>" --plan` aus und zeige die Pläne zusammen. Frag einmal, ob du die fehlenden Teile ergänzen sollst. Nach Ja je Projekt `aibos --init "<projekt>" --yes`; meldet ein Plan einen Verstoß gegen die Namensregel, gilt der Namensdialog von `/aibos-init` (Vorschlag, eigener Name mit `--accept-name`, abbrechen). Danach `aibos --integrity "<pfad>"` wiederholen und das Ergebnis zeigen.
+3. **Commit-Stand:** Nicht committete Änderungen (`<n> changed, <m> new`) nur nennen und nichts anbieten: Die Commit-Nachricht gehört dem User. Hinweise (Abschnitt `Notes`: Push-Stand, Namensregel) ebenfalls nur nennen. Der Bericht ist englisch; fasse ihn bei Bedarf in der Sprache des Users zusammen.
+
+Registrierte Skills, Manifest und Blueprints gehören nicht zur Integrität; den Abgleich macht `/aibos-deploy`.

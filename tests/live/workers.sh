@@ -7,7 +7,7 @@
       echo '                                         # package repos in <repos> (default ~/git/AIbex)'
       echo '          tests/live/workers.sh --version  # print version'
       echo '   not part of tests/run: needs network access to PyPI, takes about a minute'
-      echo '   see also: tests/run, aios --worker, aios --fetch'
+      echo '   see also: tests/run, aibos --worker, aibos --fetch'
       exit 1
    fi
 
@@ -26,7 +26,7 @@
    if [ "$2" == "" ]; then
       REPOS="${1:-$HOME/git/AIbex}"
       REPO="$(cd "$(dirname "$0")/../.." && pwd)"
-      T="${TMPDIR:-/tmp}"; SB="$(cd "$(mktemp -d "${T%/}/aios-live.XXXXXX")" && pwd -P)" || exit 1
+      T="${TMPDIR:-/tmp}"; SB="$(cd "$(mktemp -d "${T%/}/aibos-live.XXXXXX")" && pwd -P)" || exit 1
       PASS=0; FAIL=0
       check() {                                     # check <name> <condition...>
          local N="$1"; shift
@@ -34,19 +34,19 @@
          else FAIL=$((FAIL+1)); printf '\033[31mFAIL\033[0m %s\n' "$N"; fi
       }
       has() { case "$1" in *"$2"*) return 0;; esac; return 1; }
-      H="$SB/hub"; mkdir -p "$H/aios-index" "$SB/home" "$SB/opt"
-      printf 'schema: 1\npackages:\n' > "$H/aios-index/index.yaml"
+      H="$SB/hub"; mkdir -p "$H/aibos-index" "$SB/home" "$SB/opt"
+      printf 'schema: 1\npackages:\n' > "$H/aibos-index/index.yaml"
       for P in worker-deno worker-yt-dlp; do        # local hub of the tagged package repos
          git clone -q "$REPOS/$P" "$H/$P" || exit 1
-         printf '  - name: %s\n    type: worker\n    description: %s\n' "$P" "$P" >> "$H/aios-index/index.yaml"
+         printf '  - name: %s\n    type: worker\n    description: %s\n' "$P" "$P" >> "$H/aibos-index/index.yaml"
       done
-      git -C "$H/aios-index" init -q && git -C "$H/aios-index" add -A &&
-         git -C "$H/aios-index" -c user.name=live -c user.email=live@test commit -q -m index || exit 1
-      export HOME="$SB/home" AIOS_PREFIX="$SB/opt-none" AIOS_HUBS="live=file://$H"
-      V="$SB/§Live"; P="$V/P-Projekt"; mkdir -p "$V/.aios" "$V/@" "$P/@"
-      printf 'aios: 0.6.0\n' > "$V/.aios/config.yaml"
-      A() { (cd "$P" && "$REPO/bin/aios" "$@" 2>&1); }
-      W="$HOME/.aios/workers"; BIN="$HOME/.aios/bin"
+      git -C "$H/aibos-index" init -q && git -C "$H/aibos-index" add -A &&
+         git -C "$H/aibos-index" -c user.name=live -c user.email=live@test commit -q -m index || exit 1
+      export HOME="$SB/home" AIBOS_PREFIX="$SB/opt-none" AIBOS_HUBS="live=file://$H"
+      V="$SB/§Live"; P="$V/P-Projekt"; mkdir -p "$V/.aibos" "$V/@" "$P/@"
+      printf 'aibos: 0.6.0\n' > "$V/.aibos/config.yaml"
+      A() { (cd "$P" && "$REPO/bin/aibos" "$@" 2>&1); }
+      W="$HOME/.aibos/workers"; BIN="$HOME/.aibos/bin"
 
       OUT="$(A --fetch worker-yt-dlp --plan)"
       check "plan: setup of worker-deno" has "$OUT" "setup      worker-deno 0.1.1 -> $W/worker-deno/v0.1.1"

@@ -1,17 +1,17 @@
 #!/bin/bash
 # lib.sh: sandbox of the live tests with headless Claude sessions (V0.6, step 11); sourced by tests/live/*.sh
-# HOME of AIOS in the sandbox with the real forwarder ~/.aios/bin/aios and v0.6.0 = this repo; Claude keeps the
-# real HOME (login), the forwarder sets HOME for AIOS; --setting-sources project keeps the user's settings and
+# HOME of AIBOS in the sandbox with the real forwarder ~/.aibos/bin/aibos and v0.6.0 = this repo; Claude keeps the
+# real HOME (login), the forwarder sets HOME for AIBOS; --setting-sources project keeps the user's settings and
 # personal skills out of the sessions
 
    REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-   T="${TMPDIR:-/tmp}"; SB="$(cd "$(mktemp -d "${T%/}/aios-live.XXXXXX")" && pwd -P)" || exit 1
-   FWD="$SB/home/.aios/bin/aios"                    # absolute path in hooks, wrappers, master context (spec 02)
-   mkdir -p "$SB/home/.aios/bin" "$SB/bin" "$SB/forwarder"
-   cp "$REPO/templates/forwarder" "$SB/forwarder/aios"; chmod +x "$SB/forwarder/aios"
-   printf '#!/bin/bash\nHOME="%s/home" exec "%s/forwarder/aios" "$@"\n' "$SB" "$SB" > "$FWD"; chmod +x "$FWD"
-   printf 'v0.6.0: %s\n' "$REPO" > "$SB/home/.aios/installations.yaml"
-   ln -s "$FWD" "$SB/bin/aios"                      # typed aios (PATH="$SB/bin:$PATH")
+   T="${TMPDIR:-/tmp}"; SB="$(cd "$(mktemp -d "${T%/}/aibos-live.XXXXXX")" && pwd -P)" || exit 1
+   FWD="$SB/home/.aibos/bin/aibos"                    # absolute path in hooks, wrappers, master context (spec 02)
+   mkdir -p "$SB/home/.aibos/bin" "$SB/bin" "$SB/forwarder"
+   cp "$REPO/templates/forwarder" "$SB/forwarder/aibos"; chmod +x "$SB/forwarder/aibos"
+   printf '#!/bin/bash\nHOME="%s/home" exec "%s/forwarder/aibos" "$@"\n' "$SB" "$SB" > "$FWD"; chmod +x "$FWD"
+   printf 'v0.6.0: %s\n' "$REPO" > "$SB/home/.aibos/installations.yaml"
+   ln -s "$FWD" "$SB/bin/aibos"                      # typed aibos (PATH="$SB/bin:$PATH")
 
 #===============================================================================
 # hooks: settings with the hooks of AIBOS

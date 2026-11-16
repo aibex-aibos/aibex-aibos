@@ -1,8 +1,8 @@
-# t20-workspace.sh: v0.6.4 step 2 (V0.6, memos 163-177) - aios --workspace: attach <repo>, sync without
+# t20-workspace.sh: v0.6.4 step 2 (V0.6, memos 163-177) - aibos --workspace: attach <repo>, sync without
 # push (clone, fast-forward, runnable), parents before children, key sync:, cloud folders,
 # workspace.local.yaml, status, integrity, freeze (spec 06, Workspaces; spec 05, F2)
 
-   case "$SANDBOX" in */aios-test.*) ;; *) echo "*** run via tests/run, never directly (it would touch the real HOME)" >&2; exit 1;; esac
+   case "$SANDBOX" in */aibos-test.*) ;; *) echo "*** run via tests/run, never directly (it would touch the real HOME)" >&2; exit 1;; esac
 
 #===============================================================================
 # setup: python3 with PyYAML, repos under file://, a vault root as root of the workspace
@@ -30,14 +30,14 @@
    git -C "$SANDBOX/src/lib-a" commit -qm "exclude sub"; git -C "$SANDBOX/src/lib-a" push -q origin main
    repo sub @/README.md
    repo lib-b src/main.c
-   printf 'build/\n' > "$SANDBOX/src/lib-b/.gitignore"  # a foreign repo: no AIOS template (B32)
+   printf 'build/\n' > "$SANDBOX/src/lib-b/.gitignore"  # a foreign repo: no AIBOS template (B32)
    git -C "$SANDBOX/src/lib-b" commit -qam "foreign"; git -C "$SANDBOX/src/lib-b" push -q origin main
    git -C "$SANDBOX/src/lib-b" tag v1.0; git -C "$SANDBOX/src/lib-b" push -q origin v1.0
    repo docs @/README.md
    repo root @/README.md
-   W="$SANDBOX/src/root"; mkdir -p "$W/.aios"
-   printf 'aios: %s\n' "$VER" > "$W/.aios/config.yaml"
-   cat > "$W/.aios/workspace.yaml" <<YAML
+   W="$SANDBOX/src/root"; mkdir -p "$W/.aibos"
+   printf 'aibos: %s\n' "$VER" > "$W/.aibos/config.yaml"
+   cat > "$W/.aibos/workspace.yaml" <<YAML
 remotes:
   local: file://$RM
 projects:
@@ -60,10 +60,10 @@ projects:
     path: docs
     groups: [doc]
 YAML
-   printf '/libs/\n/docs/\n.claude/skills/\n.aios/registry\n.aios/workspace.local.yaml\n' > "$W/.gitignore"
+   printf '/libs/\n/docs/\n.claude/skills/\n.aibos/registry\n.aibos/workspace.local.yaml\n' > "$W/.gitignore"
    git -C "$W" add -A; git -C "$W" commit -q -m "workspace"; git -C "$W" push -q origin main
    at() { (cd "$1" && shift && "$@" 2>&1); }
-   A() { local d="$1"; shift; at "$d" "$SRC/bin/aios" "$@" </dev/null; }
+   A() { local d="$1"; shift; at "$d" "$SRC/bin/aibos" "$@" </dev/null; }
    U="$SANDBOX/u"; mkdir -p "$U"
    V="$U/§W"
 
@@ -71,7 +71,7 @@ YAML
 # usage, commands that are gone, attach: plan, clone, parents before children, runnable
 #===============================================================================
 
-   assert_contains "$(A "$U" --workspace)" "usage: aios --workspace attach" "usage"
+   assert_contains "$(A "$U" --workspace)" "usage: aibos --workspace attach" "usage"
    assert_contains "$(A "$U" --workspace init "file://$RM/root")" "gone since v0.6.4: use attach" "init is gone"
    assert_contains "$(A "$U" --workspace update)" "gone since v0.6.4: use sync" "update is gone"
    assert_contains "$(A "$U" --workspace attach "file://$RM/root" "$U/W")" "starts with §" "vault folder needs §"
@@ -91,7 +91,7 @@ YAML
    assert_eq "$(git -C "$V/libs/lib-a" status --porcelain)" "" "lib-a clean: sub excluded there"
    assert_eq "$(git -C "$V/libs/lib-b" rev-parse --abbrev-ref HEAD)" "ws/v1.0" "tag as branch ws/<revision>"
    assert_eq "$(git -C "$V" status --porcelain)" "" "vault root clean after attach"
-   assert_file "$V/libs/lib-a/.claude/skills/aios-status/SKILL.md"
+   assert_file "$V/libs/lib-a/.claude/skills/aibos-status/SKILL.md"
    assert_contains "$(A "$U" --workspace attach "file://$RM/root" "$V")" "exists already" "attach into an existing folder"
 
 #===============================================================================
@@ -120,13 +120,13 @@ YAML
    echo dirty >> "$V/docs/@/README.md"
    OUT="$(A "$V" --workspace sync --yes)"
    assert_contains "$OUT" "libs/lib-a: moved (merged with origin/main)" "F226: own commits merged"
-   assert_contains "$(git -C "$V/libs/lib-a" log -1 --format=%s)" "AIOS: zusammengeführt auf" "F226: merge commit"
+   assert_contains "$(git -C "$V/libs/lib-a" log -1 --format=%s)" "AIBOS: zusammengeführt auf" "F226: merge commit"
    assert_contains "$(git -C "$V/libs/lib-a" log --format=%s)" "own" "own commit stays"
    assert_contains "$OUT" "libs/lib-a: pushed" "merged repo pushed"
    assert_contains "$OUT" "docs: saved (0 new, 1 changed, 0 deleted)" "F225: local change saved"
-   assert_contains "$(git -C "$V/docs" log -1 --format=%s)" "AIOS: gesichert von" "F225: commit of the save"
+   assert_contains "$(git -C "$V/docs" log -1 --format=%s)" "AIBOS: gesichert von" "F225: commit of the save"
    assert_contains "$(git -C "$V/docs" log -1 --format=%s)" "gesichert von $(id -un)@" "H38: <user>@<machine>"
-   assert_contains "$(git -C "$RM/docs" log -1 --format=%s main)" "AIOS: gesichert von" "F225: save pushed"
+   assert_contains "$(git -C "$RM/docs" log -1 --format=%s main)" "AIBOS: gesichert von" "F225: save pushed"
    assert_contains "$(cat "$V/docs/@/README.md")" "dirty" "change stays"
    git -C "$V/docs" checkout -q -b other
    assert_contains "$(A "$V" --workspace sync --group doc --yes)" "docs: kept (branch other is checked out, not main)" "other branch kept"
@@ -139,19 +139,19 @@ YAML
 # key sync:, workspace.local.yaml, status
 #===============================================================================
 
-   printf 'aios: %s\nsync: off\n' "$VER" > "$V/.aios/config.yaml"
+   printf 'aibos: %s\nsync: off\n' "$VER" > "$V/.aibos/config.yaml"
    assert_contains "$(A "$V" --workspace sync --yes)" "sync is off" "sync: off refused"
    assert_contains "$(A "$V" --workspace status)" "sync: off" "status names sync: off"
-   printf 'aios: %s\nsync: sometimes\n' "$VER" > "$V/.aios/config.yaml"
+   printf 'aibos: %s\nsync: sometimes\n' "$VER" > "$V/.aibos/config.yaml"
    assert_contains "$(A "$V" --config)" "sync: sometimes is not one of auto, manual, off" "invalid sync: warned"
-   printf 'aios: %s\n' "$VER" > "$V/.aios/config.yaml"
+   printf 'aibos: %s\n' "$VER" > "$V/.aibos/config.yaml"
    assert_contains "$(A "$V" --workspace status)" "sync: auto" "default with workspace.yaml: auto"
-   printf 'schema: 1\ndetached:\n  - path: docs\n    since: 2026-11-05\n' > "$V/.aios/workspace.local.yaml"
+   printf 'schema: 1\ndetached:\n  - path: docs\n    since: 2026-11-05\n' > "$V/.aibos/workspace.local.yaml"
    OUT="$(A "$V" --workspace sync --plan)"
    assert_contains "$OUT" "docs: detached on this machine, passed over" "sync passes over a detached subtree"
    assert_not_contains "$(echo "$OUT" | grep 'fetch and merge')" "docs" "no update of the detached docs"
    assert_contains "$(A "$V" --workspace status | grep '^docs')" "detached" "status: detached"
-   rm "$V/.aios/workspace.local.yaml"
+   rm "$V/.aibos/workspace.local.yaml"
    echo x2 > "$V/libs/lib-a/x2.txt"; git -C "$V/libs/lib-a" add x2.txt; git -C "$V/libs/lib-a" commit -qm own2
    git -C "$SANDBOX/src/lib-a" pull -q --no-rebase origin main; echo 4 >> "$SANDBOX/src/lib-a/@/README.md"
    git -C "$SANDBOX/src/lib-a" commit -qam "lib-a 4"; git -C "$SANDBOX/src/lib-a" push -q origin main
@@ -160,8 +160,8 @@ YAML
    assert_contains "$OUT" "Project" "status: header"
    assert_contains "$(echo "$OUT" | grep '^lib-a')" "1 ahead, 1 behind" "status: lib-a ahead and behind"
    assert_contains "$(echo "$OUT" | grep '^lib-b')" "ws/v1.0" "status: lib-b on ws/v1.0"
-   D="$HOME/Library/CloudStorage/GoogleDrive-x/§D"; mkdir -p "$D/.aios"
-   printf 'aios: %s\nsync: auto\n' "$VER" > "$D/.aios/config.yaml"; cp "$V/.aios/workspace.yaml" "$D/.aios/"
+   D="$HOME/Library/CloudStorage/GoogleDrive-x/§D"; mkdir -p "$D/.aibos"
+   printf 'aibos: %s\nsync: auto\n' "$VER" > "$D/.aibos/config.yaml"; cp "$V/.aibos/workspace.yaml" "$D/.aibos/"
    assert_contains "$(A "$D" --workspace sync --yes)" "cloud folder (CloudStorage)" "sync in a cloud folder refused"
 
 #===============================================================================
@@ -178,7 +178,7 @@ YAML
    assert_contains "$OUT" "libs/lib-a: moved (merged with origin/main)" "diverged repo merged (no group: in every group)"
    OUT="$(A "$V" --workspace freeze --yes)"
    assert_contains "$OUT" "frozen: docs" "freeze, parents before children"
-   LOCK="$(cat "$V/.aios/lock.yaml")"
+   LOCK="$(cat "$V/.aibos/lock.yaml")"
    assert_contains "$LOCK" "lib-b: $(git -C "$V/libs/lib-b" rev-parse HEAD)" "lock: commit of lib-b"
    assert_contains "$LOCK" "schema: 1" "lock: schema"
    assert_contains "$(A "$V" --workspace freeze --yes)" "nothing to do" "freeze twice"
@@ -187,7 +187,7 @@ YAML
 # sync, steps 4 and 5: manifest, hints, push, never tags, secrets stop the push (F159, F172, F176-F182)
 #===============================================================================
 
-   git -C "$V" add .aios/lock.yaml; git -C "$V" commit -qm freeze
+   git -C "$V" add .aibos/lock.yaml; git -C "$V" commit -qm freeze
    printf '/new/\n/plain/\n/pkg/\n' >> "$V/.gitignore"; git -C "$V" commit -qam "exclude new, plain, pkg"
    repo new @/README.md
    git clone -q "file://$RM/new" "$V/new"
@@ -201,11 +201,11 @@ YAML
    assert_contains "$OUT" "note: libs/lib-a: remote lib-a differs from the schema (W-lib-a)" "plan: differs from the schema"
    OUT="$(A "$V" --workspace sync --yes)"
    assert_contains "$OUT" "new: added to workspace.yaml" "new added"
-   assert_contains "$(cat "$V/.aios/workspace.yaml")" "name: new" "workspace.yaml has new"
-   assert_contains "$(cat "$V/.aios/workspace.yaml")" "path: new" "workspace.yaml: path of new"
-   assert_eq "$(git -C "$V" log -1 --format=%s)" "AIOS: workspace.yaml nachgeführt" "commit of only workspace.yaml"
+   assert_contains "$(cat "$V/.aibos/workspace.yaml")" "name: new" "workspace.yaml has new"
+   assert_contains "$(cat "$V/.aibos/workspace.yaml")" "path: new" "workspace.yaml: path of new"
+   assert_eq "$(git -C "$V" log -1 --format=%s)" "AIBOS: workspace.yaml nachgeführt" "commit of only workspace.yaml"
    assert_contains "$OUT" ".: pushed" "vault root pushed"
-   assert_eq "$(git -C "$RM/root" log -1 --format=%s main)" "AIOS: workspace.yaml nachgeführt" "remote of the root has the commit"
+   assert_eq "$(git -C "$RM/root" log -1 --format=%s main)" "AIBOS: workspace.yaml nachgeführt" "remote of the root has the commit"
    assert_contains "$(git -C "$RM/lib-a" log --format=%s main)" "own2" "remote of lib-a has the own commit"
    echo y > "$V/docs/@/y.md"; git -C "$V/docs" add -A; git -C "$V/docs" commit -qm "docs 2"; git -C "$V/docs" tag t1
    OUT="$(A "$V" --workspace sync --yes)"
@@ -227,7 +227,7 @@ YAML
 
    OUT="$(A "$V" --workspace detach "$V/docs" --yes)"
    assert_contains "$OUT" "nothing detached, something would be lost" "detach with an unpushed commit refused"
-   assert_contains "$OUT" "aios --workspace sync saves open changes" "F238: detach points to sync"
+   assert_contains "$OUT" "aibos --workspace sync saves open changes" "F238: detach points to sync"
    assert_contains "$OUT" "docs: 1 commit(s) not pushed" "obstacle: not pushed"
    assert_dir "$V/docs/.git"
    echo s > "$V/libs/lib-a/sub/secret.txt"; echo secret.txt >> "$V/libs/lib-a/sub/.git/info/exclude"
@@ -244,7 +244,7 @@ YAML
    assert_exec "$V/new/DETACHED.command"
    [ ! -e "$V/new/.git" ] && ok || fail "the clone of new is gone from the vault"
    assert_contains "$(ls "$HOME/.Trash")" "new 20" "new in the trash with date and time"
-   assert_contains "$(cat "$V/.aios/workspace.local.yaml")" "path: new" "entry in workspace.local.yaml"
+   assert_contains "$(cat "$V/.aibos/workspace.local.yaml")" "path: new" "entry in workspace.local.yaml"
    assert_contains "$(cat "$V/new/DETACHED.md")" "file://$RM/new" "DETACHED.md names the remote"
    assert_contains "$(cat "$V/new/DETACHED.command")" '--workspace attach "$(pwd)"' "DETACHED.command calls attach"
    assert_contains "$(A "$V" --workspace status | grep '^new')" "detached" "status: new detached"
@@ -258,7 +258,7 @@ YAML
    assert_contains "$OUT" "new: cloned (main)" "attach <path> clones again"
    assert_dir "$V/new/.git"
    [ ! -e "$V/new/DETACHED.md" ] && ok || fail "placeholder removed"
-   [ ! -e "$V/.aios/workspace.local.yaml" ] && ok || fail "local file removed with the last entry"
+   [ ! -e "$V/.aibos/workspace.local.yaml" ] && ok || fail "local file removed with the last entry"
    assert_contains "$(A "$V" --workspace detach --yes)" "nothing detached, something would be lost" "detach of the workspace refused while docs is not pushed"
    V2="$U/§W2"
    A "$U" --workspace attach "file://$RM/root" "$V2" --yes >/dev/null
@@ -269,37 +269,37 @@ YAML
    assert_contains "$(ls "$HOME/.Trash")" "§W2 20" "the vault in the trash"
 
 #===============================================================================
-# hook and master context: <aios-workspace>, AIOS-SYNC, AIOS-DETACHED; integrity: detached (F168, F169,
+# hook and master context: <aibos-workspace>, AIBOS-SYNC, AIBOS-DETACHED; integrity: detached (F168, F169,
 # F183-F189, F198)
 #===============================================================================
 
-   S() { (cd "$1" && printf '{"source":"%s","session_id":"t20"}' "${2:-startup}" | "$SRC/bin/aios" --context --session 2>&1); }
-   assert_contains "$(A "$V" --context)" "<aios-workspace>
+   S() { (cd "$1" && printf '{"source":"%s","session_id":"t20"}' "${2:-startup}" | "$SRC/bin/aibos" --context --session 2>&1); }
+   assert_contains "$(A "$V" --context)" "<aibos-workspace>
 This vault is an AIBOS workspace with sync: auto." "block with sync: auto"
    assert_contains "$(A "$D" --context)" "This vault is a Cloud-Drive: it lies in a cloud folder (CloudStorage) that the cloud service replicates" "block in a cloud folder"
    echo 2 >> "$SANDBOX/src/sub/@/README.md"; git -C "$SANDBOX/src/sub" commit -qam "sub 2"; git -C "$SANDBOX/src/sub" push -q origin main
    OUT="$(S "$V/libs/lib-a/sub")"
-   assert_contains "$OUT" "AIOS-SYNC: sub updated from origin/main (1 commits)." "hook: update at startup"
+   assert_contains "$OUT" "AIBOS-SYNC: sub updated from origin/main (1 commits)." "hook: update at startup"
    assert_eq "$(git -C "$V/libs/lib-a/sub" log -1 --format=%s)" "sub 2" "sub at the new commit"
-   assert_contains "$(S "$V/libs/lib-a/sub")" "AIOS-SYNC: sub is up to date with origin/main." "hook: up to date"
-   assert_not_contains "$(S "$V/libs/lib-a/sub" resume)" "AIOS-SYNC" "hook: not at resume"
+   assert_contains "$(S "$V/libs/lib-a/sub")" "AIBOS-SYNC: sub is up to date with origin/main." "hook: up to date"
+   assert_not_contains "$(S "$V/libs/lib-a/sub" resume)" "AIBOS-SYNC" "hook: not at resume"
    echo here > "$V/libs/lib-a/@/README.md"; git -C "$V/libs/lib-a" commit -qam "here"
    git -C "$SANDBOX/src/lib-a" pull -q --no-rebase origin main; echo there > "$SANDBOX/src/lib-a/@/README.md"
    git -C "$SANDBOX/src/lib-a" commit -qam "there"; git -C "$SANDBOX/src/lib-a" push -q origin main
-   assert_contains "$(S "$V/libs/lib-a")" "AIOS-SYNC: lib-a not updated: the same files changed here and on the remote" "F230: hook makes no conflict copy"
+   assert_contains "$(S "$V/libs/lib-a")" "AIBOS-SYNC: lib-a not updated: the same files changed here and on the remote" "F230: hook makes no conflict copy"
    assert_eq "$(git -C "$V/libs/lib-a" log -1 --format=%s)" "here" "F230: hook leaves the repo as it was"
    echo wip >> "$V/libs/lib-a/x2.txt"
    assert_contains "$(S "$V/libs/lib-a")" "not updated: local changes that are not saved yet" "F230: hook does not save"
    git -C "$V/libs/lib-a" checkout -q -- x2.txt
-   printf 'aios: %s\nsync: manual\n' "$VER" > "$V/.aios/config.yaml"
-   assert_not_contains "$(S "$V/libs/lib-a/sub")" "AIOS-SYNC" "hook: no fetch with sync: manual"
+   printf 'aibos: %s\nsync: manual\n' "$VER" > "$V/.aibos/config.yaml"
+   assert_not_contains "$(S "$V/libs/lib-a/sub")" "AIBOS-SYNC" "hook: no fetch with sync: manual"
    assert_contains "$(A "$V" --context)" "with sync: manual." "block with sync: manual"
-   printf 'aios: %s\nsync: off\n' "$VER" > "$V/.aios/config.yaml"
-   assert_not_contains "$(A "$V" --context)" "<aios-workspace>" "no block with sync: off"
-   printf 'aios: %s\n' "$VER" > "$V/.aios/config.yaml"
+   printf 'aibos: %s\nsync: off\n' "$VER" > "$V/.aibos/config.yaml"
+   assert_not_contains "$(A "$V" --context)" "<aibos-workspace>" "no block with sync: off"
+   printf 'aibos: %s\n' "$VER" > "$V/.aibos/config.yaml"
    A "$V" --workspace detach "$V/new" --yes >/dev/null
    OUT="$(S "$V/new")"
-   assert_contains "$OUT" "AIOS-DETACHED: new is detached on this machine (since " "hook: AIOS-DETACHED"
+   assert_contains "$OUT" "AIBOS-DETACHED: new is detached on this machine (since " "hook: AIBOS-DETACHED"
    assert_not_contains "$OUT" "PROJECT-UNINITIALIZED" "hook: a placeholder is no project to initialize"
    assert_contains "$(A "$V" --integrity | grep ' new ')" "detached" "integrity: detached"
    assert_not_contains "$(A "$V" --integrity)" "new: " "integrity: no notes for a detached subtree"
@@ -309,21 +309,21 @@ This vault is an AIBOS workspace with sync: auto." "block with sync: auto"
 # Neuer Workspace)
 #===============================================================================
 
-   N="$U/§N"; mkdir -p "$N/.aios" "$N/@"; printf 'aios: %s\n' "$VER" > "$N/.aios/config.yaml"
+   N="$U/§N"; mkdir -p "$N/.aibos" "$N/@"; printf 'aibos: %s\n' "$VER" > "$N/.aibos/config.yaml"
    cp "$SRC/templates/gitignore" "$N/.gitignore"; printf '/P-Eins/\n/P-Zwei/\n' >> "$N/.gitignore"
    git -C "$N" init -q -b main; git -C "$N" add -A; git -C "$N" commit -qm vault
    git clone -q --bare "$N" "$RM/nroot"; git -C "$N" remote add origin "file://$RM/nroot"; git -C "$N" fetch -q origin; git -C "$N" branch -q -u origin/main
    repo p-eins @/README.md; git clone -q "file://$RM/p-eins" "$N/P-Eins"
    mkdir -p "$N/P-Zwei/@"; git -C "$N/P-Zwei" init -q -b main
-   assert_contains "$(A "$N/P-Eins" --workspace sync --yes)" "no .aios/workspace.yaml at or above" "only at the vault root"
+   assert_contains "$(A "$N/P-Eins" --workspace sync --yes)" "no .aibos/workspace.yaml at or above" "only at the vault root"
    OUT="$(A "$N" --workspace sync --plan)"
-   assert_contains "$OUT" "create .aios/workspace.yaml (new workspace) with 1 projects: P-Eins" "plan: new workspace"
+   assert_contains "$OUT" "create .aibos/workspace.yaml (new workspace) with 1 projects: P-Eins" "plan: new workspace"
    assert_contains "$OUT" "note: P-Zwei: no remote; suggested name N-P-Zwei" "plan: hint for the project without remote"
-   [ ! -e "$N/.aios/workspace.yaml" ] && ok || fail "--plan writes nothing"
+   [ ! -e "$N/.aibos/workspace.yaml" ] && ok || fail "--plan writes nothing"
    OUT="$(A "$N" --workspace sync --yes)"
    assert_contains "$OUT" ".: workspace.yaml created (1 projects)" "workspace.yaml created"
-   assert_contains "$(cat "$N/.aios/workspace.yaml")" "path: P-Eins" "entry of P-Eins"
-   assert_eq "$(git -C "$N" log -1 --format=%s)" "AIOS: workspace.yaml angelegt" "commit of only workspace.yaml"
+   assert_contains "$(cat "$N/.aibos/workspace.yaml")" "path: P-Eins" "entry of P-Eins"
+   assert_eq "$(git -C "$N" log -1 --format=%s)" "AIBOS: workspace.yaml angelegt" "commit of only workspace.yaml"
    assert_contains "$OUT" ".: pushed" "vault root pushed"
    assert_contains "$(A "$N" --workspace status)" "sync: auto" "now a workspace with sync: auto"
    git -C "$N" remote set-url origin https://github.com/aibex-test/N      # B36: owner at GitHub
@@ -346,9 +346,9 @@ This vault is an AIBOS workspace with sync: auto." "block with sync: auto"
    repo p-drei @/README.md; git clone -q "file://$RM/p-drei" "$N/P-Drei"; printf '/P-Drei/\n' >> "$N/.gitignore"
    git -C "$N" commit -qam "exclude P-Drei"
    OUT="$(A "$N" --workspace sync --yes)"
-   assert_contains "$OUT" "P-Drei: added to workspace.yaml" "B35: entry added to a workspace.yaml written by AIOS"
+   assert_contains "$OUT" "P-Drei: added to workspace.yaml" "B35: entry added to a workspace.yaml written by AIBOS"
    assert_contains "$(A "$N" --workspace status)" "P-Drei" "B35: the manifest stays readable"
-   M="$U/§M"; mkdir -p "$M/.aios"; printf 'aios: %s\nsync: off\n' "$VER" > "$M/.aios/config.yaml"; git -C "$M" init -q -b main
+   M="$U/§M"; mkdir -p "$M/.aibos"; printf 'aibos: %s\nsync: off\n' "$VER" > "$M/.aibos/config.yaml"; git -C "$M" init -q -b main
    assert_contains "$(A "$M" --workspace sync --yes)" "no workspace is created" "sync: off: no new workspace"
 
 #===============================================================================
@@ -363,15 +363,15 @@ This vault is an AIBOS workspace with sync: auto." "block with sync: auto"
    assert_contains "$OUT" "libs/lib-a/sub: pushed (2 commits to origin/main)" "F225: commit and save pushed"
    assert_contains "$(git -C "$RM/sub" log --format=%s main)" "sub 3" "remote has the commit"
    assert_file "$V/libs/lib-a/sub/wip.txt"
-   cp "$V/.aios/workspace.yaml" "$SANDBOX/ws.bak"
-   printf '  - name: gone\n    repo: file://%s/nope\n    revision: main\n    path: gone\n  - name: gone-child\n    repo: file://%s/sub\n    revision: main\n    path: gone/child\n' "$RM" "$RM" >> "$V/.aios/workspace.yaml"
+   cp "$V/.aibos/workspace.yaml" "$SANDBOX/ws.bak"
+   printf '  - name: gone\n    repo: file://%s/nope\n    revision: main\n    path: gone\n  - name: gone-child\n    repo: file://%s/sub\n    revision: main\n    path: gone/child\n' "$RM" "$RM" >> "$V/.aibos/workspace.yaml"
    printf '/gone/\n' >> "$V/.gitignore"
    OUT="$(A "$V" --workspace sync --yes)"
    assert_contains "$OUT" "gone: not cloned (cannot clone file://$RM/nope" "B30: failed clone reported"
    assert_contains "$OUT" "gone/child: not cloned (gone is not cloned)" "B30: child of a failed clone passed over"
    assert_contains "$OUT" "workspace §W synchronized" "B30: sync goes on"
    [ ! -e "$V/gone" ] && ok || fail "B30: no folder left for the failed parent"
-   cp "$SANDBOX/ws.bak" "$V/.aios/workspace.yaml"; git -C "$V" checkout -q -- .gitignore
+   cp "$SANDBOX/ws.bak" "$V/.aibos/workspace.yaml"; git -C "$V" checkout -q -- .gitignore
 
 #===============================================================================
 # B32: an @/ without a tracked file is missing in a clone; sync creates it and makes the project
@@ -379,25 +379,25 @@ This vault is an AIBOS workspace with sync: auto." "block with sync: auto"
 # hands over to the bound version (V0.6, memos 198, 199)
 #===============================================================================
 
-   repo bare README.md                               # an AIOS project whose @/ held no tracked file
-   printf '  - name: bare\n    repo: file://%s/bare\n    revision: main\n    path: bare\n' "$RM" >> "$V/.aios/workspace.yaml"
+   repo bare README.md                               # an AIBOS project whose @/ held no tracked file
+   printf '  - name: bare\n    repo: file://%s/bare\n    revision: main\n    path: bare\n' "$RM" >> "$V/.aibos/workspace.yaml"
    printf '/bare/\n' >> "$V/.gitignore"
    OUT="$(A "$V" --workspace sync --yes)"
    assert_contains "$OUT" "bare: cloned (main)" "B32: bare cloned"
    assert_contains "$OUT" "bare: @/ was missing in the clone (no tracked file in it), created" "B32: @/ created"
-   assert_file "$V/bare/.claude/skills/aios-status/SKILL.md"
+   assert_file "$V/bare/.claude/skills/aibos-status/SKILL.md"
    assert_contains "$OUT" "bare: registered (" "H31: one line for the registration"
-   assert_not_contains "$OUT" "      new      aios-status" "H31: no line per skill in sync"
+   assert_not_contains "$OUT" "      new      aibos-status" "H31: no line per skill in sync"
    assert_contains "$(A "$V/bare" --integrity)" "@/ holds no tracked file" "B32: integrity names the untracked @/"
-   cp "$SANDBOX/ws.bak" "$V/.aios/workspace.yaml"; git -C "$V" checkout -q -- .gitignore
-   export AIOS_HUBS="$("$SRC/tests/hub/build" "$SANDBOX/hubs")"   # H33: packages in one line
+   cp "$SANDBOX/ws.bak" "$V/.aibos/workspace.yaml"; git -C "$V" checkout -q -- .gitignore
+   export AIBOS_HUBS="$("$SRC/tests/hub/build" "$SANDBOX/hubs")"   # H33: packages in one line
    repo pk @/README.md
-   printf '  - name: pk\n    repo: file://%s/pk\n    revision: main\n    path: pk\n' "$RM" >> "$V/.aios/workspace.yaml"
+   printf '  - name: pk\n    repo: file://%s/pk\n    revision: main\n    path: pk\n' "$RM" >> "$V/.aibos/workspace.yaml"
    printf '/pk/\n' >> "$V/.gitignore"
    A "$V" --workspace sync --yes >/dev/null
-   A "$V/pk" --fetch aibex-aios/knowledge-orion --yes >/dev/null
-   [ -f "$V/pk/.aios/lock.yaml" ] && ok || fail "H33: lock.yaml written by fetch"
-   mkdir -p "$SANDBOX/src/pk/.aios"; cp "$V/pk/.aios/config.yaml" "$V/pk/.aios/lock.yaml" "$SANDBOX/src/pk/.aios/"
+   A "$V/pk" --fetch aibex-aibos/knowledge-orion --yes >/dev/null
+   [ -f "$V/pk/.aibos/lock.yaml" ] && ok || fail "H33: lock.yaml written by fetch"
+   mkdir -p "$SANDBOX/src/pk/.aibos"; cp "$V/pk/.aibos/config.yaml" "$V/pk/.aibos/lock.yaml" "$SANDBOX/src/pk/.aibos/"
    git -C "$SANDBOX/src/pk" add -A; git -C "$SANDBOX/src/pk" commit -qm "packages"; git -C "$SANDBOX/src/pk" push -q origin main
    rm -rf "$V/pk"
    OUT="$(A "$V" --workspace sync --yes)"
@@ -407,19 +407,19 @@ This vault is an AIBOS workspace with sync: auto." "block with sync: auto"
    assert_contains "$OUT" "pk: skills up to date" "H33: registration without changes in one line"
    assert_not_contains "$OUT" "=> skills of" "H33: no long line of the registration"
    [ -d "$V/pk/@/@!Package/knowledge-orion" ] && ok || fail "H33: package fetched in the clone"
-   cp "$SANDBOX/ws.bak" "$V/.aios/workspace.yaml"; git -C "$V" checkout -q -- .gitignore; rm -rf "$V/pk"
+   cp "$SANDBOX/ws.bak" "$V/.aibos/workspace.yaml"; git -C "$V" checkout -q -- .gitignore; rm -rf "$V/pk"
    F="$SANDBOX/fake"; mkdir -p "$F/bin"
-   printf '#!/bin/sh\necho "fake 0.6.4-rc9: $* in $(pwd)"\n' > "$F/bin/aios"; chmod +x "$F/bin/aios"
-   printf 'v0.6.4-rc9: %s\n' "$F" >> "$HOME/.aios/installations.yaml"
+   printf '#!/bin/sh\necho "fake 0.6.4-rc9: $* in $(pwd)"\n' > "$F/bin/aibos"; chmod +x "$F/bin/aibos"
+   printf 'v0.6.4-rc9: %s\n' "$F" >> "$HOME/.aibos/installations.yaml"
    repo root9 @/README.md
-   W9="$SANDBOX/src/root9"; mkdir -p "$W9/.aios"; printf 'aios: 0.6.4-rc9\n' > "$W9/.aios/config.yaml"
-   printf 'projects: []\n' > "$W9/.aios/workspace.yaml"
+   W9="$SANDBOX/src/root9"; mkdir -p "$W9/.aibos"; printf 'aibos: 0.6.4-rc9\n' > "$W9/.aibos/config.yaml"
+   printf 'projects: []\n' > "$W9/.aibos/workspace.yaml"
    git -C "$W9" add -A; git -C "$W9" commit -qm "bound to rc9"; git -C "$W9" push -q origin main
    OUT="$(A "$U" --workspace attach "file://$RM/root9" "$U/§W9" --yes)"
    assert_contains "$OUT" "hand over to the bound version 0.6.4-rc9" "H30: attach hands over"
    assert_contains "$OUT" "fake 0.6.4-rc9: --workspace sync --yes in $U/§W9" "H30: sync runs in the bound version"
-   printf 'aios: 0.6.2\n' > "$W9/.aios/config.yaml"; git -C "$W9" commit -qam "bound to 0.6.2"; git -C "$W9" push -q origin main
-   printf 'v0.6.2: %s\n' "$F" >> "$HOME/.aios/installations.yaml"
+   printf 'aibos: 0.6.2\n' > "$W9/.aibos/config.yaml"; git -C "$W9" commit -qam "bound to 0.6.2"; git -C "$W9" push -q origin main
+   printf 'v0.6.2: %s\n' "$F" >> "$HOME/.aibos/installations.yaml"
    OUT="$(A "$U" --workspace attach "file://$RM/root9" "$U/§W8" --yes)"
    assert_contains "$OUT" "has no workspace sync; the sync runs with $VER" "H30: no hand over below 0.6.4"
 
@@ -436,8 +436,8 @@ This vault is an AIBOS workspace with sync: auto." "block with sync: auto"
    OUT="$(A "$V/libs/lib-a/sub" --workspace detach --plan)"
    assert_contains "$OUT" "move libs/lib-a/sub with" "B33: detach without a path: the project of the working directory"
    assert_not_contains "$OUT" "move $V to the trash" "B33: not the whole workspace from a project"
-   assert_contains "$(A "$V/libs/lib-a/sub" --skill aios-sync)" "sync project" "B33: skill knows the words"
-   assert_contains "$(A "$V" --context --load "$V" 2>/dev/null; cat "$HOME"/.aios/cache/*/part-1.md 2>/dev/null)" "offer /aios-sync for the project" "B33: rule of the workspace names the project"
+   assert_contains "$(A "$V/libs/lib-a/sub" --skill aibos-sync)" "sync project" "B33: skill knows the words"
+   assert_contains "$(A "$V" --context --load "$V" 2>/dev/null; cat "$HOME"/.aibos/cache/*/part-1.md 2>/dev/null)" "offer /aibos-sync for the project" "B33: rule of the workspace names the project"
 
 #===============================================================================
 # H42: sync --only, one project without its subprojects (spec 06, sync; V0.6, memos 222, 227)
@@ -511,7 +511,7 @@ This vault is an AIBOS workspace with sync: auto." "block with sync: auto"
    rm "$P/plain.md"; A "$P" --workspace sync --yes >/dev/null
    OUT="$(A "$P" --workspace history "$P" --deleted)"
    assert_contains "$OUT" "plain.md  deleted" "F229: history --deleted lists the deleted note"
-   assert_contains "$(A "$P" --workspace history "$P/gone.md")" "AIOS: gesichert von" "F229: versions of a file"
+   assert_contains "$(A "$P" --workspace history "$P/gone.md")" "AIBOS: gesichert von" "F229: versions of a file"
    OUT="$(A "$P" --workspace restore "$P/plain.md" --plan)"
    assert_contains "$OUT" "restore plain.md from the version" "F229: plan of restore"
    [ ! -e "$P/plain.md" ] && ok || fail "--plan restores nothing"
@@ -530,7 +530,7 @@ This vault is an AIBOS workspace with sync: auto." "block with sync: auto"
 
    repo fuenf @/README.md
    git -C "$SANDBOX/src/root" pull -q origin main 2>/dev/null
-   printf '  - name: fuenf\n    repo: file://%s/fuenf\n    revision: main\n    path: libs/lib-a/Fünf-Acht\n' "$RM" >> "$V/.aios/workspace.yaml"
+   printf '  - name: fuenf\n    repo: file://%s/fuenf\n    revision: main\n    path: libs/lib-a/Fünf-Acht\n' "$RM" >> "$V/.aibos/workspace.yaml"
    git -C "$V" commit -qam "fuenf"
    printf '/Fünf-Acht/\n' >> "$V/libs/lib-a/.gitignore"; git -C "$V/libs/lib-a" commit -qam "exclude Fünf-Acht"
    A "$V" --workspace sync --yes >/dev/null
@@ -551,7 +551,7 @@ This vault is an AIBOS workspace with sync: auto." "block with sync: auto"
 # memos 226, 228: F239-F246)
 #===============================================================================
 
-   RR="$U/§R"; mkdir -p "$RR/.aios" "$RR/@"; printf 'aios: %s\n' "$VER" > "$RR/.aios/config.yaml"
+   RR="$U/§R"; mkdir -p "$RR/.aibos" "$RR/@"; printf 'aibos: %s\n' "$VER" > "$RR/.aibos/config.yaml"
    cp "$SRC/templates/gitignore" "$RR/.gitignore"; printf '/pa/\n/pb/\n' >> "$RR/.gitignore"
    git -C "$RR" init -q -b main; git -C "$RR" add -A; git -C "$RR" commit -qm vault
    git clone -q --bare "$RR" "$RM/rroot"; git -C "$RR" remote add origin "file://$RM/rroot"; git -C "$RR" fetch -q origin; git -C "$RR" branch -q -u origin/main
@@ -559,7 +559,7 @@ This vault is an AIBOS workspace with sync: auto." "block with sync: auto"
    repo paa @/README.md; repo pb @/README.md
    git clone -q "file://$RM/pa" "$RR/pa"; git clone -q "file://$RM/paa" "$RR/pa/paa"; git clone -q "file://$RM/pb" "$RR/pb"
    A "$RR" --workspace sync --yes >/dev/null
-   assert_contains "$(cat "$RR/.aios/workspace.yaml")" "path: pa/paa" "remove: workspace with pa, pa/paa, pb"
+   assert_contains "$(cat "$RR/.aibos/workspace.yaml")" "path: pa/paa" "remove: workspace with pa, pa/paa, pb"
    A "$U" --workspace attach "file://$RM/rroot" "$U/§R2" --yes >/dev/null
    R2="$U/§R2"
    [ -d "$R2/pa/paa/.git" ] && ok || fail "remove: second computer has pa/paa"
@@ -574,16 +574,16 @@ This vault is an AIBOS workspace with sync: auto." "block with sync: auto"
    OUT="$(A "$RR" --workspace remove "$RR/pa" --yes)"
    [ ! -e "$RR/pa" ] && ok || fail "F239: pa moved away"
    ls "$HOME/.Trash" | grep -q '^pa ' && ok || fail "F239: pa in the trash"
-   assert_contains "$(cat "$RR/.aios/workspace.yaml")" "removed:" "F244: removed: written"
-   assert_eq "$(A "$RR" --context --id >/dev/null; python3 -c "import yaml;d=yaml.safe_load(open('$RR/.aios/workspace.yaml'));print(' '.join(e['path']+'/'+e['revision']+'/'+str('since' in e) for e in d['removed']))")" "pa/main/True pa/paa/main/True" "F244: entries with revision and since"
-   assert_eq "$(git -C "$RR" log -1 --format=%s)" "AIOS: pa aus dem Workspace entfernt" "F239: commit of only workspace.yaml"
+   assert_contains "$(cat "$RR/.aibos/workspace.yaml")" "removed:" "F244: removed: written"
+   assert_eq "$(A "$RR" --context --id >/dev/null; python3 -c "import yaml;d=yaml.safe_load(open('$RR/.aibos/workspace.yaml'));print(' '.join(e['path']+'/'+e['revision']+'/'+str('since' in e) for e in d['removed']))")" "pa/main/True pa/paa/main/True" "F244: entries with revision and since"
+   assert_eq "$(git -C "$RR" log -1 --format=%s)" "AIBOS: pa aus dem Workspace entfernt" "F239: commit of only workspace.yaml"
    assert_contains "$(cat "$RR/.gitignore")" "/pa/" "FG20/4: the line in .gitignore stays"
    assert_eq "$(git -C "$RR" status --porcelain)" "" "F239: nothing else changed"
    [ "$(git -C "$RR" rev-parse HEAD)" != "$(git -C "$RR" rev-parse origin/main)" ] && ok || fail "F239: remove does not push"
    OUT="$(A "$RR" --workspace sync --yes)"
    assert_not_contains "$OUT" "pa: cloned" "F241: sync does not clone a removed project"
    [ ! -e "$RR/pa" ] && ok || fail "F241: pa stays away"
-   assert_eq "$(git -C "$RM/rroot" log -1 --format=%s main)" "AIOS: pa aus dem Workspace entfernt" "F239: the next sync pushes it"
+   assert_eq "$(git -C "$RM/rroot" log -1 --format=%s main)" "AIBOS: pa aus dem Workspace entfernt" "F239: the next sync pushes it"
 
    echo x > "$R2/pb/x.md"
    OUT="$(A "$R2" --workspace sync --plan)"
@@ -594,7 +594,7 @@ This vault is an AIBOS workspace with sync: auto." "block with sync: auto"
    assert_contains "$OUT" "pa: removed (removed on another computer)" "F241: report"
    [ ! -e "$R2/pa" ] && ok || fail "F241: pa removed on the second computer"
    assert_eq "$(git -C "$R2/pb" status --porcelain)" "" "F241: pb saved as usual"
-   assert_not_contains "$(cat "$R2/.aios/workspace.yaml")" "name: pa
+   assert_not_contains "$(cat "$R2/.aibos/workspace.yaml")" "name: pa
     remote" "F245: no commit of workspace.yaml for the removal there"
 
    A "$R2" --workspace sync --yes >/dev/null; A "$RR" --workspace sync --yes >/dev/null
@@ -605,13 +605,13 @@ This vault is an AIBOS workspace with sync: auto." "block with sync: auto"
    [ -f "$R2/pb/y.md" ] && ok || fail "F245: pb stays"
    assert_eq "$(git -C "$R2/pb" status --porcelain)" "?? y.md" "F245: a kept removed project is not saved"
    assert_contains "$(A "$R2" --workspace status)" "removed" "F243: status shows removed"
-   assert_not_contains "$(cat "$R2/.aios/workspace.yaml" | sed -n '/^projects:/,/^removed:/p')" "path: pb" "F241: not entered again"
-   assert_contains "$(S "$R2/pb")" "AIOS-SYNC: pb was removed from the workspace on another computer" "F246: hook names it"
+   assert_not_contains "$(cat "$R2/.aibos/workspace.yaml" | sed -n '/^projects:/,/^removed:/p')" "path: pb" "F241: not entered again"
+   assert_contains "$(S "$R2/pb")" "AIBOS-SYNC: pb was removed from the workspace on another computer" "F246: hook names it"
 
    OUT="$(A "$RR" --workspace attach "$RR/pa" --yes)"
    [ -d "$RR/pa/paa/.git" ] && ok || fail "F242: attach clones pa and pa/paa again"
-   assert_eq "$(git -C "$RR" log -1 --format=%s)" "AIOS: pa wieder in den Workspace aufgenommen" "F242: commit"
-   assert_eq "$(python3 -c "import yaml;d=yaml.safe_load(open('$RR/.aios/workspace.yaml'));print(sorted(e['path'] for e in d['projects']), sorted(e['path'] for e in d.get('removed') or []))")" "['pa', 'pa/paa'] ['pb']" "F242: back in projects, pb stays removed"
+   assert_eq "$(git -C "$RR" log -1 --format=%s)" "AIBOS: pa wieder in den Workspace aufgenommen" "F242: commit"
+   assert_eq "$(python3 -c "import yaml;d=yaml.safe_load(open('$RR/.aibos/workspace.yaml'));print(sorted(e['path'] for e in d['projects']), sorted(e['path'] for e in d.get('removed') or []))")" "['pa', 'pa/paa'] ['pb']" "F242: back in projects, pb stays removed"
    OUT="$(A "$RR" --workspace sync --yes)"           # the commit of attach is not pushed yet
    [ -d "$RR/pa/paa/.git" ] && ok || fail "B37: sync does not remove a project taken back with attach"
    assert_not_contains "$OUT" "removed on another computer" "B37: the local change of workspace.yaml wins"
@@ -621,13 +621,13 @@ This vault is an AIBOS workspace with sync: auto." "block with sync: auto"
    OUT="$(A "$RR" --workspace remove "$RR/pa" --plan 2>&1)"; assert_contains "$OUT" "move pa with 2 repo(s)" "remove again possible"
 
 #===============================================================================
-# kernel skills: aios-sync with R34 and --only, aios-detach with remove (spec 03; V0.6, memos 226, 227)
+# kernel skills: aibos-sync with R34 and --only, aibos-detach with remove (spec 03; V0.6, memos 226, 227)
 #===============================================================================
 
-   OUT="$(A "$RR" --skill aios-sync)"
+   OUT="$(A "$RR" --skill aibos-sync)"
    assert_contains "$OUT" "**immer zuerst**, ohne Ausnahme: auch für den ganzen Workspace" "R34: plan first, also for the whole workspace"
    assert_contains "$OUT" "[--only] --plan" "H42: the skill knows --only"
    assert_contains "$OUT" "no upstream" "B36: the skill names the hint"
-   OUT="$(A "$RR" --skill aios-detach)"
+   OUT="$(A "$RR" --skill aibos-detach)"
    assert_contains "$OUT" "--workspace remove \"<pfad>\" --plan" "remove: the skill calls remove"
    assert_contains "$OUT" "**Entfernen** gilt für alle Rechner" "remove: the skill tells detach and remove apart"

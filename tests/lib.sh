@@ -1,26 +1,26 @@
 #!/bin/bash
-# lib.sh: helpers for AIOS tests (sandbox, assertions); sourced by tests/run
+# lib.sh: helpers for AIBOS tests (sandbox, assertions); sourced by tests/run
 
    REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
    SRC="$REPO"                         # repo root = source of an installation
 
 #===============================================================================
-# sandbox: fresh HOME, AIOS_PREFIX and AIOS_CLAUDE_DIR per test file
+# sandbox: fresh HOME, AIBOS_PREFIX and AIBOS_CLAUDE_DIR per test file
 #===============================================================================
 
    sandbox_new() {
-      SANDBOX="$(T="${TMPDIR:-/tmp}"; cd "$(mktemp -d "${T%/}/aios-test.XXXXXX")" && pwd -P)" || exit 1   # physical, like AIOS
+      SANDBOX="$(T="${TMPDIR:-/tmp}"; cd "$(mktemp -d "${T%/}/aibos-test.XXXXXX")" && pwd -P)" || exit 1   # physical, like AIBOS
       export HOME="$SANDBOX/home"
-      export AIOS_PREFIX="$SANDBOX/opt/aios"
-      export AIOS_CLAUDE_DIR="$HOME/.claude"
-      unset AIOS_HOME
+      export AIBOS_PREFIX="$SANDBOX/opt/aibos"
+      export AIBOS_CLAUDE_DIR="$HOME/.claude"
+      unset AIBOS_HOME
       mkdir -p "$HOME"
       cd "$SANDBOX" || exit 1             # never inherit the caller's cwd (it may lie in an activated vault)
    }
 
    sandbox_drop() {
       case "$SANDBOX" in
-         */aios-test.*) chmod -R u+w "$SANDBOX" 2>/dev/null; rm -rf "$SANDBOX" ;;   # installations are read-only
+         */aibos-test.*) chmod -R u+w "$SANDBOX" 2>/dev/null; rm -rf "$SANDBOX" ;;   # installations are read-only
       esac
    }
 

@@ -1,0 +1,318 @@
+"""aibos --gui [--session <id>] [--html] [--aibos | --skill <name> | --apps]: surfaces of assistants,
+of apps and of AIBOS (spec 03, Oberflächen). Read only.
+
+A surface is a description gui.yaml in the folder of a surface skill (read with PyYAML),
+with optional HTML parts next to it. Without --html the body of the surface skill is printed,
+extended by the instruction how to show it; with --html an HTML fragment.
+"""
+
+from __future__ import annotations
+
+import html
+import re
+from pathlib import Path
+
+import json
+
+from . import assistant, context, elements, paths, session, skills
+from .ui import Abort
+
+KEYS = {"title", "intro", "tiles"}
+TILE_KEYS = {"title", "text", "prompt", "skill", "html", "icon"}
+ACTIONS = ("prompt", "skill", "html")
+MAX_TILES = 12
+AIBOS_GUI = Path(__file__).resolve().parents[2] / "skills" / "aibos" / "aibos-gui"
+HINT = "AIBOS surface: `/aibos-gui`"
+DATA = re.compile(r"\{\{aibos-data ([A-Za-z0-9._-]+)\}\}")
+
+
+# ---------------------------------------------------------------------------
+# description gui.yaml
+# ---------------------------------------------------------------------------
+
+def read(folder):
+    """The checked description of the surface in folder (gui.yaml)."""
+    f = folder / "gui.yaml"
+    if not f.is_file():
+        raise Abort(f"{f} is missing")
+    try:
+        import yaml
+    except ImportError:
+        raise Abort("aibos --gui needs PyYAML (python/requirements.txt of the installation)")
+    try:
+        d = yaml.safe_load(f.read_text(encoding="utf-8"))
+    except yaml.YAMLError as e:
+        raise Abort(f"{f}: {e}")
+    problems = check(d, folder)
+    if problems:
+        raise Abort(f"{f}: " + "; ".join(problems))
+    return d
+
+
+def check(d, folder):
+    if not isinstance(d, dict):
+        return ["expected a mapping with title and tiles"]
+    p = [f"unknown key {k}" for k in d if k not in KEYS]
+    if not isinstance(d.get("title"), str) or not d["title"].strip():
+        p.append("title is missing")
+    if "intro" in d and not isinstance(d["intro"], str):
+        p.append("intro must be one sentence")
+    tiles = d.get("tiles")
+    if not isinstance(tiles, list) or not 1 <= len(tiles) <= MAX_TILES:
+        p.append(f"tiles must be a list of 1 to {MAX_TILES} tiles")
+        return p
+    for i, t in enumerate(tiles, 1):
+        if not isinstance(t, dict):
+            p.append(f"tile {i} is not a mapping")
+            continue
+        p += [f"tile {i}: unknown key {k}" for k in t if k not in TILE_KEYS]
+        if not isinstance(t.get("title"), str) or not t["title"].strip():
+            p.append(f"tile {i}: title is missing")
+        acts = [a for a in ACTIONS if a in t]
+        if len(acts) != 1:
+            p.append(f"tile {i}: exactly one of prompt, skill, html")
+        elif not isinstance(t[acts[0]], str) or not t[acts[0]].strip():
+            p.append(f"tile {i}: {acts[0]} must be a text")
+        elif acts[0] == "html" and ("/" in t["html"] or not (folder / t["html"]).is_file()):
+            p.append(f"tile {i}: HTML part {t['html']} not found in {folder}")
+    return p
+
+
+def action(t):
+    """(kind, value) of a tile. A skill tile sends a sentence naming /<skill>: the desktop app
+    drops messages from sendPrompt that start with / (V0.3, acceptance of v0.3.1)."""
+    if "html" in t:
+        return "html", t["html"]
+    if "skill" in t:
+        return "prompt", f"Run the skill /{t['skill']}."
+    return "prompt", t["prompt"]
+
+
+# ---------------------------------------------------------------------------
+# output: body with instruction, or HTML fragment
+# ---------------------------------------------------------------------------
+
+def instruction(d, call):
+    """How Claude shows the surface (spec 03, Darstellung), with the tiles as data."""
+    lines = ["", "## Show the surface", "",
+             "Show this surface now, without further explanation:", "",
+             f"- **Desktop app with HTML surfaces** (a tool that shows HTML directly in the chat, e.g. "
+             f"`show_widget`): run `{call} --html` and show its output unchanged with this tool. "
+             f"Never publish the surface as an artifact, file or web page and do not ask for it. "
+             f"If the user then names a tile in the chat (in some chats the tiles do not react), "
+             f"offer the same tiles as the menu below (V0.3, A10).",
+             "- **Otherwise (CLI, headless, no such tool):** a menu with the question tool (`AskUserQuestion`), "
+             "question = title, at most 4 entries per level, with more tiles a last entry \"More …\" leading to the "
+             "next level. Tiles with an HTML part are missing in the menu; mention them as a hint (\"desktop app only\"). "
+             "After the choice: treat the text as if the user had typed it (\"Run the skill /<skill>.\" calls that skill). "
+             "Talk to the user in the user's language.",
+             "", f"Title: {d['title']}"]
+    if d.get("intro"):
+        lines.append(f"Intro: {d['intro']}")
+    lines.append("Tiles:")
+    for t in d["tiles"]:
+        kind, value = action(t)
+        what = f"HTML part {value}" if kind == "html" else f"sends: {value}"
+        lines.append(f"- {t['title']}" + (f" — {t['text']}" if t.get("text") else "") + f" ({what})")
+    return "\n".join(lines) + "\n"
+
+
+def data_json(data_dir, name):
+    """Content of @Data/<paket>/<name> as JSON for a placeholder {{aibos-data <name>}} of an
+    HTML part (V0.4, memo 49); null if the file is missing or not readable."""
+    f = (data_dir / name) if data_dir else None
+    if f is None or not f.is_file():
+        return "null"
+    try:
+        import yaml
+        value = yaml.safe_load(f.read_text(encoding="utf-8"))
+    except Exception:
+        return "null"
+    return json.dumps(value, ensure_ascii=False).replace("</", "<\\/")
+
+
+def fragment(d, folder, data_dir=None):
+    """HTML fragment: heading, intro, tiles as buttons (sendPrompt), HTML parts embedded."""
+    e = html.escape
+    out = ['<div class="aibos-gui">',
+           "<style>.aibos-gui{font-family:system-ui,sans-serif;max-width:720px}"
+           ".aibos-gui .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}"
+           ".aibos-gui button.tile{text-align:left;padding:12px;border-radius:10px;border:1px solid #8884;"
+           "background:transparent;color:inherit;cursor:pointer}.aibos-gui button.tile:hover{background:#8882}"
+           ".aibos-gui .tile b{display:block;margin-bottom:4px}.aibos-gui .part{margin-top:16px}"
+           ".aibos-gui .hint{font-size:12px;opacity:.7}</style>",
+           f"<h2>{e(d['title'])}</h2>"]
+    if d.get("intro"):
+        out.append(f"<p>{e(d['intro'])}</p>")
+    out.append('<div class="tiles">')
+    parts = []
+    for t in d["tiles"]:
+        kind, value = action(t)
+        text = f"<span>{e(t['text'])}</span>" if t.get("text") else ""
+        icon = f' data-icon="{e(t["icon"])}"' if t.get("icon") else ""
+        if kind == "html":
+            parts.append((t, value))
+            target = f' data-part="aibos-part-{len(parts)}"'
+        else:
+            target = f' data-prompt="{e(value)}"'
+        out.append(f'<button type="button" class="tile"{icon}{target}><b>{e(t["title"])}</b>{text}</button>')
+    out.append("</div>")
+    out.append('<p class="hint">If a tile only fills the input field, press Enter. '
+               'If nothing happens, name the tile in the chat.</p>')       # A10
+    scripts = []
+    for i, (t, name) in enumerate(parts, 1):
+        out.append(f'<section class="part" id="aibos-part-{i}"><h3>{e(t["title"])}</h3>')
+        part = DATA.sub(lambda m: data_json(data_dir, m.group(1)), (folder / name).read_text(encoding="utf-8"))
+        body = SCRIPT_TAG.sub(lambda m: scripts.append(m.group(0)) or "", part)
+        out.append(body.rstrip("\n"))
+        out.append("</section>")
+    out.append("</div>")
+    # hosts drop inline handlers (onclick) and run only top-level scripts: all scripts go last
+    return "\n".join(out + scripts + [SCRIPT]) + "\n"
+
+
+SCRIPT_TAG = re.compile(r"<script\b[^>]*>.*?</script>", re.S | re.I)
+SCRIPT = """<script>
+(function () {
+  document.querySelectorAll(".aibos-gui button.tile").forEach(function (b) {
+    b.addEventListener("click", function () {
+      if (b.dataset.prompt) { sendPrompt(b.dataset.prompt); }
+      else if (b.dataset.part) { document.getElementById(b.dataset.part).scrollIntoView({behavior: "smooth"}); }
+    });
+  });
+})();
+</script>"""
+
+
+# ---------------------------------------------------------------------------
+# aibos --gui
+# ---------------------------------------------------------------------------
+
+def session_assistant(ctx, session_id):
+    """Name of the assistant of the session (marker), else of the assignment of the project."""
+    if session_id is not None:
+        try:
+            m = session.read(session_id)
+        except session.BadId as e:
+            raise Abort(str(e))
+        from .context import marker_applies
+        if marker_applies(ctx, m):
+            return m["assistant"]
+    return ctx.cfg.assignment[0]
+
+
+def apps(ctx):
+    """(package, surface skill, description) of the deployed apps of the chain, nearest first."""
+    from . import package
+    out, seen = [], set()
+    for ms in reversed(ctx.masterspaces):
+        for p in elements.packages(ms):
+            if p.name in seen:
+                continue
+            try:
+                m = package.load(p.dir)
+            except package.ManifestError:
+                continue
+            gui = m.contents.get("gui")
+            if gui and p.deployed(gui) and (p.dir / "skills" / gui / "gui.yaml").is_file():
+                seen.add(p.name)
+                out.append((p, gui, m.description))
+    return out
+
+
+def show_apps():
+    """aibos --gui --apps: the surfaces of the deployed apps (tile Apps of /aibos-gui)."""
+    ctx = context.Context(paths.cwd())
+    found = apps(ctx) if ctx.mode == "aibos" else []
+    if not found:
+        print("No apps in this project. Fetch one with /aibos-package, e.g. app-taschenrechner.")
+        return 0
+    print("Apps (open with the skill of the surface):")
+    for p, gui, text in found:
+        print(f"- /{gui} — {p.name} {p.version}: {text}")
+    return 0
+
+
+def show_app(name, html=False):
+    """aibos --gui --skill <name>: the surface of an app; placeholders get the data of the app
+    from @Data/<paket>/ of the project of the session (spec 06, Daten von Apps)."""
+    ctx = context.Context(paths.cwd())
+    if ctx.mode != "aibos":
+        raise Abort(f"{paths.cwd()} is not in an activated vault")
+    for p, gui, _ in apps(ctx):
+        if gui == name:
+            folder = p.dir / "skills" / gui
+            d = read(folder)
+            data_dir = ctx.project / "@Data" / p.name
+            if html:
+                print(fragment(d, folder, data_dir), end="")
+            else:
+                print(f"# {d['title']}\n" + instruction(d, f"aibos --gui --skill {name}"), end="")
+            return 0
+    raise Abort(f"no deployed app with the surface {name} in the chain (aibos --gui --apps)")
+
+
+def command(args):
+    opts = {"html": False, "aibos": False, "session": None}
+    skill, list_apps, i = None, False, 0
+    while i < len(args):
+        a = args[i]
+        if a in ("--session", "--skill") and i + 1 < len(args):
+            if a == "--skill":
+                skill = args[i + 1]
+            else:
+                opts["session"] = args[i + 1]
+            i += 2
+            continue
+        if a in ("--html", "--aibos"):
+            opts[a[2:]] = True
+        elif a == "--apps":
+            list_apps = True
+        else:
+            raise Abort("usage: aibos --gui [--session <id>] [--html] | aibos --gui --aibos [--html]"
+                        " | aibos --gui --skill <name> [--html] | aibos --gui --apps")
+        i += 1
+    if list_apps:
+        return show_apps()
+    if skill:
+        return show_app(skill, opts["html"])
+    return show(**opts)
+
+
+def show(html=False, aibos=False, session=None):
+    body_file = None
+    if aibos:                                        # the AIBOS skill aibos-gui calls this: no body
+        folder, call = AIBOS_GUI, "aibos --gui --aibos"
+    else:
+        ctx = context.Context(paths.cwd())
+        if ctx.mode != "aibos":
+            print(f"No assistant active.\n{HINT}")
+            return 0
+        name = session_assistant(ctx, session)
+        if name == "none":
+            print(f"No assistant active.\n{HINT}")
+            return 0
+        try:
+            name, (d, meta) = assistant.resolve(ctx, name)
+        except Abort:
+            print(f"The assistant {name} was not found.\n{HINT}")
+            return 0
+        title = meta.get("title", name)
+        gui_name = meta.get("gui")
+        if not gui_name:
+            print(f"The assistant {title} has no surface.\n{HINT}")
+            return 0
+        if gui_name not in assistant.as_list(meta.get("skills")):
+            raise Abort(f"gui {gui_name} of the assistant {name} is not in its skills")
+        body_file = assistant.lookup(d, ctx, "skill", gui_name)
+        folder = body_file.parent
+        call = "aibos --gui" + (f" --session {session}" if session else "")
+    d = read(folder)
+    if html:
+        print(fragment(d, folder), end="")
+    else:
+        body = skills.strip_frontmatter(body_file.read_text(encoding="utf-8")).rstrip("\n") + "\n" \
+            if body_file else f"# {d['title']}\n"
+        print(body + instruction(d, call), end="")
+    return 0
+

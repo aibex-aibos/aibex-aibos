@@ -1,8 +1,0 @@
-name: test-befehl
-version: 0.1.0
-type: app
-description: Testpaket mit Befehl
-requires:
-  aios: ">=0.4,<0.7"
-contents:
-  commands: [hallo]

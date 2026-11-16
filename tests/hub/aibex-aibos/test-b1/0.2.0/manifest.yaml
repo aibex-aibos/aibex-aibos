@@ -1,0 +1,8 @@
+name: test-b1
+version: 0.2.0
+type: skill
+description: Testpaket, dessen hoechste Version nur zu AIBOS 0.6 passt (B1)
+requires:
+  aibos: ">=0.6,<0.8"
+contents:
+  skills: [bee]

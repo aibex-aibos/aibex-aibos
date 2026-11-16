@@ -1,0 +1,39 @@
+title: AIbex AIBOS
+intro: Was möchtest du in diesem Projekt tun?
+tiles:
+  - title: Projekt initialisieren
+    text: Ordner zum Projekt machen oder fehlende Teile ergänzen
+    skill: aibos-init
+    icon: folder
+  - title: Kontext und Konfiguration
+    text: Was ist geladen, welche Einstellungen gelten?
+    prompt: "Führe /aibos-context aus und zeige danach die Ausgabe von `aibos --config`."
+    icon: book
+  - title: Assistent zuordnen
+    text: Einen Assistenten, none oder inherit für dieses Projekt wählen
+    prompt: "Zeige mit /aibos-assistant die verfügbaren Assistenten und die Zuordnung, lass mich mit dem Auswahlwerkzeug einen Assistenten, none oder inherit wählen und ordne ihn dann zu."
+    icon: person
+  - title: Pakete
+    text: Pakete und Apps suchen, holen, zeigen, was geholt ist
+    skill: aibos-package
+    icon: box
+  - title: Apps
+    text: Oberflächen der Apps dieses Projekts öffnen
+    prompt: "Führe `aibos --gui --apps` aus, zeige die Apps mit dem Auswahlwerkzeug und rufe nach der Wahl den Skill ihrer Oberfläche auf."
+    icon: grid
+  - title: Pakete abgleichen und Skills registrieren
+    text: Pakete mit lock.yaml abgleichen, Skills registrieren
+    prompt: "Gleiche mit /aibos-fetch die Pakete dieses Projekts mit lock.yaml ab und registriere danach die Skills mit /aibos-register."
+    icon: gear
+  - title: Integrität prüfen
+    text: Struktur und Commit-Stand aller Projekte
+    skill: aibos-integrity
+    icon: check
+  - title: Projektstatus
+    text: Was ist erledigt, was ist offen?
+    skill: aibos-status
+    icon: list
+  - title: Memo schreiben
+    text: Einen Gedanken als Memo festhalten
+    prompt: "Ich möchte ein Memo schreiben. Frag mich zuerst nach dem Inhalt. Verwende /memo, wenn der Skill verfügbar ist, sonst /aibos-memo."
+    icon: pencil

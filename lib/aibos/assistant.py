@@ -1,0 +1,167 @@
+"""aibos --context --assistant <name>, --assistants (spec 03, Assistenten). Stateless: nothing is written."""
+
+from __future__ import annotations
+
+import hashlib
+import unicodedata
+from pathlib import Path
+
+from . import config, elements, registry
+from .context import AVAILABLE, LOAD, classify, title
+from .skills import strip_frontmatter
+from .ui import Abort
+
+
+def normalize(text):
+    """Compare names without case and umlauts: Obstgärtner == obstgaertner."""
+    t = text.strip().lower()
+    for a, b in (("ä", "ae"), ("ö", "oe"), ("ü", "ue"), ("ß", "ss")):
+        t = t.replace(a, b)
+    t = unicodedata.normalize("NFKD", t)
+    return "".join(c for c in t if not unicodedata.combining(c))
+
+
+def meta_of(file):
+    text = file.read_text(encoding="utf-8")
+    if not text.startswith("---\n"):
+        raise Abort(f"{file} has no frontmatter")
+    end = text.find("\n---", 3)
+    try:
+        return config.parse(text[4:end], str(file))
+    except config.ConfigError as e:
+        raise Abort(str(e))
+
+
+def assistants(ctx):
+    """({name: (dir, meta)}, [problems]) of the chain; the nearest masterspace wins (spec 03).
+    An assistant with a wrong name or without a valid version is skipped and reported."""
+    found, problems = {}, []
+    for _, d, _ in elements.candidates(ctx.masterspaces, "assistants", "@!Assistant"):
+        f = d / "ASSISTANT.md"
+        try:
+            meta = meta_of(f)
+        except Abort as e:
+            problems.append(f"{e}, not resolved")
+            continue
+        if f.parent.name in config.RESERVED:
+            problems.append(f"{f}: {f.parent.name} is a reserved name (none, inherit), not resolved")
+            continue
+        if meta.get("name") != f.parent.name:
+            problems.append(f"{f}: name {meta.get('name')!r} differs from the folder {f.parent.name!r}, not resolved")
+            continue
+        problem = registry.version_problem("assistant", f.parent.name, meta)
+        if problem:
+            problems.append(f"{problem}, not resolved ({f.parent})")
+            continue
+        found[f.parent.name] = (f.parent, meta)
+    return found, problems
+
+
+def origin(d):
+    """Project of an assistant folder, with the package it comes from."""
+    ms = next(p for p in d.parents if p.name == "@")
+    pkg = d.parents[1].name if d.parent.name == "assistants" else None
+    return ms.parent.name + (f", package {pkg}" if pkg else "")
+
+
+def available_lines(found, problems=()):
+    lines = [f"{n:20} {m.get('title', n)} {registry.version_of(m)} — {m.get('description', '')}  ({origin(d)})"
+             for n, (d, m) in sorted(found.items())]
+    if not found:
+        lines = ["no assistants in the chain (@!Assistant/<name>/ASSISTANT.md)"]
+    return lines + [f"skipped: {p}" for p in problems]
+
+
+def resolve(ctx, query):
+    found, problems = assistants(ctx)
+    q = normalize(query)
+    hits = [n for n, (d, m) in found.items() if q in (normalize(n), normalize(str(m.get("title", ""))))]
+    if len(hits) != 1:
+        what = "no assistant" if not hits else "more than one assistant"
+        raise Abort(f"{what} named {query!r}; available:\n" + "\n".join(available_lines(found, problems)))
+    return hits[0], found[hits[0]]
+
+
+def lookup(assistant_dir, ctx, kind, name):
+    """Prompt or skill: first in the assistant folder, then in the chain from the project upwards;
+    per masterspace the local blueprint before a deployed skill of a package (spec 03)."""
+    rel = Path("@!Prompt") / f"{name}.md" if kind == "prompt" else Path("@!Skill") / name / "SKILL.md"
+    files = [assistant_dir / rel]
+    for ms in reversed(ctx.masterspaces):
+        files.append(ms / rel)
+        if kind == "skill":
+            files += [d / "SKILL.md" for p in reversed(elements.packages(ms)) for d in p.dirs("skills")
+                      if d.name == name]
+    for f in files:
+        if f.is_file():
+            if kind == "skill":
+                problem = registry.version_problem("skill", name, meta_of(f))
+                if problem:
+                    raise Abort(f"{problem} ({f}); a skill of the assistant {assistant_dir.name} needs a version")
+            return f
+    raise Abort(f"{kind} {name} of the assistant {assistant_dir.name} not found "
+                f"(looked in {assistant_dir} and the masterspaces of the chain)")
+
+
+def as_list(value):
+    if value in (None, ""):
+        return []
+    return value if isinstance(value, list) else [value]
+
+
+def render(ctx, query):
+    name, (d, meta) = resolve(ctx, query)
+    prompt = lookup(d, ctx, "prompt", meta["prompt"]) if meta.get("prompt") else None
+    skills = [lookup(d, ctx, "skill", s) for s in as_list(meta.get("skills"))]
+    if meta.get("gui") and meta["gui"] not in as_list(meta.get("skills")):
+        raise Abort(f"gui {meta['gui']} of the assistant {name} is not in its skills")
+    found = classify(d)
+    knowledge = [p for p in found[LOAD] if p != d / "ASSISTANT.md"]
+    available = found[AVAILABLE]
+    model = meta.get("model")
+    model = ", ".join(f"{k}: {v}" for k, v in model.items()) if isinstance(model, dict) else (model or "")
+    t = meta.get("title", name)
+    out = [f'<aibos-assistant name="{name}" title="{t}" version="{registry.version_of(meta)}" src="{d}">\n',
+           "<aibos-assistant-meta>\n",
+           f"description: {meta.get('description', '')}\n",
+           f"model: {model or '-'}\n",
+           f"tools: {', '.join(as_list(meta.get('tools'))) or '-'}\n",
+           f"skills: {', '.join(as_list(meta.get('skills'))) or '-'}\n",
+           f"gui: {meta.get('gui') or '-'}\n",
+           "</aibos-assistant-meta>\n"]
+
+    def file(cls, p, text):
+        out.append(f'<aibos-file class="{cls}" src="{p}">\n')
+        out.append(text if text.endswith("\n") or not text else text + "\n")
+        out.append("</aibos-file>\n")
+    if prompt:
+        file("prompt", prompt, prompt.read_text(encoding="utf-8"))
+    file("assistant", d / "ASSISTANT.md", strip_frontmatter((d / "ASSISTANT.md").read_text(encoding="utf-8")))
+    for p in knowledge:
+        file("load", p, p.read_text(encoding="utf-8", errors="replace"))
+    if available:
+        out.append("<aibos-available>\n")
+        out += [f"- {p} — {title(p)}\n" for p in available]
+        out.append("</aibos-available>\n")
+    for s in skills:
+        file("skill", s, s.read_text(encoding="utf-8"))
+    out.append(f'</aibos-assistant name="{name}">\n')
+    return "".join(out)
+
+
+def load_parts(ctx, name, text=None):
+    """(version, part files) of the context of the assistant under ~/.aibos/cache/a-<name>-<id>/."""
+    from . import context
+    _, (_, meta) = resolve(ctx, name)
+    text = render(ctx, name) if text is None else text
+    key = f"a-{name}-{hashlib.sha256(text.encode()).hexdigest()[:8]}"
+    return registry.version_of(meta), context.write_parts(key, text)
+
+
+def load_message(name, ver, parts):
+    lines = [f"AIBOS-ASSISTANT-LOAD name={name} version={ver} parts={len(parts)}",
+             "Read each of the following part files completely (Read tool), in order:"]
+    lines += [f"   {p}" for p in parts]
+    lines.append(f'The assistant is loaded once </aibos-assistant name="{name}"> '
+                 f"(end of the last part) has been read.")
+    return "\n".join(lines)

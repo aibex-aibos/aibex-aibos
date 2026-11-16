@@ -1,11 +1,11 @@
 #!/bin/bash
-# run: run all AIOS tests (tests/t*.sh), each in its own sandbox
+# run: run all AIBOS tests (tests/t*.sh), each in its own sandbox
 
    if [ "$*" == "-?" ] || [ "$*" == "--help" ]; then
       echo '   usage: tests/run            # run all tests'
       echo '          tests/run t01        # run tests whose file name starts with t01'
       echo '          tests/run --version  # print version'
-      echo '   see also: aios'
+      echo '   see also: aibos'
       exit 1
    fi
 

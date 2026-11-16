@@ -6,7 +6,7 @@
       echo '   usage: tests/live/permit.sh [<model>]   # headless sessions R1-R8, default model haiku'
       echo '          tests/live/permit.sh --version   # print version'
       echo '   not part of tests/run: needs a logged-in claude CLI and uses tokens'
-      echo '   see also: tests/t22-permit.sh, aios --context --permit'
+      echo '   see also: tests/t22-permit.sh, aibos --context --permit'
       exit 1
    fi
 
@@ -26,9 +26,9 @@
       MODEL="${1:-haiku}"
       . "$(dirname "$0")/lib.sh"
       V="$SB/§Live"; G="$V/Garten"; ALT="$SB/§Alt"; OUT="$SB/Draussen"
-      mkdir -p "$V/.aios" "$V/@" "$G/@" "$ALT/.aios" "$ALT/@" "$OUT"
-      printf 'aios: 0.6.0\n' > "$V/.aios/config.yaml"
-      printf 'aios: 0.5.0\n' > "$ALT/.aios/config.yaml"   # bound below 0.6: no release (E1)
+      mkdir -p "$V/.aibos" "$V/@" "$G/@" "$ALT/.aibos" "$ALT/@" "$OUT"
+      printf 'aibos: 0.6.0\n' > "$V/.aibos/config.yaml"
+      printf 'aibos: 0.5.0\n' > "$ALT/.aibos/config.yaml"   # bound below 0.6: no release (E1)
       HOOKS="$(hooks)"
       ask() {                                       # ask <dir> <command>: answer and the denied commands
          local P="Führe genau diesen einen Befehl mit dem Bash-Tool aus, unverändert und ohne weitere Befehle, und gib nur seine Ausgabe wieder: $2"

@@ -1,5 +1,5 @@
 # venv (Build-Output von . pimp)
-@aios/
+@aibos/
 
 # consignte Kopien in .pimp/bin (Quelle: bin/)
 .pimp/bin/*

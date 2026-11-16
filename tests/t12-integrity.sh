@@ -1,6 +1,6 @@
-# t12-integrity.sh: step 4 of the plan (V0.3, memo 32) - aios --integrity (spec 05, Integrität)
+# t12-integrity.sh: step 4 of the plan (V0.3, memo 32) - aibos --integrity (spec 05, Integrität)
 
-   case "$SANDBOX" in */aios-test.*) ;; *) echo "*** run via tests/run, never directly (it would touch the real HOME)" >&2; exit 1;; esac
+   case "$SANDBOX" in */aibos-test.*) ;; *) echo "*** run via tests/run, never directly (it would touch the real HOME)" >&2; exit 1;; esac
 
 #===============================================================================
 # setup: vault §Demo as root project, subprojects with and without gaps, a container
@@ -10,10 +10,10 @@
    export GIT_AUTHOR_NAME=t GIT_AUTHOR_EMAIL=t@t GIT_COMMITTER_NAME=t GIT_COMMITTER_EMAIL=t@t
    D="$SANDBOX/work/§Demo"
    mk() { mkdir -p "$(dirname "$1")"; printf '%s' "$2" > "$1"; }
-   GI=$'.DS_Store\n.claude/skills/\n.claude/worktrees/\n.agents/\n.aios/registry\n.aios/backup/\n.aios/workspace.local.yaml\n@Secret/\n'
+   GI=$'.DS_Store\n.claude/skills/\n.claude/worktrees/\n.agents/\n.aibos/registry\n.aibos/backup/\n.aibos/workspace.local.yaml\n@Secret/\n'
    mkproj() { mkdir -p "$1/@"; touch "$1/@/.gitkeep"; mk "$1/.gitignore" "$GI$2"; git -C "$1" init -q -b main
               git -C "$1" add -A && git -C "$1" commit -qm init; }
-   A() { "$SRC/bin/aios" "$@" 2>&1; }
+   A() { "$SRC/bin/aibos" "$@" 2>&1; }
 
    mkproj "$D" $'/G-Garten/\n/S-Sternwarte/\n/Notizen/\n'
    mkproj "$D/G-Garten" $'/GB-Beet/\n'
@@ -30,8 +30,8 @@
    OUT="$(A --integrity "$D/S-Sternwarte")"
    assert_contains "$OUT" "Integrity S-Sternwarte — $(date +%F)" "header with name and date"
    assert_contains "$OUT" "Result: 1 of 1 project integer" "single project integer"
-   assert_exit 0 "$SRC/bin/aios" --integrity "$D/S-Sternwarte"
-   assert_eq "$(cd "$D/S-Sternwarte" && "$SRC/bin/aios" --integrity 2>&1 | sed -n 1p | cut -d' ' -f2)" "S-Sternwarte" "default path: cwd"
+   assert_exit 0 "$SRC/bin/aibos" --integrity "$D/S-Sternwarte"
+   assert_eq "$(cd "$D/S-Sternwarte" && "$SRC/bin/aibos" --integrity 2>&1 | sed -n 1p | cut -d' ' -f2)" "S-Sternwarte" "default path: cwd"
 
 #===============================================================================
 # gaps, changes, nesting
@@ -41,7 +41,7 @@
    echo x >> "$D/S-Sternwarte/@/.gitkeep"
    mk "$D/S-Sternwarte/neu1.md" "a"; mk "$D/S-Sternwarte/sub/neu2.md" "b"
    OUT="$(A --integrity "$D")"
-   assert_exit 1 "$SRC/bin/aios" --integrity "$D"
+   assert_exit 1 "$SRC/bin/aibos" --integrity "$D"
    assert_contains "$OUT" "Integrity §Demo" "header: vault root"
    assert_eq "$(printf '%s\n' "$OUT" | sed -n 3p | tr -s ' ')" "Project Init Commit" "column header"
    assert_eq "$(printf '%s\n' "$OUT" | grep -c '^§Demo ')" "1" "root project at depth 0"
@@ -53,7 +53,7 @@
    assert_contains "$OUT" "- GB-Beet: missing own git repo" "GB-Beet: missing repo under Notes (A15)"
    assert_contains "$(printf '%s\n' "$OUT" | grep GB-Beet)" "—" "GB-Beet: no own repo, commit —"
    assert_contains "$(printf '%s\n' "$OUT" | grep '^ *S-Sternwarte')" "missing: 1 part" "S-Sternwarte: one missing part (A15)"
-   assert_contains "$OUT" "- S-Sternwarte: missing .gitignore lines: .DS_Store, .claude/skills/, .claude/worktrees/, .agents/, .aios/registry, .aios/backup/, .aios/workspace.local.yaml, @Secret/" "S-Sternwarte: gitignore lines under Notes"
+   assert_contains "$OUT" "- S-Sternwarte: missing .gitignore lines: .DS_Store, .claude/skills/, .claude/worktrees/, .agents/, .aibos/registry, .aibos/backup/, .aibos/workspace.local.yaml, @Secret/" "S-Sternwarte: gitignore lines under Notes"
    assert_contains "$(printf '%s\n' "$OUT" | grep S-Sternwarte)" "2 changed, 2 new" "changed and new separately (deleted .gitignore counts as changed, new files one by one)"
    assert_eq "$(printf '%s\n' "$OUT" | grep '^  G-Garten ' | tr -s ' ')" " G-Garten ok ok" "G-Garten integer"
    assert_contains "$OUT" "Result: 4 of 6 projects integer" "result line"
@@ -91,34 +91,34 @@
    assert_contains "$OUT" "Result: 2 of 2 projects integer" "container: only projects below"
    mkdir -p "$SANDBOX/leer"
    assert_contains "$(A --integrity "$SANDBOX/leer")" "No projects in" "no projects"
-   assert_contains "$(A --integrity "$SANDBOX/nope")" "*** aios --integrity:" "missing path"
-   assert_exit 1 "$SRC/bin/aios" --integrity "$SANDBOX/nope"
-   assert_exit 1 "$SRC/bin/aios" --integrity "$D" "$D"
+   assert_contains "$(A --integrity "$SANDBOX/nope")" "*** aibos --integrity:" "missing path"
+   assert_exit 1 "$SRC/bin/aibos" --integrity "$SANDBOX/nope"
+   assert_exit 1 "$SRC/bin/aibos" --integrity "$D" "$D"
 
 #===============================================================================
 # v0.5 step 3: outdated copies in .agents/skills/ are notes (spec 05; V0.5, memos 10, 24, N11)
 #===============================================================================
 
    N="$D/Notizen/N-Frei"
-   mk "$N/.aios/registry" $'# written by AIOS (registration), do not edit\nschema: 1\nregistered:\n  memo:\n    source: "x"\n    version: 6.0.1\n    digest: sha256:0\n'
-   mk "$N/.agents/skills/memo/.aios-deploy" $'# written by aios --deploy, do not edit\nname: memo\nversion: 6.0.0\nsource: "library"\n'
-   mk "$N/.agents/skills/alt/.aios-deploy" $'name: alt\nversion: 1.0.0\n'
+   mk "$N/.aibos/registry" $'# written by AIBOS (registration), do not edit\nschema: 1\nregistered:\n  memo:\n    source: "x"\n    version: 6.0.1\n    digest: sha256:0\n'
+   mk "$N/.agents/skills/memo/.aibos-deploy" $'# written by aibos --deploy, do not edit\nname: memo\nversion: 6.0.0\nsource: "library"\n'
+   mk "$N/.agents/skills/alt/.aibos-deploy" $'name: alt\nversion: 1.0.0\n'
    mk "$N/.agents/skills/fremd/SKILL.md" $'---\nname: fremd\n---\n'
    OUT="$(A --integrity "$N")"
    assert_contains "$OUT" "- N-Frei: outdated copy .agents/skills/memo (memo 6.0.0): registered is 6.0.1" ".agents: other version than registered"
    assert_contains "$OUT" "- N-Frei: outdated copy .agents/skills/alt (alt 1.0.0): skill not registered here" ".agents: skill not registered"
    assert_not_contains "$OUT" "fremd" ".agents: copies without marker are not touched or named"
    assert_contains "$OUT" "Result: 1 of 1 project integer" ".agents: only a note, the project stays integer"
-   [ -e "$N/.agents/skills/memo/.aios-deploy" ] && ok || fail ".agents: nothing removed"
+   [ -e "$N/.agents/skills/memo/.aibos-deploy" ] && ok || fail ".agents: nothing removed"
 
 #===============================================================================
-# bindings: aios: or legacy: outside the vault root, both at the vault root (V0.6, memos 16, 17)
+# bindings: aibos: or legacy: outside the vault root, both at the vault root (V0.6, memos 16, 17)
 #===============================================================================
 
-   mk "$N/.aios/config.yaml" $'aios: 0.6.0\nlegacy: ai-brain\n'
+   mk "$N/.aibos/config.yaml" $'aibos: 0.6.0\nlegacy: ai-brain\n'
    OUT="$(A --integrity "$N")"
-   assert_contains "$OUT" "- N-Frei: aios:, legacy: in .aios/config.yaml ignored (only at the vault root)" "binding in a project: named"
-   rm "$N/.aios/config.yaml"
-   mkdir -p "$D/.aios"; cp "$D/.aios/config.yaml" "$SANDBOX/root.yaml" 2>/dev/null; printf 'aios: 0.6.0\nlegacy: ai-brain\n' > "$D/.aios/config.yaml"
-   assert_contains "$(A --integrity "$D")" "aios: and legacy: together in .aios/config.yaml, aios: applies" "vault root: aios: and legacy: together"
-   if [ -e "$SANDBOX/root.yaml" ]; then mv "$SANDBOX/root.yaml" "$D/.aios/config.yaml"; fi
+   assert_contains "$OUT" "- N-Frei: aibos:, legacy: in .aibos/config.yaml ignored (only at the vault root)" "binding in a project: named"
+   rm "$N/.aibos/config.yaml"
+   mkdir -p "$D/.aibos"; cp "$D/.aibos/config.yaml" "$SANDBOX/root.yaml" 2>/dev/null; printf 'aibos: 0.6.0\nlegacy: ai-brain\n' > "$D/.aibos/config.yaml"
+   assert_contains "$(A --integrity "$D")" "aibos: and legacy: together in .aibos/config.yaml, aibos: applies" "vault root: aibos: and legacy: together"
+   if [ -e "$SANDBOX/root.yaml" ]; then mv "$SANDBOX/root.yaml" "$D/.aibos/config.yaml"; fi

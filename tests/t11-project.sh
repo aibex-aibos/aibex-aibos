@@ -1,6 +1,6 @@
 # t11-project.sh: step 1 of the plan (V0.3, memo 32) - structure S1-S4 and name rule (spec 05)
 
-   case "$SANDBOX" in */aios-test.*) ;; *) echo "*** run via tests/run, never directly (it would touch the real HOME)" >&2; exit 1;; esac
+   case "$SANDBOX" in */aibos-test.*) ;; *) echo "*** run via tests/run, never directly (it would touch the real HOME)" >&2; exit 1;; esac
 
 #===============================================================================
 # setup: vault §Demo as root project with repo, projects with and without gaps
@@ -10,7 +10,7 @@
    export GIT_AUTHOR_NAME=t GIT_AUTHOR_EMAIL=t@t GIT_COMMITTER_NAME=t GIT_COMMITTER_EMAIL=t@t
    D="$SANDBOX/work/§Demo"
    mk() { mkdir -p "$(dirname "$1")"; printf '%s' "$2" > "$1"; }
-   GI=$'.DS_Store\n.claude/skills/\n.claude/worktrees/\n.agents/\n.aios/registry\n.aios/backup/\n.aios/workspace.local.yaml\n@Secret/\n'
+   GI=$'.DS_Store\n.claude/skills/\n.claude/worktrees/\n.agents/\n.aibos/registry\n.aibos/backup/\n.aibos/workspace.local.yaml\n@Secret/\n'
    mkproj() { mkdir -p "$1/@"; mk "$1/.gitignore" "$GI"; git -C "$1" init -q; }
 
    mkproj "$D"
@@ -24,10 +24,10 @@
    git -C "$D" add .gitignore S-Sternwarte && git -C "$D" commit -qm init
 
    GAPS() { PYTHONPATH="$SRC/lib" python3 -c "
-from aios import project
+from aibos import project
 print('|'.join(g.text for g in project.check('$1')))"; }
    NAME() { PYTHONPATH="$SRC/lib" python3 -c "
-from aios import project
+from aibos import project
 n = project.check_name('$1'); print(('ok' if n.ok else 'bad') + '|' + n.proposal + '|' + ' / '.join(n.problems))"; }
 
 #===============================================================================
@@ -37,14 +37,14 @@ n = project.check_name('$1'); print(('ok' if n.ok else 'bad') + '|' + n.proposal
    assert_eq "$(GAPS "$D")" "" "root project complete (no parent repo above the vault root)"
    assert_eq "$(GAPS "$D/G-Garten")" "" "G-Garten complete"
    assert_eq "$(GAPS "$D/P-Projekte/PB-Blogs")" "" "broader exclusion /P-Projekte/ counts"
-   assert_eq "$(GAPS "$D/S-Sternwarte")" "own git repo|.gitignore lines: .DS_Store, .claude/skills/, .claude/worktrees/, .agents/, .aios/registry, .aios/backup/, .aios/workspace.local.yaml, @Secret/|exclusion in parent repo $D" "S-Sternwarte: repo, gitignore, parent"
+   assert_eq "$(GAPS "$D/S-Sternwarte")" "own git repo|.gitignore lines: .DS_Store, .claude/skills/, .claude/worktrees/, .agents/, .aibos/registry, .aibos/backup/, .aibos/workspace.local.yaml, @Secret/|exclusion in parent repo $D" "S-Sternwarte: repo, gitignore, parent"
    assert_eq "$(GAPS "$D/P-Projekte/PB-Blogs/PB1-Die-KI-Kann-Viel")" "exclusion in parent repo $D/P-Projekte/PB-Blogs" "nested repo needs exclusion in the nearest repo above"
-   assert_eq "$(GAPS "$D/L-Labor")" ".gitignore lines: .claude/skills/, .claude/worktrees/, .agents/, .aios/registry, .aios/backup/, .aios/workspace.local.yaml, @Secret/|exclusion in parent repo $D" "L-Labor: missing lines, not excluded"
+   assert_eq "$(GAPS "$D/L-Labor")" ".gitignore lines: .claude/skills/, .claude/worktrees/, .agents/, .aibos/registry, .aibos/backup/, .aibos/workspace.local.yaml, @Secret/|exclusion in parent repo $D" "L-Labor: missing lines, not excluded"
    mkdir -p "$D/N-Neu"
    assert_contains "$(GAPS "$D/N-Neu")" "local masterspace @/" "S1 reported"
 
    OUT="$(PYTHONPATH="$SRC/lib" python3 -c "
-from aios import project
+from aibos import project
 p = project.parent_repo('$D/S-Sternwarte'); print(p.rel, p.ignored, p.tracked)")"
    assert_eq "$OUT" "S-Sternwarte False ['S-Sternwarte/@/stern.md']" "parent repo: relative path, not ignored, tracked files"
    echo '/S-Sternwarte/' >> "$D/.gitignore"
@@ -53,7 +53,7 @@ p = project.parent_repo('$D/S-Sternwarte'); print(p.rel, p.ignored, p.tracked)")
    case "$(GAPS "$D/S-Sternwarte")" in *"exclusion"*) fail "ignored and untracked: S4 fulfilled" ;; *) ok ;; esac
 
    mkdir -p "$SANDBOX/work/Draussen/X-Proj/@"; git -C "$SANDBOX/work/Draussen" init -q
-   assert_eq "$(GAPS "$SANDBOX/work/Draussen/X-Proj")" "own git repo|.gitignore lines: .DS_Store, .claude/skills/, .claude/worktrees/, .agents/, .aios/registry, .aios/backup/, .aios/workspace.local.yaml, @Secret/" "outside a vault: no parent repo"
+   assert_eq "$(GAPS "$SANDBOX/work/Draussen/X-Proj")" "own git repo|.gitignore lines: .DS_Store, .claude/skills/, .claude/worktrees/, .agents/, .aibos/registry, .aibos/backup/, .aibos/workspace.local.yaml, @Secret/" "outside a vault: no parent repo"
 
 #===============================================================================
 # name rule and proposal

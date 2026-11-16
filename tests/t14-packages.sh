@@ -1,6 +1,6 @@
 # t14-packages.sh: step 2 of the plan v0.4 (V0.4, memo 18) - versions and ranges, manifest.yaml,
 
-   case "$SANDBOX" in */aios-test.*) ;; *) echo "*** run via tests/run, never directly (it would touch the real HOME)" >&2; exit 1;; esac
+   case "$SANDBOX" in */aibos-test.*) ;; *) echo "*** run via tests/run, never directly (it would touch the real HOME)" >&2; exit 1;; esac
 # resolver (spec 06)
 
 #===============================================================================
@@ -13,7 +13,7 @@
    done
    [ -n "$PYDIR" ] && ok || fail "t14 needs a python3 with PyYAML (pip install pyyaml)"
    export PATH="$PYDIR:/usr/bin:/bin:/usr/sbin:/sbin"
-   PY() { PYTHONPATH="$SRC/lib" python3 -c "from aios import semver, package, resolver
+   PY() { PYTHONPATH="$SRC/lib" python3 -c "from aibos import semver, package, resolver
 $1" 2>&1; }
    IN() { PY "print(semver.Range.parse('$1').contains('$2'))"; }
 
@@ -58,7 +58,7 @@ version: 0.1.0
 type: app
 description: Programmierbarer Taschenrechner
 requires:
-  aios: ">=0.4,<0.5"
+  aibos: ">=0.4,<0.5"
 depends:
   memo: "~=6.0"
 contents:
@@ -80,7 +80,7 @@ d = yaml.safe_load('''name: k
 version: 0.1.0
 type: knowledge
 description: x
-requires: {aios: '*'}
+requires: {aibos: '*'}
 $1''')
 d.update($2)
 try:
@@ -90,22 +90,22 @@ except package.ManifestError as e:
    assert_eq "$(MF '' '{}')" "ok False []" "knowledge package is no module"
    assert_eq "$(MF 'contents: {skills: [a]}' '{}')" "ok True []" "knowledge package with a skill is a module"
    assert_contains "$(MF '' "{'type': 'buch'}")" "unknown type 'buch', treated as knowledge" "unknown type: warning"
-   assert_contains "$(MF '' "{'name': 'aios-x'}")" "aios-x is a reserved name" "reserved prefix aios-"
-   assert_contains "$(MF '' "{'name': 'aios'}")" "aios is a reserved name" "aios reserved for the kernel (Q1)"
+   assert_contains "$(MF '' "{'name': 'aibos-x'}")" "aibos-x is a reserved name" "reserved prefix aibos-"
+   assert_contains "$(MF '' "{'name': 'aibos'}")" "aibos is a reserved name" "aibos reserved for the kernel (Q1)"
    assert_contains "$(MF '' "{'name': 'Gross'}")" "is not a package name" "upper case name"
    assert_contains "$(MF '' "{'version': '0.1'}")" "not MAJOR.MINOR.PATCH" "version needs three parts"
    assert_contains "$(MF '' "{'requires': None}")" "requires is missing" "requires required"
-   assert_contains "$(MF 'depends: {aios: ">=0.4"}' '{}')" "depends must not name aios" "no depends on the kernel"
+   assert_contains "$(MF 'depends: {aibos: ">=0.4"}' '{}')" "depends must not name aibos" "no depends on the kernel"
    assert_contains "$(MF 'contents: {skills: [a], gui: b}' '{}')" "contents.gui b is not in contents.skills" "gui must be a skill"
    assert_contains "$(MF 'contents: {skills: [a], commands: [a]}' '{}')" "element names are not unique: a" "unique element names"
-   assert_contains "$(MF 'workers: {db: {install: i.sh}}' '{}')" "workers: is gone since AIOS 0.5" "workers: of v0.4 rejected (L9)"
+   assert_contains "$(MF 'workers: {db: {install: i.sh}}' '{}')" "workers: is gone since AIBOS 0.5" "workers: of v0.4 rejected (L9)"
 
 #===============================================================================
 # v0.5 step 2: type worker (spec 07), type distribution with kernel: (spec 06)
 #===============================================================================
 
    W="'type': 'worker', 'worker': {'kind': 'python', 'requirements': 'worker/requirements.lock', 'programs': ['yt-dlp'], 'check': 'yt-dlp --version'}"
-   WM() { PY "m = package.parse({'name': 'worker-x', 'version': '0.1.0', 'description': 'x', 'requires': {'aios': '*'}, $W})
+   WM() { PY "m = package.parse({'name': 'worker-x', 'version': '0.1.0', 'description': 'x', 'requires': {'aibos': '*'}, $W})
 $1"; }
    assert_eq "$(MF '' "{$W}")" "ok True []" "worker: a module"
    assert_eq "$(WM "print(m.elements(), m.worker['programs'])")" "[] ['yt-dlp']" "worker: no elements, programs"
@@ -136,18 +136,18 @@ $1"; }
 #===============================================================================
 
    L="$(PYTHONPATH="$SRC/lib" python3 -c "
-from aios import yamlsub
-print(yamlsub.dump({'schema': 1, 'packages': {'worker-yt-dlp': {'version': '0.1.0', 'hub': 'aibex-aios',
-  'repo': 'https://github.com/aibex-aios/worker-yt-dlp', 'tag': 'v0.1.0', 'commit': '1234567',
+from aibos import yamlsub
+print(yamlsub.dump({'schema': 1, 'packages': {'worker-yt-dlp': {'version': '0.1.0', 'hub': 'aibex-aibos',
+  'repo': 'https://github.com/aibex-aibos/worker-yt-dlp', 'tag': 'v0.1.0', 'commit': '1234567',
   'requested': '~=0.1.0', 'required_by': ['skill-a', 'skill-b']}},
-  'workspace': {'AA': 'abc123'}}, 'written by AIOS (fetch, workspace), do not edit'), end='')")"
-   assert_eq "$L" '# written by AIOS (fetch, workspace), do not edit
+  'workspace': {'AA': 'abc123'}}, 'written by AIBOS (fetch, workspace), do not edit'), end='')")"
+   assert_eq "$L" '# written by AIBOS (fetch, workspace), do not edit
 schema: 1
 packages:
   worker-yt-dlp:
     version: 0.1.0
-    hub: aibex-aios
-    repo: "https://github.com/aibex-aios/worker-yt-dlp"
+    hub: aibex-aibos
+    repo: "https://github.com/aibex-aibos/worker-yt-dlp"
     tag: v0.1.0
     commit: "1234567"
     requested: "~=0.1.0"
@@ -166,37 +166,37 @@ workspace:
    RES() { PY "import yaml
 def M(name, ver, dep=None, req='>=0.4,<0.5'):
     return package.parse({'name': name, 'version': ver, 'type': 'skill', 'description': 'x',
-                          'requires': {'aios': req}, 'depends': dep or {}})
-H = {('aibex-aios', 'memo'): {'6.0.0': M('memo', '6.0.0'), '6.1.0': M('memo', '6.1.0'), '7.0.0': M('memo', '7.0.0')},
-     ('aibex-aios', 'taschenrechner'): {'0.1.0': M('taschenrechner', '0.1.0', {'memo': '~=6.0'}),
+                          'requires': {'aibos': req}, 'depends': dep or {}})
+H = {('aibex-aibos', 'memo'): {'6.0.0': M('memo', '6.0.0'), '6.1.0': M('memo', '6.1.0'), '7.0.0': M('memo', '7.0.0')},
+     ('aibex-aibos', 'taschenrechner'): {'0.1.0': M('taschenrechner', '0.1.0', {'memo': '~=6.0'}),
                                         '0.1.1': M('taschenrechner', '0.1.1', {'memo': '~=6.0'}),
                                         '0.2.0': M('taschenrechner', '0.2.0', {'memo': '~=6.0'}, '>=0.5')},
      ('aibex-hub', 'knowledge-scorpio'): {'0.1.0': M('knowledge-scorpio', '0.1.0', {'sternkarte': '*'})},
      ('aibex-hub', 'sternkarte'): {'1.0.0': M('sternkarte', '1.0.0')},
-     ('aibex-aios', 'sternkarte'): {'2.0.0': M('sternkarte', '2.0.0')},
+     ('aibex-aibos', 'sternkarte'): {'2.0.0': M('sternkarte', '2.0.0')},
      ('aibex-hub', 'memo'): {'6.0.0': M('memo', '6.0.0')},
-     ('aibex-aios', 'a'): {'1.0.0': M('a', '1.0.0', {'b': '>=1.0'})},
-     ('aibex-aios', 'b'): {'1.0.0': M('b', '1.0.0', {'a': '*'}), '2.0.0': M('b', '2.0.0', {'a': '<1.0'})}}
+     ('aibex-aibos', 'a'): {'1.0.0': M('a', '1.0.0', {'b': '>=1.0'})},
+     ('aibex-aibos', 'b'): {'1.0.0': M('b', '1.0.0', {'a': '*'}), '2.0.0': M('b', '2.0.0', {'a': '<1.0'})}}
 src = resolver.MemorySource(H)
 R = resolver.Request; S = semver.Range.parse
-def run(req, hubs=('aibex-aios',), locked=None, upgrade=(), kernel='0.4.0-dev'):
+def run(req, hubs=('aibex-aibos',), locked=None, upgrade=(), kernel='0.4.0-dev'):
     try:
         out = resolver.Resolver(src, hubs, kernel, locked, upgrade).resolve(req)
         print(' '.join(f'{p.name}={p.version}@{p.hub}' + (f'<{\",\".join(p.required_by)}' if p.required_by else '') for p in out.values()))
     except resolver.ResolveError as e:
         print(type(e).__name__, e)
 $1"; }
-   assert_eq "$(RES "run({'taschenrechner': R()})")" "memo=6.1.0@aibex-aios<taschenrechner taschenrechner=0.1.1@aibex-aios" "highest fitting versions, requires.aios, depends"
-   assert_eq "$(RES "run(dict(taschenrechner=R(S('==0.1.0')), memo=R(S('<6.1'))))")" "memo=6.0.0@aibex-aios<taschenrechner taschenrechner=0.1.0@aibex-aios" "ranges from packages: and depends together"
-   assert_eq "$(RES "run({'memo': R()}, locked=dict(memo=('6.0.0', 'aibex-aios')))")" "memo=6.0.0@aibex-aios" "locked version stays (no silent update)"
-   assert_eq "$(RES "run({'memo': R()}, locked=dict(memo=('6.0.0', 'aibex-aios')), upgrade=['memo'])")" "memo=7.0.0@aibex-aios" "--upgrade chooses anew"
-   assert_contains "$(RES "run({'taschenrechner': R(S('>=0.2'))})")" "requires.aios" "conflict: no version runs with this AIOS"
+   assert_eq "$(RES "run({'taschenrechner': R()})")" "memo=6.1.0@aibex-aibos<taschenrechner taschenrechner=0.1.1@aibex-aibos" "highest fitting versions, requires.aibos, depends"
+   assert_eq "$(RES "run(dict(taschenrechner=R(S('==0.1.0')), memo=R(S('<6.1'))))")" "memo=6.0.0@aibex-aibos<taschenrechner taschenrechner=0.1.0@aibex-aibos" "ranges from packages: and depends together"
+   assert_eq "$(RES "run({'memo': R()}, locked=dict(memo=('6.0.0', 'aibex-aibos')))")" "memo=6.0.0@aibex-aibos" "locked version stays (no silent update)"
+   assert_eq "$(RES "run({'memo': R()}, locked=dict(memo=('6.0.0', 'aibex-aibos')), upgrade=['memo'])")" "memo=7.0.0@aibex-aibos" "--upgrade chooses anew"
+   assert_contains "$(RES "run({'taschenrechner': R(S('>=0.2'))})")" "requires.aibos" "conflict: no version runs with this AIBOS"
    assert_contains "$(RES "run(dict(taschenrechner=R(), memo=R(S('>=7'))))")" "- memo: no version fulfils the ranges; >=7 (packages:); ~=6.0 (taschenrechner 0.1.1)" "conflict list with origins"
-   assert_contains "$(RES "run({'memo': R()}, hubs=('aibex-aios', 'aibex-hub'))")" "Ambiguous package memo is in several hubs: aibex-aios, aibex-hub" "name in two hubs: ambiguous"
-   assert_eq "$(RES "run({'memo': R(hub='aibex-hub')}, hubs=('aibex-aios', 'aibex-hub'))")" "memo=6.0.0@aibex-hub" "named hub"
+   assert_contains "$(RES "run({'memo': R()}, hubs=('aibex-aibos', 'aibex-hub'))")" "Ambiguous package memo is in several hubs: aibex-aibos, aibex-hub" "name in two hubs: ambiguous"
+   assert_eq "$(RES "run({'memo': R(hub='aibex-hub')}, hubs=('aibex-aibos', 'aibex-hub'))")" "memo=6.0.0@aibex-hub" "named hub"
    assert_eq "$(RES "run({'knowledge-scorpio': R(hub='aibex-hub')})")" "knowledge-scorpio=0.1.0@aibex-hub sternkarte=1.0.0@aibex-hub<knowledge-scorpio" "dependency first in the hub of the package, also outside the hub list (H5)"
-   assert_contains "$(RES "run({'gibtsnicht': R()})")" "NotFound package gibtsnicht not found in the hubs aibex-aios" "unknown package"
-   assert_eq "$(RES "run(dict(a=R(), b=R(S('==1.0.0'))))")" "a=1.0.0@aibex-aios<b b=1.0.0@aibex-aios<a" "cycle in depends allowed when fulfillable"
+   assert_contains "$(RES "run({'gibtsnicht': R()})")" "NotFound package gibtsnicht not found in the hubs aibex-aibos" "unknown package"
+   assert_eq "$(RES "run(dict(a=R(), b=R(S('==1.0.0'))))")" "a=1.0.0@aibex-aibos<b b=1.0.0@aibex-aibos<a" "cycle in depends allowed when fulfillable"
    assert_contains "$(RES "run({'a': R()})")" "- a: no version fulfils the ranges; * (packages:); <1.0 (b 2.0.0)" "no backtracking over older versions of other packages (F5)"
    assert_eq "$(RES "run({'memo': R()}, kernel='0.3.1')")" "Conflict no versions fulfil all ranges:
-- memo: no fitting version runs with AIOS 0.3.1 (requires.aios); * (packages:)" "kernel too old"
+- memo: no fitting version runs with AIBOS 0.3.1 (requires.aibos); * (packages:)" "kernel too old"

@@ -1,4 +1,4 @@
-"""wheel.py <dir> <version> <lock>: build the test wheel aios-test-tool (standard library only)
+"""wheel.py <dir> <version> <lock>: build the test wheel aibos-test-tool (standard library only)
 into <dir> and write the requirements file with its hash to <lock> (spec 07, Tests; V0.5,
 memo 32). The wheel is deterministic (fixed time stamps), so equal versions give equal hashes.
 """
@@ -9,7 +9,7 @@ import sys
 import zipfile
 from pathlib import Path
 
-NAME, MOD = "aios-test-tool", "aios_test_tool"
+NAME, MOD = "aibos-test-tool", "aibos_test_tool"
 
 
 def record_line(path, data):
@@ -21,9 +21,9 @@ def build(out, version):
     dist = f"{MOD}-{version}.dist-info"
     files = {
         f"{MOD}/__init__.py": (f'VERSION = "{version}"\n\n\ndef main():\n'
-                               f'    import sys\n    print("aios-test-tool " + VERSION, *sys.argv[1:])\n'),
-        f"{dist}/METADATA": f"Metadata-Version: 2.1\nName: {NAME}\nVersion: {version}\nSummary: test tool of AIOS\n",
-        f"{dist}/WHEEL": "Wheel-Version: 1.0\nGenerator: aios-tests\nRoot-Is-Purelib: true\nTag: py3-none-any\n",
+                               f'    import sys\n    print("aibos-test-tool " + VERSION, *sys.argv[1:])\n'),
+        f"{dist}/METADATA": f"Metadata-Version: 2.1\nName: {NAME}\nVersion: {version}\nSummary: test tool of AIBOS\n",
+        f"{dist}/WHEEL": "Wheel-Version: 1.0\nGenerator: aibos-tests\nRoot-Is-Purelib: true\nTag: py3-none-any\n",
         f"{dist}/entry_points.txt": f"[console_scripts]\n{NAME} = {MOD}:main\n",
     }
     record = [record_line(p, d.encode()) for p, d in files.items()] + [f"{dist}/RECORD,,"]

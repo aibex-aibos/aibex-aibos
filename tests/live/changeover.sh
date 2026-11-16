@@ -1,7 +1,7 @@
 #!/bin/bash
 # changeover.sh: live test of the change of packages at the activation (v0.6.1, step 5; V0.6, memos 81, 84, 90):
 # vault A with two projects on worker-yt-dlp 0.1.0 (fits 0.5 only), vault B on 0.1.0 without an entry in
-# workers.yaml, known by the marker of a session; aios --activate of A on the candidate (VERSION) shows the
+# workers.yaml, known by the marker of a session; aibos --activate of A on the candidate (VERSION) shows the
 # fetch of each project (B13), sets up 0.1.1 once and keeps 0.1.0 for B (B12); real PyPI
 
    if [ "$*" == "-?" ] || [ "$*" == "--help" ]; then
@@ -9,7 +9,7 @@
       echo '                                            # from the tagged repos in <repos> (default ~/git/AIbex)'
       echo '          tests/live/changeover.sh --version  # print version'
       echo '   not part of tests/run: needs network access to PyPI, takes about two minutes'
-      echo '   see also: tests/live/rothirsch.sh, aios --activate'
+      echo '   see also: tests/live/rothirsch.sh, aibos --activate'
       exit 1
    fi
 
@@ -28,7 +28,7 @@
    if [ "$2" == "" ]; then
       REPOS="${1:-$HOME/git/AIbex}"
       REPO="$(cd "$(dirname "$0")/../.." && pwd)"
-      T="${TMPDIR:-/tmp}"; SB="$(cd "$(mktemp -d "${T%/}/aios-live.XXXXXX")" && pwd -P)" || exit 1
+      T="${TMPDIR:-/tmp}"; SB="$(cd "$(mktemp -d "${T%/}/aibos-live.XXXXXX")" && pwd -P)" || exit 1
       PASS=0; FAIL=0
       check() {                                     # check <name> <condition...>
          local N="$1"; shift
@@ -37,7 +37,7 @@
       }
       has() { case "$1" in *"$2"*) return 0;; esac; return 1; }
       hasnt() { ! has "$@"; }
-      VER() { python3 -c "import yaml,sys; print(yaml.safe_load(open(sys.argv[1]+'/.aios/lock.yaml'))['packages'][sys.argv[2]]['version'])" "$1" "$2"; }
+      VER() { python3 -c "import yaml,sys; print(yaml.safe_load(open(sys.argv[1]+'/.aibos/lock.yaml'))['packages'][sys.argv[2]]['version'])" "$1" "$2"; }
       count() { printf '%s\n' "$1" | grep -c -F "$2"; }
       G() { git -c user.name=live -c user.email=live@test "$@"; }
 
@@ -50,36 +50,36 @@
       G -C "$S" tag -d "v$K" >/dev/null 2>&1        # a tag of the repo moves onto the working tree, in the clone only
       G -C "$S" add -A && { G -C "$S" diff --cached --quiet || G -C "$S" commit -q -m "v$K"; } && G -C "$S" tag "v$K" || exit 1
 
-      H="$SB/aibex-local"; mkdir -p "$H/aios-index"   # local hub of the tagged package repos (S4)
-      printf 'schema: 1\npackages:\n' > "$H/aios-index/index.yaml"
+      H="$SB/aibex-local"; mkdir -p "$H/aibos-index"   # local hub of the tagged package repos (S4)
+      printf 'schema: 1\npackages:\n' > "$H/aibos-index/index.yaml"
       for P in skill-video-analyse skill-5-8-zusammenfassung skill-memo worker-yt-dlp worker-deno; do
          G clone -q "$REPOS/$P" "$H/$P" || exit 1
-         printf '  - name: %s\n    type: %s\n    description: %s\n' "$P" "${P%%-*}" "$P" >> "$H/aios-index/index.yaml"
+         printf '  - name: %s\n    type: %s\n    description: %s\n' "$P" "${P%%-*}" "$P" >> "$H/aibos-index/index.yaml"
       done
-      G -C "$H/aios-index" init -q && G -C "$H/aios-index" add -A && G -C "$H/aios-index" commit -q -m index
+      G -C "$H/aibos-index" init -q && G -C "$H/aibos-index" add -A && G -C "$H/aibos-index" commit -q -m index
       for T in $(G -C "$H/skill-video-analyse" tag -l 'v0.3*' 'v0.4*' 'v1*'); do   # the test is about 0.2.0 -> 0.2.1;
          G -C "$H/skill-video-analyse" tag -d "$T" >/dev/null                    # later releases stay out (v0.6.6)
       done
       mkdir -p "$SB/home/bin" "$SB/opt" "$SB/fake"
-      export HOME="$SB/home" AIOS_PREFIX="$SB/opt" AIOS_CLAUDE_DIR="$SB/home/.claude"
-      export AIOS_SUDO="$SB/fake/no-sudo" AIOS_PIP=true
-      export AIOS_HUBS="aibex-local=file://$H"
+      export HOME="$SB/home" AIBOS_PREFIX="$SB/opt" AIBOS_CLAUDE_DIR="$SB/home/.claude"
+      export AIBOS_SUDO="$SB/fake/no-sudo" AIBOS_PIP=true
+      export AIBOS_HUBS="aibex-local=file://$H"
       PYDIR=""                                      # never the real ~/bin in PATH
       for P in $(type -ap python3) /opt/homebrew/bin/python3 /usr/local/bin/python3 /usr/bin/python3; do
          [ -x "$P" ] && "$P" -c "import yaml, venv, ensurepip" 2>/dev/null && { PYDIR="$(dirname "$P")"; break; }
       done
       [ -n "$PYDIR" ] || { echo "*** needs a python3 with PyYAML, venv and ensurepip" >&2; exit 1; }
       export PATH="$HOME/bin:$PYDIR:/usr/bin:/bin:/usr/sbin:/sbin"
-      A_="$S/bin/aios"; WK="$HOME/.aios/workers"; BIN="$HOME/.aios/bin"; WY="$HOME/.aios/workers.yaml"
+      A_="$S/bin/aibos"; WK="$HOME/.aibos/workers"; BIN="$HOME/.aibos/bin"; WY="$HOME/.aibos/workers.yaml"
 
       OUT="$(cd "$SB" && "$A_" --install "v$K" --yes 2>&1)"; RC=$?
       [ "$RC" == "0" ] || printf '%s\n' "$OUT"
-      check "kernel $K installed" [ "$RC" == "0" ] && [ -x "$HOME/.aios/versions/v$K/bin/aios" ]
+      check "kernel $K installed" [ "$RC" == "0" ] && [ -x "$HOME/.aibos/versions/v$K/bin/aibos" ]
 
       VA="$SB/§Alpha"; VB="$SB/§Beta"               # two vaults of 0.5.1, each project on worker-yt-dlp 0.1.0
       for P in "$VA/PA-Eins" "$VA/PA-Zwei" "$VB/PB-Alt"; do
-         V="$(dirname "$P")"; mkdir -p "$V/@" "$V/.aios" "$P/@"
-         [ -f "$V/.aios/config.yaml" ] || printf 'aios: 0.5.1\n' > "$V/.aios/config.yaml"
+         V="$(dirname "$P")"; mkdir -p "$V/@" "$V/.aibos" "$P/@"
+         [ -f "$V/.aibos/config.yaml" ] || printf 'aibos: 0.5.1\n' > "$V/.aibos/config.yaml"
          OUT="$("$A_" --fetch 'worker-yt-dlp==0.1.0' --to "$P" --yes 2>&1)" && \
          OUT="$("$A_" --fetch 'skill-video-analyse==0.2.0' --to "$P" --yes 2>&1)"; RC=$?
          [ "$RC" == "0" ] || printf '%s\n' "$OUT"
@@ -96,16 +96,16 @@ for pkg in d.get("workers", {}).values():
 open(f, "w").write(yaml.safe_dump(d, sort_keys=False))
 EOF
       check "B not in workers.yaml" hasnt "$(cat "$WY")" "$VB"
-      mkdir -p "$HOME/.aios/sessions"
-      printf 'cwd: "%s"\nassistant: none\nused: 2026-11-01T10:00:00\n' "$VB/PB-Alt" > "$HOME/.aios/sessions/beta.yaml"
+      mkdir -p "$HOME/.aibos/sessions"
+      printf 'cwd: "%s"\nassistant: none\nused: 2026-11-01T10:00:00\n' "$VB/PB-Alt" > "$HOME/.aibos/sessions/beta.yaml"
 
       OUT="$("$A_" --activate "v$K" "$VA" --plan 2>&1)"; RC=$?
       [ "$RC" == "0" ] || printf '%s\n' "$OUT"
       printf '%s\n' "$OUT" | sed 's/^/      | /'
       check "plan: exit 0" [ "$RC" == "0" ]
       for P in PA-Eins PA-Zwei; do
-         check "plan: packages for AIOS $K: $P (B13)" has "$OUT" "packages for AIOS $K: $VA/$P"
-         check "plan: lock.yaml of $P among the substeps" has "$OUT" "$VA/$P/.aios/lock.yaml"
+         check "plan: packages for AIBOS $K: $P (B13)" has "$OUT" "packages for AIBOS $K: $VA/$P"
+         check "plan: lock.yaml of $P among the substeps" has "$OUT" "$VA/$P/.aibos/lock.yaml"
       done
       check "plan: packages: skill-video-analyse 0.2.0 -> 0.2.1" has "$OUT" "$VA/PA-Eins: packages: skill-video-analyse 0.2.0 -> skill-video-analyse 0.2.1"
       check "plan: upgrade skill-video-analyse among the substeps" has "$OUT" "upgrade 0.2.0 -> 0.2.1 skill-video-analyse 0.2.1"
@@ -117,7 +117,7 @@ EOF
       OUT="$("$A_" --activate "v$K" "$VA" --yes 2>&1)"; RC=$?
       [ "$RC" == "0" ] || printf '%s\n' "$OUT"
       check "activate: exit 0" [ "$RC" == "0" ]
-      check "activate: A bound to $K" has "$(cat "$VA/.aios/config.yaml")" "aios: $K"
+      check "activate: A bound to $K" has "$(cat "$VA/.aibos/config.yaml")" "aibos: $K"
       for P in PA-Eins PA-Zwei; do
          check "activate: $P on skill-video-analyse 0.2.1, worker-yt-dlp 0.1.1" \
             [ "$(VER "$VA/$P" skill-video-analyse) $(VER "$VA/$P" worker-yt-dlp)" == "0.2.1 0.1.1" ]
@@ -127,7 +127,7 @@ EOF
       check "activate: B noted in workers.yaml" has "$(cat "$WY")" "$VB/PB-Alt"
       check "forwarder in A takes 0.1.1" has "$(cd "$VA/PA-Eins" && "$BIN/yt-dlp" ---which 2>&1)" "version=0.1.1"
       check "forwarder in B takes 0.1.0" has "$(cd "$VB/PB-Alt" && "$BIN/yt-dlp" ---which 2>&1)" "version=0.1.0"
-      check "B untouched: bound to 0.5.1" has "$(cat "$VB/.aios/config.yaml")" "aios: 0.5.1"
+      check "B untouched: bound to 0.5.1" has "$(cat "$VB/.aibos/config.yaml")" "aibos: 0.5.1"
 
       echo "=> $PASS passed, $FAIL failed (sandbox $SB)"
       [ "$FAIL" == "0" ] || exit 1

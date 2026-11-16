@@ -6,7 +6,7 @@
       echo '   usage: tests/live/hooks.sh [<model>]   # headless sessions L1-L6, default model haiku'
       echo '          tests/live/hooks.sh --version   # print version'
       echo '   not part of tests/run: needs a logged-in claude CLI and uses tokens'
-      echo '   see also: tests/run, aios --context'
+      echo '   see also: tests/run, aibos --context'
       exit 1
    fi
 
@@ -27,8 +27,8 @@
       . "$(dirname "$0")/lib.sh"
       SECRET="Quittenbaum-$RANDOM$RANDOM"
       V="$SB/§Live"
-      mkdir -p "$SB/home/.aios" "$SB/bin" "$V/.aios" "$V/@/@Rule" "$V/Garten/@" "$V/Garten/Neu"
-      printf 'aios: 0.6.0\n' > "$V/.aios/config.yaml"
+      mkdir -p "$SB/home/.aibos" "$SB/bin" "$V/.aibos" "$V/@/@Rule" "$V/Garten/@" "$V/Garten/Neu"
+      printf 'aibos: 0.6.0\n' > "$V/.aibos/config.yaml"
       printf '# Geheimwort\nDas Geheimwort lautet: %s\n' "$SECRET" > "$V/@/@Rule/geheim.md"
       printf '# Garten\nIm Garten wachsen Äpfel.\n' > "$V/Garten/@/garten.md"
       ask() {                                       # ask <dir> <settings> <prompt>: calls of the forwarder only via PreToolUse
@@ -41,10 +41,10 @@
       A="$(ask "$V/Garten" "$(hooks)" "$Q")"
       check "L1 inline: master context from SessionStart" "$A" "$SECRET"
 
-      printf 'inline_limit: 100\n' > "$SB/home/.aios/config.yaml"
+      printf 'inline_limit: 100\n' > "$SB/home/.aibos/config.yaml"
       A="$(ask "$V/Garten" "$(hooks)" "$Q")"
-      check "L2 part files: AIOS-CONTEXT-MANDATORY" "$A" "$SECRET"
-      rm "$SB/home/.aios/config.yaml"
+      check "L2 part files: AIBOS-CONTEXT-MANDATORY" "$A" "$SECRET"
+      rm "$SB/home/.aibos/config.yaml"
 
       A="$(ask "$V/Garten/Neu" "$(hooks)" "Was ist 2+2?")"
       check "L3 not initialized: the chat shows the dialog Projekt initialisieren first (v0.3)" "$A" "nitialisier"
@@ -59,7 +59,7 @@
       ask "$V/Garten" "$(hooks)" "Sag nur OK." >/dev/null
       [ -f "$V/Garten/.claude/skills/token-probe/SKILL.md" ] && R5="registered" || R5="not registered"
       check "L5a session 1 registers the skill of the vault root" "$R5" "registered"
-      [ -f "$V/Garten/.claude/skills/aios-status/SKILL.md" ] && grep -q "Bash($FWD --skill aios-status)" "$V/Garten/.claude/skills/aios-status/SKILL.md" \
+      [ -f "$V/Garten/.claude/skills/aibos-status/SKILL.md" ] && grep -q "Bash($FWD --skill aibos-status)" "$V/Garten/.claude/skills/aibos-status/SKILL.md" \
          && R5="kernel wrapper" || R5="no kernel wrapper"
       check "L5a session 1 registers the kernel wrappers with the absolute forwarder (V0.6, F18)" "$R5" "kernel wrapper"
       Q5="Rufe den Skill token-probe auf und gib nur sein Ergebnis aus."
@@ -68,8 +68,8 @@
       check "L5b session 2 calls the skill across the git boundary" "$A" "$TOKEN"
       A="$(cd "$V/Wiese" && claude -p "$Q5" --model "$MODEL" --settings '{"hooks":{}}' \
             --setting-sources project --allowedTools "Skill" 2>&1)"
-      case "$A" in *"$TOKEN"*) check "L5c control: without AIOS the skill is unknown" "token found" "unknown";;
-                   *) check "L5c control: without AIOS the skill is unknown" "unknown" "unknown";; esac
+      case "$A" in *"$TOKEN"*) check "L5c control: without AIBOS the skill is unknown" "token found" "unknown";;
+                   *) check "L5c control: without AIBOS the skill is unknown" "unknown" "unknown";; esac
 
       printf '.claude/worktrees/\n' > "$V/Garten/.gitignore"      # L6: worktree of the host (v0.5.1, B6)
       git -C "$V/Garten" add -A && git -C "$V/Garten" -c user.name=t -c user.email=t@t commit -qm init

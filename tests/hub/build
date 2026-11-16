@@ -2,9 +2,9 @@
 # build: Test-Hubs aus den Vorlagen tests/hub/<hub>/<paket>/<version>/ bauen (Spec 06, V0.4 Memo 35)
 
    if [ "$*" == "-?" ] || [ "$*" == "--help" ]; then
-      echo '   usage: tests/hub/build <ziel>     # Test-Hubs unter <ziel> bauen, AIOS_HUBS ausgeben; Wheels in <ziel>/wheels'
+      echo '   usage: tests/hub/build <ziel>     # Test-Hubs unter <ziel> bauen, AIBOS_HUBS ausgeben; Wheels in <ziel>/wheels'
       echo '          tests/hub/build --version  # print version'
-      echo '   see also: tests/run, aios --library, aios --hubs'
+      echo '   see also: tests/run, aibos --library, aibos --hubs'
       exit 1
    fi
 
@@ -24,7 +24,7 @@
       SRC="$(cd "$(dirname "$0")" && pwd)"
       mkdir -p "$1" || exit 1
       ZIEL="$(cd "$1" && pwd)"
-      G() { git -c user.name=aios-test -c user.email=test@aios -c init.defaultBranch=main "$@"; }
+      G() { git -c user.name=aibos-test -c user.email=test@aibos -c init.defaultBranch=main "$@"; }
       HUBS=""
       for H in "$SRC"/*/; do
          H="$(basename "$H")"
@@ -33,7 +33,7 @@
             P="$(basename "$P")"
             R="$ZIEL/$H/$P"
             G init -q "$R" || exit 1
-            if [ "$P" == "aios-index" ]; then
+            if [ "$P" == "aibos-index" ]; then
                cp -R "$SRC/$H/$P/." "$R/" || exit 1
                G -C "$R" add -A && G -C "$R" commit -q -m "index" || exit 1
                continue
@@ -42,7 +42,7 @@
                find "$R" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
                cp -R "$SRC/$H/$P/$V/." "$R/" || exit 1
                if [ "$P" == "worker-test" ]; then          # test wheel and its hash (spec 07, Tests)
-                  W="$(sed -n 's/^aios-test-tool==\([^ ]*\).*/\1/p' "$R/worker/requirements.lock")"
+                  W="$(sed -n 's/^aibos-test-tool==\([^ ]*\).*/\1/p' "$R/worker/requirements.lock")"
                   python3 "$SRC/wheel.py" "$ZIEL/wheels" "$W" "$R/worker/requirements.lock" || exit 1
                fi
                G -C "$R" add -A && G -C "$R" commit -q -m "$P $V" && G -C "$R" tag "v$V" || exit 1

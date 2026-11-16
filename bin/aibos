@@ -1,0 +1,113 @@
+#!/bin/bash
+# aibos: install, activate and maintain AIbex AIBOS (spec 04)
+
+   if [ "$*" == "-?" ] || [ "$*" == "--help" ]; then
+      echo '   usage: aibos --install [v<version>] [--system] # install a version into ~/.aibos (--system: /opt/aibos)'
+      echo '          aibos --prepare [--dev]              # legacy of v0.5, no longer used'
+      echo '          aibos --install distribution-<name> [<vault>] [--from <repo>]  # kernel, workhorses, packages'
+      echo '          aibos --versions                     # installed versions and their locations'
+      echo '          aibos --vaults                       # vaults AIBOS finds, with binding and source'
+      echo '          aibos --remove-version v<version>    # remove an installed version'
+      echo '          aibos --uninstall                    # remove the forwarder, the hooks and old wrappers'
+      echo '          aibos --activate v<version> [<vault-root>] # bind a vault (only at its root) to a version'
+      echo '          aibos --deactivate [<vault-root>]    # remove the binding'
+      echo '          aibos --config [<path>]              # effective configuration and its origin'
+      echo '          aibos --context [<path>]             # master context of cwd or <path> (spec 02)'
+      echo '          aibos --context --load|--id|--list [<path>] # part files, id, listing'
+      echo '          aibos --context --session|--advise|--permit # hooks (hook JSON on stdin)'
+      echo '          aibos --context --assistant <name> [--load [<path>]] | --assistants # assistants'
+      echo '          aibos --context --assignment [<path>] [--session <id>] # assistant that applies'
+      echo '          aibos --context --sync [--yes|--plan] # register the wrappers and project skills'
+      echo '          aibos --register [<path>]            # register the wrappers and project skills (spec 03)'
+      echo '          aibos --init [<path>]                # make a folder a project (@/, git, .gitignore)'
+      echo '          aibos --integrity [<path>]           # integrity of a project and its subprojects'
+      echo '          aibos --assistant <name|none|inherit> # assign the assistant to the project'
+      echo '                       [--to <project>] [--session <id>]'
+      echo '          aibos --gui [--session <id>] [--html] # surface of the assistant (--aibos: of AIBOS)'
+      echo '                       [--apps] [--skill <surface>] # surfaces of deployed apps'
+      echo '          aibos --library [<word>|<package>]   # search the packages of the hub list'
+      echo '          aibos --hubs [add <name> [<url>] | remove <name>] [--vault] # the hub list'
+      echo '          aibos --fetch [<hub>/]<package>[<range>] # fetch, deploy and register a package'
+      echo '                       [--hub <hub>] [--from <repo>] [--to <project>]'
+      echo '          aibos --fetch [--upgrade [<package>] | --remove <package>] # sync with lock.yaml'
+      echo '          aibos --deploy <package> --only <element>... | --all # select the elements'
+      echo '          aibos --deploy [--to <project>]      # show the deployed elements'
+      echo '          aibos --worker [<package> setup]     # workhorses on the machine; repair (spec 07)'
+      echo '                       [--to <project>]'
+      echo '          aibos --run <command> [args]         # deployed command of a package'
+      echo '          aibos --contribute <file>... --to <package> [--message <text>] # pull request'
+      echo '          aibos --workspace attach <repo> [<vault-folder>] # bind a workspace to this machine'
+      echo '          aibos --workspace sync | status | freeze [<path>] [--group <g>] # projects of a workspace'
+      echo '          aibos --workspace sync [<path>] --only  # one project without its subprojects'
+      echo '          aibos --workspace remove <path>      # remove a project from the workspace'
+      echo '          aibos --workspace history | restore <path> [--at <time>] # earlier versions'
+      echo '          aibos --skill <name> [--session <id>] # body of an AIBOS skill'
+      echo '          aibos <writing command> --plan       # show the plan only (for skills)'
+      echo '          aibos <writing command> --yes        # no question (after asking in the chat)'
+      echo '          aibos --version                      # print version'
+      echo '   see also: ai-brain, stup'
+      exit 1
+   fi
+
+#===============================================================================
+# locations of this installation or clone
+#===============================================================================
+
+   HERE="$(cd "$(dirname "$0")/.." && pwd)"      # installation or repo root
+   PY="$HERE/python/bin/python"                  # venv of an installation
+   [ -x "$PY" ] || PY="python3"                  # clone: system python (stdlib only)
+
+#===============================================================================
+# print version: aibos --version
+#===============================================================================
+
+   if [ "$*" == "--version" ]; then
+      cat "$HERE/VERSION"; exit 0
+   fi
+
+#===============================================================================
+# the working directory is gone: the first absolute path, else a message (V0.6, memo 204: H34)
+#===============================================================================
+
+   if ! pwd -P >/dev/null 2>&1 || [ ! -d "$PWD" ]; then
+      ABS=""
+      for A in "$@"; do
+         case "$A" in
+            /*) if [ -d "$A" ]; then ABS="$A"; elif [ -d "$(dirname "$A")" ]; then ABS="$(dirname "$A")"; fi ;;
+         esac
+         [ -n "$ABS" ] && break
+      done
+      if [ -n "$ABS" ]; then
+         cd "$ABS" 2>/dev/null || exit 1
+      elif [ "$1" == "--context" ]; then          # hooks: no output (spec 02)
+         exit 0
+      else
+         echo "*** aibos: the current directory no longer exists; change to an existing one (e.g. cd ~) or give an absolute path" >&2
+         exit 1
+      fi
+   fi
+
+#===============================================================================
+# master context: aibos --context [<option>] [<args>]  (spec 02; without loading the CLI, for the hooks)
+#===============================================================================
+
+   if [ "$1" == "--context" ]; then
+      shift
+      case "$1" in -*) ;; *) set -- --context "$@";; esac   # no option: print the master context
+      PYTHONPATH="$HERE/lib" exec "$PY" -m aibos.context "$@"
+   fi
+
+#===============================================================================
+# everything else is handled by the Python part
+#===============================================================================
+
+   if [ "$1" != "" ]; then
+      PYTHONPATH="$HERE/lib" exec "$PY" -m aibos.cli "$@"
+   fi
+
+#===============================================================================
+# cannot deal with anything else ...
+#===============================================================================
+
+   "$0" -?
+   exit 1

@@ -1,5 +1,5 @@
 #!/bin/bash
-# worker-forwarder: ~/.aios/bin/<program>, call the version of a workhorse that lock.yaml names (spec 07)
+# worker-forwarder: ~/.aibos/bin/<program>, call the version of a workhorse that lock.yaml names (spec 07)
 
    PROG="$(basename "$0")"
 
@@ -7,9 +7,9 @@
       echo "   usage: $PROG <args>      # call $PROG of the workhorse version locked for cwd"
       echo "          $PROG ---which    # show the chosen installation and why"
       echo "          $PROG ---version  # print version of this forwarder"
-      echo '   order: packages of the program from workers.yaml, nearest .aios/lock.yaml from cwd'
+      echo '   order: packages of the program from workers.yaml, nearest .aibos/lock.yaml from cwd'
       echo '          upwards that names one of them, its version, <workers>/<package>/v<version>/bin'
-      echo '   see also: aios --worker, aios --fetch'
+      echo '   see also: aibos --worker, aibos --fetch'
       exit 1
    fi
 
@@ -25,8 +25,8 @@
 # helpers: workers.yaml and lock.yaml in the subset of spec 04, read without a YAML parser
 #===============================================================================
 
-   PREFIX="${AIOS_PREFIX:-/opt/aios}"
-   ROOT="$PREFIX"; [ -f "$PREFIX/workers.yaml" ] || ROOT="$HOME/.aios"
+   PREFIX="${AIBOS_PREFIX:-/opt/aibos}"
+   ROOT="$PREFIX"; [ -f "$PREFIX/workers.yaml" ] || ROOT="$HOME/.aibos"
    STATE="$ROOT/workers.yaml"
 
    packages_of() {                                  # packages that bring the program $1
@@ -44,12 +44,12 @@
       PKGS="$(packages_of "$PROG")"
       D="$(pwd -P)"
       while :; do
-         if [ -f "$D/.aios/lock.yaml" ]; then
+         if [ -f "$D/.aibos/lock.yaml" ]; then
             for P in $PKGS; do
-               V="$(locked "$D/.aios/lock.yaml" "$P")"
+               V="$(locked "$D/.aibos/lock.yaml" "$P")"
                if [ -n "$V" ]; then
                   PKG="$P"; VER="$V"; TARGET="$ROOT/workers/$P/v$V/bin/$PROG"
-                  WHY="$P $V in $D/.aios/lock.yaml"; return 0
+                  WHY="$P $V in $D/.aibos/lock.yaml"; return 0
                fi
             done
          fi
@@ -79,7 +79,7 @@
       exit 127
    fi
    if [ ! -x "$TARGET" ]; then
-      echo "*** $PROG: $PKG $VER is not fully loaded; aios --fetch" >&2
+      echo "*** $PROG: $PKG $VER is not fully loaded; aibos --fetch" >&2
       exit 127
    fi
-   PATH="$HOME/.aios/bin:$PATH" exec "$TARGET" "$@"
+   PATH="$HOME/.aibos/bin:$PATH" exec "$TARGET" "$@"

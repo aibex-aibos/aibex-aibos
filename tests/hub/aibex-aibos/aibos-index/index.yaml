@@ -1,0 +1,62 @@
+schema: 1
+packages:
+  - name: skill-memo
+    type: skill
+    description: Memo-Stil für Projekte in AIBOS-Vaults
+  - name: assistent-gaertner
+    type: assistant
+    description: Demo-Assistent Gärtner, rechnet nur mit Äpfeln und Birnen
+  - name: assistent-astronom
+    type: assistant
+    description: Demo-Assistent Astronom, rechnet nur mit Sonne und Mond, nennt Sterndaten
+  - name: assistant-gaertner
+    type: assistant
+    description: Demo-Assistent Gärtner, rechnet nur mit Äpfeln und Birnen
+  - name: assistant-astronom
+    type: assistant
+    description: Demo-Assistent Astronom, rechnet nur mit Sonne und Mond, nennt Sterndaten
+  - name: app-taschenrechner
+    type: app
+    description: Programmierbarer RPN-Taschenrechner mit lernenden Funktionstasten
+  - name: knowledge-orion
+    type: knowledge
+    description: Die hellsten Sterne des Orion
+  - name: test-konflikt
+    type: skill
+    description: Testpaket mit unerfüllbarer Abhängigkeit
+  - name: test-worker
+    type: app
+    description: Testpaket mit Arbeitspferd
+  - name: test-hook
+    type: skill
+    description: Testpaket mit Hook
+  - name: test-befehl
+    type: app
+    description: Testpaket mit Befehl
+  - name: test-assistent
+    type: assistant
+    description: Testpaket mit einem Assistenten
+  - name: worker-test
+    type: worker
+    description: Testpaket Arbeitspferd mit kind python
+  - name: worker-test-script
+    type: worker
+    description: Testpaket Arbeitspferd mit kind script
+  - name: worker-test-anders
+    type: worker
+    description: Testpaket Arbeitspferd mit demselben Programm wie worker-test
+  - name: skill-test-nutzer
+    type: skill
+    description: Testpaket Skill, der das Arbeitspferd worker-test nutzt
+  - name: distribution-demo
+    type: distribution
+    description: Testdistribution mit Kernel
+  - name: distribution-zwei
+    type: distribution
+    description: Zweite Testdistribution mit Kernel
+  - name: distribution-sammlung
+    type: distribution
+    description: Testdistribution ohne Kernel
+  - name: distribution-kaputt
+    type: distribution
+    description: Testdistribution mit einem Kernel ohne Tag

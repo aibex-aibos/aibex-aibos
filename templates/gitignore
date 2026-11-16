@@ -2,7 +2,7 @@
 .claude/skills/
 .claude/worktrees/
 .agents/
-.aios/registry
-.aios/backup/
-.aios/workspace.local.yaml
+.aibos/registry
+.aibos/backup/
+.aibos/workspace.local.yaml
 @Secret/
