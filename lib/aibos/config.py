@@ -13,6 +13,7 @@ import re
 from pathlib import Path
 
 from . import paths
+from . import legacy
 
 KEY = re.compile(r"^([A-Za-z_][\w-]*):(?:\s+(.*?))?\s*$")
 SUBKEY = re.compile(r"^([A-Za-z0-9_][\w./-]*):(?:\s+(.*?))?\s*$")   # skills: name or assistant/name
@@ -244,12 +245,18 @@ class Config:
         self.files = []                             # chain files, nearest first
         self.warnings = []
         self.packages = {}                          # config.yaml -> packages: of that file
+        self.alt = None                             # aios: in <vault>/.aios/config.yaml until 0.8 (F270, F272)
         self.hub_entries = []                       # (config.yaml, level, hubs:) vault first
 
     @property
     def aibos(self):
         """Version the vault root binds to (without v), None = no binding."""
         return self.values.get("aibos")
+
+    @property
+    def binding(self):
+        """Version of the binding: aibos:, else the Altbindung aios: of .aios/config.yaml (F272)."""
+        return self.aibos or self.alt
 
     @property
     def legacy(self):
@@ -264,6 +271,8 @@ class Config:
             return "none"
         if self.aibos:
             return "aibos" if is_aibos(self.aibos) else "alt"
+        if self.alt and is_aibos(self.alt):          # Altbindung aios: 0.6.x (spec 02; F272, FL12)
+            return "alt"
         return "legacy" if self.legacy else "none"
 
     @property
@@ -352,6 +361,18 @@ def load(path="."):
         if d == home:                               # ~/.aibos/config.yaml is the home level
             continue
         f = d / ".aibos" / "config.yaml"
+        old = d / legacy.OLD_DIR / "config.yaml"
+        if not f.is_file() and d == dirs[-1] and old.is_file():     # vault root of AIOS (F270)
+            cfg.files.append(old)
+            try:
+                data = read(old)
+            except (ConfigError, UnicodeDecodeError) as e:
+                cfg.warnings.append(f"{e}; file ignored")
+                data = {}
+            if data.get(legacy.OLD_KEY):
+                cfg.alt, cfg.source["alt"] = str(data[legacy.OLD_KEY]), old
+            cfg.take(old, "vault", {k: v for k, v in data.items() if k == "legacy"})
+            continue
         if f.is_file():
             level = "vault" if d == dirs[-1] else "project"     # a worktree may replace the root
             cfg.files.append(f)
@@ -377,8 +398,8 @@ def describe(cfg):
         return str(f) if f else "default"
     lines = [f"path      {cfg.path}",
              f"vault     {cfg.vault or '- (outside a vault)'}"]
-    if os.environ.get("AIBOS_HOME"):
-        lines.append(f"AIBOS_HOME {os.environ['AIBOS_HOME']} (chooses the version)")
+    if legacy.env("AIBOS_HOME"):
+        lines.append(f"AIBOS_HOME {legacy.env('AIBOS_HOME')} (chooses the version)")
     lines.append(f"aibos      {cfg.aibos} ({where(cfg.source.get('aibos'))})" if cfg.aibos
                  else "aibos      - (no binding)")
     if cfg.legacy:

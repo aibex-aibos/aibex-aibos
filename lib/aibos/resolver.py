@@ -19,6 +19,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from . import semver
+from . import legacy
 
 FROM = "from:"                                      # hub key of a package from a repo (--from)
 
@@ -136,10 +137,16 @@ class Resolver:
                          reverse=True)
         if not fitting:
             return None, "no version fulfils the ranges"
+        first = None
         for v in fitting:
             m = self.source.manifest(name, hub, str(v))
             if semver.kernel_fits(m.requires, self.kernel):
                 return v, m
+            first = first or (v, m)
+        if first and first[1].requires_key == legacy.OLD_KEY:   # a package of AIOS (F283, FL10)
+            v, m = first
+            return None, (f"{name} {v} needs a version for AIBOS {self.kernel.release()} "
+                          f"(requires.aios {m.requires})")
         return None, f"no fitting version runs with AIBOS {self.kernel.release()} (requires.aibos)"
 
     def resolve(self, requests):

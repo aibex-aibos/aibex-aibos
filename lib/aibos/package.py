@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from . import semver
+from . import legacy
 from .install import frontmatter
 
 NAME = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")
@@ -43,6 +44,7 @@ class Manifest:
     license: str = ""
     userdata: object = None
     warnings: list = field(default_factory=list)
+    requires_key: str = "aibos"                   # aios in packages of AIOS (F283)
 
     @property
     def is_module(self):
@@ -165,13 +167,14 @@ def parse(data, where="manifest.yaml", kernel=False):
         raise ManifestError(f"{where}: workers: is gone since AIBOS 0.5; a workhorse is a package "
                             "of type: worker (spec 07)")
     requires = data["requires"]
-    if not isinstance(requires, dict) or "aibos" not in requires:
+    req_key = legacy.requires_key(requires)
+    if req_key is None:
         raise ManifestError(f"{where}: requires needs aibos: \"<range>\"")
     try:
-        req = semver.Range.parse(requires["aibos"])
+        req = semver.Range.parse(requires[req_key])
         depends = {}
         for dep, rng in (data.get("depends") or {}).items():
-            if dep == "aibos":
+            if dep in ("aibos", "aios"):
                 raise ManifestError(f"{where}: depends must not name aibos, use requires")
             problem = name_problem(dep)
             if problem:
@@ -208,7 +211,8 @@ def parse(data, where="manifest.yaml", kernel=False):
     elif "worker" in data:
         raise ManifestError(f"{where}: worker: is only allowed for type: worker")
     return Manifest(name, version, kind, str(data["description"]), req, depends, contents, worker,
-                    kernel_range, str(data.get("license") or ""), data.get("userdata"), warnings)
+                    kernel_range, str(data.get("license") or ""), data.get("userdata"), warnings,
+                    requires_key=req_key)
 
 
 def load(folder, kernel=False):

@@ -639,7 +639,7 @@ def main(argv):
         print("\n".join(listing(ctx)))
         return 0
     if ctx.mode in ("none", "alt"):
-        mode = "none" if ctx.mode == "none" else f"alt-{ctx.cfg.aibos}"
+        mode = "none" if ctx.mode == "none" else f"alt-{ctx.cfg.binding}"
         if cmd == "--id":
             print(f"id=- files=0 cwd={ctx.cwd} mode={mode}")
         else:

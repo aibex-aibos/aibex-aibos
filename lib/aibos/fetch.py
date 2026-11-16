@@ -15,6 +15,7 @@ import tempfile
 from pathlib import Path
 
 from . import backup, config, deploy, hub, package, paths, resolver, semver, ui, worker
+from . import legacy
 from .deploy import MARKER, digest_of, read_marker
 from .install import frontmatter, make_writable
 from .ui import Abort, Plan, say, warn
@@ -53,7 +54,7 @@ def request(entry):
     """Request from a packages: entry: a range or {range, hub, from, only}."""
     try:
         if isinstance(entry, dict):
-            return resolver.Request(semver.Range.parse(entry.get("range", "*")), entry.get("hub") or None,
+            return resolver.Request(semver.Range.parse(entry.get("range", "*")), legacy.hub(entry.get("hub")) or None,
                                     entry.get("from") or None)
         return resolver.Request(semver.Range.parse(entry))
     except semver.VersionError as e:
@@ -102,7 +103,7 @@ def locked(lock):
     """{name: (version, hub key)} of lock.yaml for the resolver."""
     out = {}
     for name, e in (lock.get("packages") or {}).items():
-        key = resolver.FROM + e["from"] if e.get("from") else e.get("hub")
+        key = resolver.FROM + e["from"] if e.get("from") else legacy.hub(e.get("hub"))
         if e.get("version") and key:
             out[name] = (str(e["version"]), key)
     return out
@@ -221,7 +222,7 @@ class Fetch:
             return None
         picks = {}
         for name, e in entries.items():
-            key = resolver.FROM + e["from"] if e.get("from") else e.get("hub")
+            key = resolver.FROM + e["from"] if e.get("from") else legacy.hub(e.get("hub"))
             d = self.source.folder(name, key, str(e.get("version")))
             if not (d / ".git").is_dir():
                 return None
@@ -417,7 +418,7 @@ class Fetch:
                          lambda n=name, v=ver, f=found: worker.add_users(n, v, f))
                 continue
             e = old.get(name) or {}
-            key = resolver.FROM + e["from"] if e.get("from") else e.get("hub")
+            key = resolver.FROM + e["from"] if e.get("from") else legacy.hub(e.get("hub"))
             d = self.source.folder(name, key, ver) if key else None
             try:
                 m = package.load(d) if d and (d / "manifest.yaml").is_file() else None
@@ -447,7 +448,7 @@ def parse_spec(spec):
     m = SPEC.match(spec)
     if not m:
         raise Abort(f"{spec}: expected [<hub>/]<package>[<range>], e.g. taschenrechner~=0.1.0")
-    hub_name, name, rng = m.group(1), m.group(2), m.group(3).strip()
+    hub_name, name, rng = legacy.hub(m.group(1)), m.group(2), m.group(3).strip()
     if rng and not rng[0] in "=!<>~*":
         raise Abort(f"{spec}: expected [<hub>/]<package>[<range>], e.g. taschenrechner~=0.1.0")
     try:
@@ -490,6 +491,7 @@ def open_files(project, dirs=()):
 def add(spec, hub_name=None, repo=None, to=None):
     """aibos --fetch [<hub>/]<package>[<range>] [--hub <hub>] [--from <repo>] [--to <project>]."""
     named, name, rng = parse_spec(spec)
+    hub_name = legacy.hub(hub_name)
     if named and hub_name and named != hub_name:
         raise Abort(f"{spec}: the hub {named} and --hub {hub_name} differ")
     hub_name = named or hub_name

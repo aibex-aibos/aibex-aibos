@@ -1,6 +1,7 @@
 """Fixed locations of AIBOS, redirectable for tests (spec 04, Umlenkung fuer Tests)."""
 
 import os
+from . import legacy
 from pathlib import Path
 
 
@@ -10,7 +11,7 @@ def home() -> Path:
 
 def prefix() -> Path:
     """Shared installations, default /opt/aibos (AIBOS_PREFIX)."""
-    return Path(os.environ.get("AIBOS_PREFIX", "/opt/aibos"))
+    return Path(legacy.env("AIBOS_PREFIX", "/opt/aibos"))
 
 
 def user_dir() -> Path:
@@ -20,7 +21,7 @@ def user_dir() -> Path:
 
 def claude_dir() -> Path:
     """Claude Code configuration, ~/.claude (AIBOS_CLAUDE_DIR)."""
-    return Path(os.environ.get("AIBOS_CLAUDE_DIR", str(home() / ".claude")))
+    return Path(legacy.env("AIBOS_CLAUDE_DIR", str(home() / ".claude")))
 
 
 def bin_dir() -> Path:
@@ -52,18 +53,17 @@ def user_versions() -> Path:
 
 def sudo_cmd() -> str:
     """Program used as sudo (AIBOS_SUDO), tests never call the real sudo."""
-    return os.environ.get("AIBOS_SUDO", "sudo")
+    return legacy.env("AIBOS_SUDO", "sudo")
 
 
 def stup_url() -> str:
     """Source of stup (AIBOS_STUP_URL), may be a file:// URL in tests."""
-    return os.environ.get(
-        "AIBOS_STUP_URL", "https://raw.githubusercontent.com/bluccino/tool-stup/master/bin/stup")
+    return legacy.env("AIBOS_STUP_URL", "https://raw.githubusercontent.com/bluccino/tool-stup/master/bin/stup")
 
 
 def pip_cmd() -> str:
     """Command that installs python/requirements.txt into the venv (AIBOS_PIP), empty = default."""
-    return os.environ.get("AIBOS_PIP", "")
+    return legacy.env("AIBOS_PIP", "")
 
 
 def cwd() -> str:

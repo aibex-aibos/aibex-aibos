@@ -17,6 +17,7 @@ import sys
 from pathlib import Path
 
 from . import deploy, elements, package, paths, ui
+from . import legacy
 from .install import make_readonly, make_writable
 from .ui import Abort, Plan, say, warn
 
@@ -159,7 +160,7 @@ def run(cmd, **kw):
 
 
 def env_for(d, target):
-    return dict(os.environ, AIBOS_PACKAGE=str(d), AIBOS_WORKER_DIR=str(target),
+    return dict(os.environ, **legacy.package_env(AIBOS_PACKAGE=str(d), AIBOS_WORKER_DIR=str(target)),
                 PATH=f"{bin_dir()}{os.pathsep}{os.environ.get('PATH', '')}")
 
 
@@ -210,7 +211,7 @@ def setup(d, m, project):
             run([kernel_python(), "-m", "venv", str(new)])
             pip = [str(new / "bin" / "python"), "-m", "pip", "install", "-q", "--disable-pip-version-check",
                    "--require-hashes", "--no-deps", "-r", str(d / w["requirements"])]
-            links = os.environ.get("AIBOS_PIP_FIND_LINKS")
+            links = legacy.env("AIBOS_PIP_FIND_LINKS")
             if links:
                 pip += ["--no-index", "--find-links", links]
             run(pip, cwd=d)
@@ -519,7 +520,7 @@ def run_command(args):
         for p in elements.packages(ms):
             f = p.dir / "commands" / name
             if f.is_file() and p.deployed(name):
-                env = dict(os.environ, AIBOS_PACKAGE=str(p.dir), AIBOS_PROJECT=str(ms.parent),
-                           AIBOS_DATA=str(ms.parent / "@Data" / p.name))
+                env = dict(os.environ, **legacy.package_env(AIBOS_PACKAGE=str(p.dir), AIBOS_PROJECT=str(ms.parent),
+                           AIBOS_DATA=str(ms.parent / "@Data" / p.name)))
                 return subprocess.run(["bash", str(f), *rest], env=env).returncode
     raise Abort(f"no deployed command {name} in the packages of the chain")

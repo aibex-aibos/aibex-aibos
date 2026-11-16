@@ -18,6 +18,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from . import config, package, paths, semver, ui
+from . import legacy
 from .resolver import FROM
 from .ui import Abort, Plan, say
 
@@ -37,7 +38,7 @@ class Hub:
 def github(name):
     """Base URL of a hub that is not in the hub list: the GitHub owner <name> (spec 06);
     AIBOS_GITHUB redirects it for tests (spec 04)."""
-    return os.environ.get("AIBOS_GITHUB", GITHUB).rstrip("/") + "/" + name
+    return legacy.env("AIBOS_GITHUB", GITHUB).rstrip("/") + "/" + name
 
 
 def entries(raw):
@@ -46,7 +47,7 @@ def entries(raw):
     items = raw.items() if isinstance(raw, dict) else [
         next(iter(x.items())) if isinstance(x, dict) else (x, None) for x in raw]
     for name, url in items:
-        name = str(name).strip()
+        name = legacy.hub(str(name).strip())
         if name:
             out.append((name, str(url).strip() if url else github(name)))
     return out
@@ -55,11 +56,12 @@ def entries(raw):
 def hub_list(cfg=None):
     """The hub list in search order: AIBOS_HUBS, else hubs: of the vault root before home (the
     vault root wins for the same name), else [aibex-aibos] (spec 06, Hub-Liste)."""
-    env = os.environ.get("AIBOS_HUBS")
+    env = legacy.env("AIBOS_HUBS")
     if env is not None and env.strip():
         hubs = []
         for item in env.split():
             name, _, url = item.partition("=")
+            name = legacy.hub(name)
             hubs.append(Hub(name, url or github(name), "AIBOS_HUBS"))
         return hubs
     cfg = cfg or config.load(paths.cwd())
@@ -196,6 +198,7 @@ def library(arg=None):
     hubs = hub_list()
     if arg and "/" in arg:                          # <hub>/<paket>: only this hub, also outside the list
         name, _, arg = arg.partition("/")
+        name = legacy.hub(name)
         hubs = [h for h in hubs if h.name == name] or [Hub(name, github(name), "named")]
     if arg:
         src = GitSource(hubs)
@@ -315,7 +318,7 @@ def command(args):
         say(f"=> hub {name} is not in the hub list of {file}, nothing to do")
         return 0
     plan = Plan()
-    first = args[0] == "add" and name != DEFAULT and not os.environ.get("AIBOS_HUBS", "").strip() \
+    first = args[0] == "add" and name != DEFAULT and not legacy.env("AIBOS_HUBS", "").strip() \
         and not config.load(paths.cwd()).hub_entries
     if first:                                       # the first list keeps the default hub (memo 60, D1)
         plan.add(f"{file}: hubs: {DEFAULT} {github(DEFAULT)} (the default, kept in the new list)",

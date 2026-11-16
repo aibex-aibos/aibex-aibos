@@ -18,6 +18,7 @@ import sys
 from pathlib import Path
 
 from . import config, paths
+from . import legacy
 
 FORBIDDEN = (";", "&", "|", "`", "$(", ">", "<", "\n", "\r")      # E3: a single command only
 MANAGED = (Path("/Library/Application Support/ClaudeCode/managed-settings.json"),   # macOS
@@ -47,7 +48,7 @@ def single(command):
 
 
 def managed_files():
-    env = os.environ.get("AIBOS_MANAGED_SETTINGS")
+    env = legacy.env("AIBOS_MANAGED_SETTINGS")
     return [Path(env)] if env else list(MANAGED)
 
 

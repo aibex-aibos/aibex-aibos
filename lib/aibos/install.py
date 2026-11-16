@@ -22,6 +22,7 @@ import urllib.request
 from pathlib import Path
 
 from . import paths
+from . import legacy
 from .ui import Abort, Plan, confirm, extra, say, warn  # noqa: F401 - Abort is part of the API
 
 
@@ -294,7 +295,7 @@ def basic_kit(dev=False):
     """Missing parts of the basic kit (python3 >= 3.11 with venv and pip, git) and, with dev, of
     the developer kit (gh); spec 04, aibos --prepare; V0.5, memos 31, 91 (B11: workhorses need 3.11). AIBOS_PREPARE_PATH replaces
     PATH for this check (tests)."""
-    path = os.environ.get("AIBOS_PREPARE_PATH")
+    path = legacy.env("AIBOS_PREPARE_PATH")
     missing = []
     py = shutil.which("python3", path=path)
     good = False
@@ -688,7 +689,7 @@ def plan_user(plan, src, repo):
 
 def own_uid():
     """The uid that counts as the current user; AIBOS_TEST_UID in tests (spec 04; V0.6, memo 153: F151)."""
-    v = os.environ.get("AIBOS_TEST_UID", "")
+    v = legacy.env("AIBOS_TEST_UID", "")
     return int(v) if v.isdigit() else os.getuid()
 
 
@@ -797,7 +798,7 @@ def binding(v):
     if not v.is_dir():
         return "missing"
     cfg = config.load(v)
-    return f"{cfg.kind} {cfg.aibos}" if cfg.kind in ("aibos", "alt") else cfg.kind
+    return f"{cfg.kind} {cfg.binding}" if cfg.kind in ("aibos", "alt") else cfg.kind
 
 
 def vaults():
@@ -848,7 +849,8 @@ def vault_lines(tag):
     for v in known_vaults():
         cfg = config.load(v)
         if cfg.kind == "alt":
-            lines.append(f"vault {v}: binding {cfg.aibos} below 0.6; change over with: aibos --activate {tag} {v}")
+            lines.append(f"vault {v}: binding {cfg.binding} " + ("of AIOS" if cfg.alt and not cfg.aibos else "below 0.6")
+                         + f"; change over with: aibos --activate {tag} {v}")
         elif cfg.kind in ("aibos", "legacy"):
             lines.append(f"vault {v}: " + (f"AIBOS workspace ({cfg.aibos})" if cfg.kind == "aibos" else "legacy: ai-brain"))
     return lines

@@ -1,6 +1,7 @@
 """Dialog of the writing commands: plan, one confirmation, abort (spec 01, I7)."""
 
 import os
+from . import legacy
 import sys
 
 
@@ -37,7 +38,7 @@ class Plan:
     def run(self):
         """Run the actions in order. AIBOS_TEST_FAIL=<n>[:crash] (tests, spec 04) lets the n-th
         action fail, or with :crash end the process there without any clean-up."""
-        fail = os.environ.get("AIBOS_TEST_FAIL", "")
+        fail = legacy.env("AIBOS_TEST_FAIL", "")
         n = 0
         for _, action in self.steps:
             if action:

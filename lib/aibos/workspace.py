@@ -1106,7 +1106,7 @@ def handover(target, bound):
         warn(f"AIBOS {bound} is bound but not installed; the sync runs with {running()}")
         return False
     say(f"=> hand over to the bound version {bound}: aibos --workspace sync")
-    env = {k: v for k, v in os.environ.items() if k != "AIBOS_HOME"}
+    env = {k: v for k, v in os.environ.items() if k not in ("AIBOS_HOME", "AIOS_HOME")}
     r = subprocess.run([str(Path(found[0]) / "bin" / "aibos"), "--workspace", "sync", "--yes"],
                        cwd=str(target), env=env)
     if r.returncode:
