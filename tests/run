@@ -14,7 +14,7 @@
 #===============================================================================
 
    if [ "$*" == "--version" ]; then
-      echo "0.1.0"; exit 0
+      echo "0.2.0"; exit 0
    fi
 
 #===============================================================================
@@ -23,6 +23,10 @@
 
    if [ "$2" == "" ]; then
       DIR="$(cd "$(dirname "$0")" && pwd)"
+      if ! python3 -c "import yaml" 2>/dev/null; then    # H49: without PyYAML most checks fail
+         echo "*** tests/run: needs a python3 with PyYAML first in PATH (e.g. the python/bin of an installation); found: $(command -v python3 || echo none)" >&2
+         exit 1
+      fi
       REAL_HOME="$HOME"
       TOTAL_PASS=0; TOTAL_FAIL=0
       for T in "$DIR"/${1:-t}*.sh; do

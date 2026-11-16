@@ -9,7 +9,7 @@ Das Repo liegt unter `~/Workspace/§AIBOS/A-AIOS/AA-AIbex-AIOS/@Package/aibex-ai
 | # | Schritt | Ergebnis | Spec | Stand |
 |---|---|---|---|---|
 | 0 | **Repo auf 0.7:** `VERSION`, `manifest.yaml`, `STATUS.md`, `CLAUDE.md` | `VERSION` und `manifest.yaml` bleiben `0.6.6` bis Schritt 2, weil der Test-Hub noch Pakete mit `<0.7` hat (`knowledge-orion` 0.1.1; ein erster Lauf mit `0.7.0-dev`: 4 Fehler in t20, H33; FL20); `STATUS.md` neu für v0.7 (v0.6.4–v0.6.6 im Tag `v0.6.6`); `CLAUDE.md` mit den Memos von v0.7 und dem Arbeitsrechner auf 0.6.6; `tests/run` grün (mit `python3` samt PyYAML vorn im `PATH`) | 01 | ☑ abgeschlossen |
-| 1 | **H49:** `tests/run` prüft zu Beginn auf ein `python3` mit PyYAML | | 01 | ☐ |
+| 1 | **H49:** `tests/run` prüft zu Beginn auf ein `python3` mit PyYAML | `tests/run` 0.2.0: ohne PyYAML eine Zeile auf stderr und Exit 1 (geprüft mit dem `python3` von Homebrew), mit PyYAML 1657 Prüfungen grün (Konzept-Repo V0.7, Memo 21: F301, FL21) | 01 | ☑ abgeschlossen |
 | 2 | **Umbenennung des Codes** in einem Commit (FL17), mit `VERSION` `0.7.0-dev` (FL20): `bin/aibos`, `lib/aibos/`, `skills/aibos/aibos-*`, `templates/`, Test-Hub `aibex-aibos`, Tests | | 01–07 | ☐ |
 | 3 | **Übergang beim Lesen:** `AIOS_*`, `.aios/`, `aios:`, `requires.aios` (Bereich streng), Hub `aibex-aios`, Variablen an Pakete unter beiden Namen | | 04, 06, 07 | ☐ |
 | 4 | **Weiterleiter 0.5.0:** beide Bindungen, Alias `bin/aios`, Kopfzeile | | 04 | ☐ |
