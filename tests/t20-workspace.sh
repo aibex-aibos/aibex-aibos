@@ -341,8 +341,35 @@ This vault is an AIBOS workspace with sync: auto." "block with sync: auto"
    assert_contains "$OUT" "P-Vier: no upstream; git -C P-Vier push -u origin main" "B36: hint in the report"
    assert_eq "$(git -C "$RM/p-vier" rev-list --all | wc -l | tr -d ' ')" "0" "B36: sync pushes no repo without upstream (F217)"
    assert_contains "$(A "$N" --workspace status)" "- P-Vier: no upstream" "B36: hint in status"
-   git -C "$N/P-Vier" push -q -u origin main
+   OUT="$(A "$N" --workspace sync --plan)"         # v0.7, B41: P-Vier is in workspace.yaml now
+   assert_contains "$OUT" "first push of main in P-Vier (git push -u origin main)" "B41: the plan names the first push"
+   OUT="$(A "$N" --workspace sync --yes)"
+   assert_contains "$OUT" "P-Vier: pushed (first push of main, upstream origin/main)" "B41: first push in the report"
+   assert_eq "$(git -C "$N/P-Vier" rev-parse --abbrev-ref '@{upstream}')" "origin/main" "B41: the upstream is set"
+   assert_eq "$(git -C "$RM/p-vier" rev-list --all | wc -l | tr -d ' ')" "1" "B41: the commit is on the server"
    assert_not_contains "$(A "$N" --workspace sync --plan)" "P-Vier: no upstream" "B36: no hint once the upstream is set"
+   mkdir -p "$N/P-Eins/PE-Probe/@"; git -C "$N/P-Eins/PE-Probe" init -q -b main      # v0.7, H48
+   echo p > "$N/P-Eins/PE-Probe/p.md"; git -C "$N/P-Eins/PE-Probe" add -A; git -C "$N/P-Eins/PE-Probe" commit -qm probe
+   printf '/PE-Probe/\n' >> "$N/P-Eins/.gitignore"; git -C "$N/P-Eins" commit -qam "exclude PE-Probe"
+   OUT="$(A "$N/P-Eins/PE-Probe" --workspace sync --plan)"
+   assert_contains "$OUT" "note: P-Eins/PE-Probe has no remote and is not in workspace.yaml; this plan is for P-Eins" "H48: the plan names the project without remote"
+   assert_not_contains "$(A "$N/P-Eins" --workspace sync --plan)" "has no remote and is not in workspace.yaml" "H48: no note in a listed project"
+   OUT="$(PYTHONPATH="$SRC/lib" python3 -c "
+from aibos import workspace as w
+print(w.same_repo('git@github.com:o/r.git', 'https://github.com/o/r'),
+      w.same_repo('ssh://git@github.com/o/r', 'https://github.com/o/r.git'),
+      w.same_repo('https://github.com/aibex-aios/r', 'git@github.com:aibex-aibos/r.git'),
+      w.same_repo('git@github.com:o/r', 'https://github.com/o/s'),
+      w.same_repo('git@gitlab.com:o/r', 'https://github.com/o/r'))")"
+   assert_eq "$OUT" "True True True False False" "B40: the same repo in another form or organisation (F264)"
+   G40="$SANDBOX/b40"; mkdir -p "$G40/P-Sechs/@"; git -C "$G40/P-Sechs" init -q -b main
+   git -C "$G40/P-Sechs" remote add origin git@github.com:aibex-aibos/N-P-Sechs.git
+   OUT="$(PYTHONPATH="$SRC/lib" python3 -c "
+from pathlib import Path
+from aibos import workspace as w
+e, h = w.scan(Path('$G40'), {'gh': 'https://github.com/aibex-aios'}, set(), set())
+print(e)")"
+   assert_contains "$OUT" "'remote': 'gh'" "B40: step 5 takes remote: for the same base in another form"
    repo p-drei @/README.md; git clone -q "file://$RM/p-drei" "$N/P-Drei"; printf '/P-Drei/\n' >> "$N/.gitignore"
    git -C "$N" commit -qam "exclude P-Drei"
    OUT="$(A "$N" --workspace sync --yes)"

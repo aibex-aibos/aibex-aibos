@@ -20,7 +20,7 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import config, paths, project, ui
+from . import config, legacy, paths, project, ui
 from .ui import Abort, Plan, say, warn
 
 FILE = Path(".aibos") / "workspace.yaml"
@@ -343,9 +343,19 @@ def origin_of(d):
     return git(d, "remote", "get-url", "origin").stdout.strip()
 
 
+GITHUB_SSH = re.compile(r"^(?:ssh://)?git@github\.com[:/]")
+
+
+def norm_url(u):
+    """B40, F264: git@github.com:<o>/<r>(.git), ssh://git@github.com/<o>/<r> and
+    https://github.com/<o>/<r>(.git) are the same repo, aibex-aios the same as aibex-aibos (until 0.8)."""
+    u = u.strip().rstrip("/").removesuffix(".git").removeprefix("file://")
+    u = GITHUB_SSH.sub("https://github.com/", u)
+    return legacy.url(u)
+
+
 def same_repo(a, b):
-    norm = lambda u: u.rstrip("/").removesuffix(".git").removeprefix("file://")
-    return norm(a) == norm(b)
+    return norm_url(a) == norm_url(b)
 
 
 def conflict(item, d):
@@ -486,7 +496,7 @@ def savable(item, d):
     """Why the local changes of d are not saved, or None (F234)."""
     if conflict(item, d):
         return conflict(item, d)
-    if git(d, "rev-parse", "--abbrev-ref", "@{upstream}").returncode:
+    if git(d, "rev-parse", "--abbrev-ref", "@{upstream}").returncode and not first_push_due(item, d):
         return "no upstream"
     if kind(d, item.revision) != "branch":
         return f"fixed revision {item.revision}"
@@ -875,6 +885,42 @@ def secrets(d):
     return hits
 
 
+def first_push_due(item, d):
+    """B41: the repo is in workspace.yaml, has an origin, no upstream, and its checked-out branch
+    (that of workspace.yaml) is missing on the server."""
+    if not origin_of(d) or not git(d, "rev-parse", "--abbrev-ref", "@{upstream}").returncode:
+        return False
+    branch = git(d, "rev-parse", "--abbrev-ref", "HEAD").stdout.strip()
+    if branch in ("", "HEAD") or branch != item.revision:
+        return False
+    r = git(d, "ls-remote", "--heads", "origin", branch)
+    return r.returncode == 0 and not r.stdout.strip()
+
+
+def first_push(path, d, kept):
+    """B41: git push -u origin <branch>, never tags or --force, after the check for secrets over
+    all commits of the branch."""
+    if path in kept:
+        report(path, "not pushed", kept[path])
+        return
+    out = git(d, "log", "--format=%x00%h", "--name-only", "HEAD").stdout
+    hits, sha = [], ""
+    for line in out.splitlines():
+        if line.startswith("\x00"):
+            sha = line[1:]
+        elif line and SECRET.search(line):
+            hits.append((line, sha))
+    if hits:
+        report(path, "push stopped", "secret-like files: " + ", ".join(f"{f} in {s}" for f, s in hits))
+        return
+    branch = git(d, "rev-parse", "--abbrev-ref", "HEAD").stdout.strip()
+    r = git(d, "push", "-q", "-u", "origin", branch)
+    if r.returncode:
+        report(path, "push failed", (r.stderr or r.stdout).strip())
+        return
+    report(path, "pushed", f"first push of {branch}, upstream origin/{branch}")
+
+
 def push(path, d, kept):
     if path in kept:
         report(path, "not pushed", kept[path])
@@ -898,6 +944,11 @@ def push_steps(plan, root, targets, kept):
     """Step 5 of sync: one action per repo; the plan names the outgoing commits."""
     for item in targets:
         d = root if item.path == "." else root / item.path
+        if first_push_due(item, d):                # B41
+            branch = git(d, "rev-parse", "--abbrev-ref", "HEAD").stdout.strip()
+            plan.add(f"first push of {branch} in {item.path} (git push -u origin {branch})",
+                     lambda item=item, d=d: first_push(item.path, d, kept))
+            continue
         ahead = outgoing(d)
         if ahead is None and item.path != ".":
             continue
@@ -989,6 +1040,17 @@ def refuse_off(root):
     return mode
 
 
+def own_project(root, start):
+    """H48: the project of the working directory (nearest folder with @/ and its own repo at or
+    above start, below the vault root), or None."""
+    d = start
+    while d != root and root in d.parents:
+        if (d / "@").is_dir() and (d / ".git").exists():
+            return d
+        d = d.parent
+    return None
+
+
 def project_of(root, start):
     """B33: without a path the project of the working directory counts: the nearest entry of
     workspace.yaml at or above start, else the vault root (the whole workspace)."""
@@ -1012,10 +1074,18 @@ def do_sync(path=None, groups=(), accept=(), only=False):
     root = root_of(start)
     activated(root)
     refuse_off(root)
+    note = None
     if path is None or only:
+        own = own_project(root, start)
         start = project_of(root, start)                 # B33: the project, at the vault root all
+        if own is not None and own != start and not origin_of(own):   # H48 (F278)
+            entry = start.relative_to(root).as_posix() if start != root else "."
+            note = (f"note: {own.relative_to(root).as_posix()} has no remote and is not in "
+                    f"workspace.yaml; this plan is for {entry}")
     rel = start.relative_to(root).as_posix() if start != root else "."
     plan = Plan()
+    if note:
+        plan.add(note)
     accept = [Path(os.path.realpath(a)).relative_to(root).as_posix() if os.path.isabs(a) or os.path.exists(a)
               else a for a in accept]
     items = plan_only(plan, root, rel, accept) if only else plan_sync(plan, root, rel, groups, accept)
