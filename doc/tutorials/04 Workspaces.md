@@ -10,7 +10,7 @@ Dieses Tutorial führt in etwa 20 Minuten durch Workspaces von AIbex AIBOS. Ein 
 
 Dazu kommt `remove`: ein Projekt aus dem Workspace entfernen, auf allen Rechnern (Abschnitt 7).
 
-Voraussetzung: AIBOS v0.6.6 ist installiert, der Vault `~/tmp/§Demo` ist ein AIBOS-Workspace (Tutorial 01) und hat ein eigenes Git-Repo. Die Projekte des Beispiels sind Paket-Repos des Hubs `aibex-aibos`; zum Klonen genügt Lesezugriff.
+Voraussetzung: AIBOS v0.7.0 ist installiert, der Vault `~/tmp/§Demo` ist ein AIBOS-Workspace (Tutorial 01) und hat ein eigenes Git-Repo. Die Projekte des Beispiels sind Paket-Repos des Hubs `aibex-aibos`; zum Klonen genügt Lesezugriff.
 
 ## 1. Das Manifest in der Vault-Root
 
@@ -208,4 +208,4 @@ aibos --workspace freeze
 | sync:, Arten | `auto`, `manual`, `off`; Lokal-, Cloud-, AIBOS- und Netz-Drive; Cloud-Ordner immer `off` |
 | Einfrieren | `aibos --workspace freeze`, Abschnitt `workspace:` in `lock.yaml` |
 
-Die vollständigen Regeln stehen in Spec 06 *Pakete und Workspaces*, Abschnitt *Workspaces*, und in Spec 05 *Projekte*, installiert unter `~/.aibos/versions/v0.6.6/doc/spec/`.
+Die vollständigen Regeln stehen in Spec 06 *Pakete und Workspaces*, Abschnitt *Workspaces*, und in Spec 05 *Projekte*, installiert unter `~/.aibos/versions/v0.7.0/doc/spec/`.

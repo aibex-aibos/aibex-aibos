@@ -1,6 +1,8 @@
 #!/bin/bash
 # run: run all AIBOS tests (tests/t*.sh), each in its own sandbox
 
+   exec </dev/null                                  # nothing waits for input (V0.7, memo 26: H55)
+
    if [ "$*" == "-?" ] || [ "$*" == "--help" ]; then
       echo '   usage: tests/run            # run all tests'
       echo '          tests/run t01        # run tests whose file name starts with t01'

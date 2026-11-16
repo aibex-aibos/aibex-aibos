@@ -2,6 +2,8 @@
 # assistants.sh: live test of the assignment of assistants (/aibos-assistant, hooks, resume) with Gärtner and Astronom
 # (V0.6 step 11: wrappers registered in the vault, PreToolUse releases the forwarder; costs tokens)
 
+   exec </dev/null                                  # nothing waits for input (V0.7, memo 26: H55)
+
    if [ "$*" == "-?" ] || [ "$*" == "--help" ]; then
       echo '   usage: tests/live/assistants.sh [<model>]   # headless sessions A1-A6, default model haiku'
       echo '          tests/live/assistants.sh --version   # print version'

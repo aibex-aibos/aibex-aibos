@@ -3,9 +3,11 @@
 # step 5): the candidate of distribution-rothirsch with the kernel of VERSION from a sandbox clone of this
 # repo with the local tag (F59); local hub aibex-local of the package repos, real PyPI
 
+   exec </dev/null                                  # nothing waits for input (V0.7, memo 26: H55)
+
    if [ "$*" == "-?" ] || [ "$*" == "--help" ]; then
       echo '   usage: tests/live/rothirsch.sh [<repos>]  # install distribution-rothirsch from a local hub of the'
-      echo '                                           # tagged package repos in <repos> (default ~/git/AIbex)'
+      echo '                                           # tagged package repos in <repos> (default: clones of AIBOS_LIVE_HUB)'
       echo '          tests/live/rothirsch.sh --version  # print version'
       echo '   not part of tests/run: needs network access to PyPI, takes about two minutes;'
       echo '   the test versions distribution-rothirsch <candidate>-rc8 (if the release wants another kernel),'
@@ -28,7 +30,7 @@
 #===============================================================================
 
    if [ "$2" == "" ]; then
-      REPOS="${1:-$HOME/git/AIbex}"
+      . "$(dirname "$0")/repos.sh"; REPOS="$(repos "$1" distribution-rothirsch skill-video-analyse assistant-anja skill-5-8-zusammenfassung skill-memo worker-yt-dlp worker-deno)" || exit 1   # F289, FL33
       REPO="$(cd "$(dirname "$0")/../.." && pwd)"
       T="${TMPDIR:-/tmp}"; SB="$(cd "$(mktemp -d "${T%/}/aibos-live.XXXXXX")" && pwd -P)" || exit 1
       PASS=0; FAIL=0

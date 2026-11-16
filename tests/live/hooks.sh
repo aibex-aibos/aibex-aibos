@@ -2,6 +2,8 @@
 # hooks.sh: live test of hooks and registration with real headless Claude sessions (steps 6, 7; v0.5.1 step 1;
 # V0.6 step 11: three hooks with the absolute forwarder, the PreToolUse hook releases its calls; costs tokens)
 
+   exec </dev/null                                  # nothing waits for input (V0.7, memo 26: H55)
+
    if [ "$*" == "-?" ] || [ "$*" == "--help" ]; then
       echo '   usage: tests/live/hooks.sh [<model>]   # headless sessions L1-L6, default model haiku'
       echo '          tests/live/hooks.sh --version   # print version'

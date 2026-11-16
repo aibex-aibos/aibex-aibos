@@ -2,6 +2,8 @@
 # skills.sh: live test of the AIBOS skills with real headless Claude sessions (steps 8, 9; V0.6 step 11: kernel
 # skills as registered wrappers with the absolute forwarder, released by the PreToolUse hook; costs tokens)
 
+   exec </dev/null                                  # nothing waits for input (V0.7, memo 26: H55)
+
    if [ "$*" == "-?" ] || [ "$*" == "--help" ]; then
       echo '   usage: tests/live/skills.sh [<model>]   # headless sessions S1-S9, default model haiku'
       echo '          tests/live/skills.sh --version   # print version'

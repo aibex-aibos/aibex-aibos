@@ -4,9 +4,11 @@
 # workers.yaml, known by the marker of a session; aibos --activate of A on the candidate (VERSION) shows the
 # fetch of each project (B13), sets up 0.1.1 once and keeps 0.1.0 for B (B12); real PyPI
 
+   exec </dev/null                                  # nothing waits for input (V0.7, memo 26: H55)
+
    if [ "$*" == "-?" ] || [ "$*" == "--help" ]; then
       echo '   usage: tests/live/changeover.sh [<repos>]  # activate a vault of 0.5.1 on the candidate with packages'
-      echo '                                            # from the tagged repos in <repos> (default ~/git/AIbex)'
+      echo '                                            # from the tagged repos in <repos> (default: clones of AIBOS_LIVE_HUB)'
       echo '          tests/live/changeover.sh --version  # print version'
       echo '   not part of tests/run: needs network access to PyPI, takes about two minutes'
       echo '   see also: tests/live/rothirsch.sh, aibos --activate'
@@ -26,7 +28,7 @@
 #===============================================================================
 
    if [ "$2" == "" ]; then
-      REPOS="${1:-$HOME/git/AIbex}"
+      . "$(dirname "$0")/repos.sh"; REPOS="$(repos "$1" skill-video-analyse skill-5-8-zusammenfassung skill-memo worker-yt-dlp worker-deno)" || exit 1   # F289, FL33
       REPO="$(cd "$(dirname "$0")/../.." && pwd)"
       T="${TMPDIR:-/tmp}"; SB="$(cd "$(mktemp -d "${T%/}/aibos-live.XXXXXX")" && pwd -P)" || exit 1
       PASS=0; FAIL=0

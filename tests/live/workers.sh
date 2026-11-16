@@ -2,9 +2,11 @@
 # workers.sh: live test of the companion workhorses worker-deno and worker-yt-dlp against the real
 # PyPI (spec 07, Tests; V0.5, step 8; V0.6, step 11: vault bound to 0.6, versions 0.1.1); no call of YouTube
 
+   exec </dev/null                                  # nothing waits for input (V0.7, memo 26: H55)
+
    if [ "$*" == "-?" ] || [ "$*" == "--help" ]; then
       echo '   usage: tests/live/workers.sh [<repos>]  # load worker-yt-dlp (with worker-deno) from the local'
-      echo '                                         # package repos in <repos> (default ~/git/AIbex)'
+      echo '                                         # package repos in <repos> (default: clones of AIBOS_LIVE_HUB)'
       echo '          tests/live/workers.sh --version  # print version'
       echo '   not part of tests/run: needs network access to PyPI, takes about a minute'
       echo '   see also: tests/run, aibos --worker, aibos --fetch'
@@ -24,7 +26,7 @@
 #===============================================================================
 
    if [ "$2" == "" ]; then
-      REPOS="${1:-$HOME/git/AIbex}"
+      . "$(dirname "$0")/repos.sh"; REPOS="$(repos "$1" worker-deno worker-yt-dlp)" || exit 1   # F289, FL33
       REPO="$(cd "$(dirname "$0")/../.." && pwd)"
       T="${TMPDIR:-/tmp}"; SB="$(cd "$(mktemp -d "${T%/}/aibos-live.XXXXXX")" && pwd -P)" || exit 1
       PASS=0; FAIL=0

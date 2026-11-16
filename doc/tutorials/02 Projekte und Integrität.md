@@ -2,7 +2,7 @@
 
 Dieses Tutorial zeigt in etwa 15 Minuten, was zu einem Projekt gehört, wie AIBOS beim Start eines Chats Lücken erkennt und wie `/aibos-integrity` ein Projekt mit allen Unterprojekten prüft. Es baut auf dem Vault `~/tmp/§Demo` aus Tutorial 01 auf; ein frisch aktivierter Vault genügt aber auch.
 
-Voraussetzung: AIBOS v0.6 ist installiert, der Vault ist mit `aibos --activate v0.6.6 ~/tmp/§Demo` ein AIBOS-Workspace (Tutorial 01).
+Voraussetzung: AIBOS v0.7 ist installiert, der Vault ist mit `aibos --activate v0.7.0 ~/tmp/§Demo` ein AIBOS-Workspace (Tutorial 01).
 
 ## 1. Was zu einem Projekt gehört
 
@@ -108,4 +108,4 @@ endet mit Exit 0, wenn alle Projekte integer sind, sonst mit Exit 1, und eignet 
 | Integrität | `/aibos-integrity`: Init und Commit für alle Projekte, Hinweise zu Push und Namen |
 | Ergänzen | `aibos --init` ergänzt nur, was fehlt, und committet nur die Dateien von AIBOS |
 
-Die vollständigen Regeln stehen in Spec 05 *Projekte*, installiert unter `~/.aibos/versions/v0.6.6/doc/spec/`.
+Die vollständigen Regeln stehen in Spec 05 *Projekte*, installiert unter `~/.aibos/versions/v0.7.0/doc/spec/`.

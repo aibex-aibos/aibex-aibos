@@ -2,6 +2,8 @@
 # outside.sh: live test of a session outside an AIBOS workspace with the hooks of AIBOS (spec 01, I15; V0.6,
 # memos 27, 33; step 11): Claude behaves as if AIBOS were not installed
 
+   exec </dev/null                                  # nothing waits for input (V0.7, memo 26: H55)
+
    if [ "$*" == "-?" ] || [ "$*" == "--help" ]; then
       echo '   usage: tests/live/outside.sh [<model>]   # headless sessions O1-O3, default model haiku'
       echo '          tests/live/outside.sh --version   # print version'

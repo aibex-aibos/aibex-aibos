@@ -2,7 +2,7 @@
 
 Dieses Tutorial führt in etwa 20 Minuten durch **Arbeitspferde** und **Distributionen** von AIbex AIBOS. Du installierst die Distribution **Rothirsch** mit der Video-Analyse und der Assistentin Anja, siehst, wie AIBOS das Programm `yt-dlp` einrichtet, ohne dass du etwas installierst, und wie ein zweiter Rechner, ein Update und das Entfernen damit umgehen.
 
-Voraussetzung: AIBOS v0.6.6 ist installiert (`aibos --install v0.6.6`, siehe README), mit der Grundausstattung, die `aibos --install` prüft (`python3` ab 3.11 mit `venv` und `pip`, `git`; auf macOS z. B. `brew install python`). Fehlt der Kernel, installiert ihn die Distribution selbst. Für das Einrichten der Arbeitspferde braucht der Rechner Zugang zu PyPI.
+Voraussetzung: AIBOS v0.7.0 ist installiert (`aibos --install v0.7.0`, siehe README), mit der Grundausstattung, die `aibos --install` prüft (`python3` ab 3.11 mit `venv` und `pip`, `git`; auf macOS z. B. `brew install python`). Fehlt der Kernel, installiert ihn die Distribution selbst. Für das Einrichten der Arbeitspferde braucht der Rechner Zugang zu PyPI.
 
 ## 1. Was ein Arbeitspferd ist
 
@@ -28,7 +28,7 @@ aibos --install distribution-rothirsch ~/tmp/§Rothirsch --plan
 => install distribution-rothirsch 1.1.0 into ~/tmp/§Rothirsch (kernel 0.6.1)
    plan:
       (machine part: kernel and workhorses)
-      (AIBOS v0.6.6 is already installed in ~/.aibos/versions/v0.6.6)
+      (AIBOS v0.7.0 is already installed in ~/.aibos/versions/v0.7.0)
       setup      worker-deno 0.1.1 -> ~/.aibos/workers/worker-deno/v0.1.1
              python /opt/homebrew/opt/python@3.11/bin/python3.11, 1 packages from worker/requirements.lock:
              | deno==2.9.8
@@ -255,4 +255,4 @@ Die Bindung an den Kernel bleibt; Daten in `@Data/` bleiben stehen. Die Dateien 
 - Ein eigenes Arbeitspferd oder eine eigene Distribution bauen: Die Assistentin **Anja** (`/aibos-assistant Anja`) begleitet dich vom Konzept bis zur Veröffentlichung; eine Distribution aus einem erprobten Projekt stellt `/aibos-distribution` zusammen.
 - Zum Aufräumen: `aibos --fetch --remove distribution-rothirsch --to ~/tmp/§Rothirsch` und danach `aibos --deactivate ~/tmp/§Rothirsch`.
 
-Die vollständigen Regeln stehen in Spec 07 *Arbeitspferde* und Spec 06 *Distributionen*, installiert unter `~/.aibos/versions/v0.6.6/doc/spec/`.
+Die vollständigen Regeln stehen in Spec 07 *Arbeitspferde* und Spec 06 *Distributionen*, installiert unter `~/.aibos/versions/v0.7.0/doc/spec/`.

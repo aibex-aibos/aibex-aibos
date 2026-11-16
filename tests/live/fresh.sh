@@ -3,9 +3,11 @@
 # PyYAML, PATH without the user's folders, kernel from a sandbox clone with the local tag v0.6.0; packages from
 # a local hub of the package repos, the real hub only read; no Claude session, no tokens
 
+   exec </dev/null                                  # nothing waits for input (V0.7, memo 26: H55)
+
    if [ "$*" == "-?" ] || [ "$*" == "--help" ]; then
       echo '   usage: tests/live/fresh.sh [<repos>]   # install, activate, init, fetch in a fresh sandbox; packages'
-      echo '                                         # from the tagged repos in <repos> (default ~/git/AIbex)'
+      echo '                                         # from the tagged repos in <repos> (default: clones of AIBOS_LIVE_HUB)'
       echo '          tests/live/fresh.sh --version   # print version'
       echo '   not part of tests/run: needs python3.11 and network access (PyPI for PyYAML, GitHub for stup and'
       echo '   the real hub, read only)'
@@ -26,7 +28,7 @@
 #===============================================================================
 
    if [ "$2" == "" ]; then
-      REPOS="${1:-$HOME/git/AIbex}"
+      . "$(dirname "$0")/repos.sh"; REPOS="$(repos "$1" assistant-gaertner assistant-astronom skill-memo knowledge-orion app-taschenrechner)" || exit 1   # F289, FL33
       REPO="$(cd "$(dirname "$0")/../.." && pwd)"
       VERSION="$(cat "$REPO/VERSION")"
       PY311="$(command -v python3.11 || ls /opt/homebrew/bin/python3.11 /usr/local/bin/python3.11 2>/dev/null | head -1)"

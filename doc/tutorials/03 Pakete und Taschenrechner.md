@@ -2,7 +2,7 @@
 
 Dieses Tutorial führt in etwa 20 Minuten durch Pakete und Hubs von AIbex AIBOS. Du holst die Demo-App **Taschenrechner** mit ihrer Abhängigkeit, rechnest damit, belegst eine Funktionstaste, holst Wissenspakete aus zwei Hubs, wählst Versionen und Elemente und spielst eine Funktionstaste als Beitrag an das Paket zurück.
 
-Voraussetzung: AIBOS v0.6 ist installiert, der Vault `~/tmp/§Demo` ist mit `aibos --activate v0.6.6 ~/tmp/§Demo` ein AIBOS-Workspace (Tutorial 01). Für die Suche in Hubs ohne Index und für den Rückfluss brauchst du `gh` (GitHub CLI), angemeldet mit `gh auth login`.
+Voraussetzung: AIBOS v0.7 ist installiert, der Vault `~/tmp/§Demo` ist mit `aibos --activate v0.7.0 ~/tmp/§Demo` ein AIBOS-Workspace (Tutorial 01). Für die Suche in Hubs ohne Index und für den Rückfluss brauchst du `gh` (GitHub CLI), angemeldet mit `gh auth login`.
 
 ## 1. Hub und Hub-Liste
 
@@ -29,7 +29,7 @@ aibex-aibos/app-taschenrechner  app           Programmierbarer RPN-Taschenrechne
 aibex-aibos/app-taschenrechner  0.1.0 0.1.1 0.2.0 0.2.1 0.3.0 0.3.1 0.3.2 0.4.0 0.4.1 0.4.2 0.5.0 0.5.1
 ```
 
-Mit einem Suchwort sucht `aibos --library` in Namen und Beschreibungen, mit einem Paketnamen zeigt es dessen Versionen. Mit AIBOS v0.6 lässt sich davon nur 0.5.1 holen; die älteren verlangen v0.4 bzw. v0.5 (`requires.aibos`, Abschnitt 5).
+Mit einem Suchwort sucht `aibos --library` in Namen und Beschreibungen, mit einem Paketnamen zeigt es dessen Versionen. Mit AIBOS v0.7 lässt sich davon nur 0.5.1 holen; die älteren verlangen v0.4 bzw. v0.5 (`requires.aibos`, Abschnitt 5).
 
 ## 2. Den Taschenrechner holen
 
@@ -204,7 +204,7 @@ Wissen eines geholten Pakets zählt, als läge es in `@/`. Ordne in einem Chat i
 
 ## 5. Versionen und Elemente
 
-**Version wählen:** Ein Bereich hinter dem Namen wählt eine bestimmte Version. Die älteren Versionen des Taschenrechners verlangen AIBOS v0.4 oder v0.5 (`requires.aibos: ">=0.4,<0.5"` bzw. `"<0.6"`); in einem AIBOS-Workspace lehnt AIBOS v0.6 sie ab, bevor etwas geschieht:
+**Version wählen:** Ein Bereich hinter dem Namen wählt eine bestimmte Version. Die älteren Versionen des Taschenrechners verlangen AIBOS v0.4 oder v0.5 (`requires.aibos: ">=0.4,<0.5"` bzw. `"<0.6"`); in einem AIBOS-Workspace lehnt AIBOS v0.7 sie ab, bevor etwas geschieht:
 
 ```bash
 aibos --fetch app-taschenrechner==0.3.2 --plan
@@ -281,4 +281,4 @@ aibos --contribute @Data/app-taschenrechner/funktionstasten.yaml --to app-tasche
 - Tutorial *04 Workspaces*: Paket-Repos und Projekte als Git-Checkouts eines Wurzelprojekts.
 - Bau dein eigenes Paket: ein Git-Repo mit `manifest.yaml` (`name`, `version`, `type`, `description`, `requires.aibos`, `contents`), ein Tag `v0.1.0`, und `aibos --fetch <paket> --from <repo-url>` holt es ohne Hub.
 
-Die vollständigen Regeln stehen in Spec 06 *Pakete und Workspaces*, installiert unter `~/.aibos/versions/v0.6.6/doc/spec/`.
+Die vollständigen Regeln stehen in Spec 06 *Pakete und Workspaces*, installiert unter `~/.aibos/versions/v0.7.0/doc/spec/`.
