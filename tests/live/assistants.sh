@@ -18,7 +18,7 @@
 #===============================================================================
 
    if [ "$*" == "--version" ]; then
-      echo "0.4.0"; exit 0
+      echo "0.4.1"; exit 0
    fi
 
 #===============================================================================
@@ -56,7 +56,8 @@
       refuse "A1 Gärtner: no 0/1 result" "$ANS" "= 1"
 
       ANS="$(ask "Was ist Mond * Mond?")"
-      check "A2 new chat: the hook loads Gärtner" "$ANS" "Gärtner"
+      case "$ANS" in *"Gärtner"*|"👩‍🌾"*) R2="Gärtner";; *) R2="$ANS";; esac   # his name or his prefix (V0.7, memo 38)
+      check "A2 new chat: the hook loads Gärtner" "$R2" "Gärtner"
       refuse "A2 Gärtner: boundary, no result −Sonne" "$ANS" "−Sonne"
       refuse "A2 Gärtner: boundary, no result -Sonne" "$ANS" "-Sonne"
 

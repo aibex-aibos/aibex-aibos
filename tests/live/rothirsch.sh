@@ -22,7 +22,7 @@
 #===============================================================================
 
    if [ "$*" == "--version" ]; then
-      echo "0.4.0"; exit 0
+      echo "0.4.1"; exit 0
    fi
 
 #===============================================================================
@@ -30,7 +30,7 @@
 #===============================================================================
 
    if [ "$2" == "" ]; then
-      . "$(dirname "$0")/repos.sh"; REPOS="$(repos "$1" distribution-rothirsch skill-video-analyse assistant-anja skill-5-8-zusammenfassung skill-memo worker-yt-dlp worker-deno)" || exit 1   # F289, FL33
+      . "$(dirname "$0")/repos.sh"; REPOS="$(repos "$1" distribution-rothirsch skill-video-analyse assistant-anja skill-5-8-zusammenfassung skill-memo skill-cleanup worker-yt-dlp worker-deno)" || exit 1   # F289, FL33
       REPO="$(cd "$(dirname "$0")/../.." && pwd)"
       T="${TMPDIR:-/tmp}"; SB="$(cd "$(mktemp -d "${T%/}/aibos-live.XXXXXX")" && pwd -P)" || exit 1
       PASS=0; FAIL=0
@@ -56,7 +56,7 @@
 
       H="$SB/aibex-local"; mkdir -p "$H/aibos-index"   # local hub of the tagged package repos (S4)
       printf 'schema: 1\npackages:\n' > "$H/aibos-index/index.yaml"
-      for P in distribution-rothirsch skill-video-analyse assistant-anja skill-5-8-zusammenfassung skill-memo \
+      for P in distribution-rothirsch skill-video-analyse assistant-anja skill-5-8-zusammenfassung skill-memo skill-cleanup \
                worker-yt-dlp worker-deno; do
          G clone -q "$REPOS/$P" "$H/$P" || exit 1
          printf '  - name: %s\n    type: %s\n    description: %s\n' "$P" "${P%%-*}" "$P" >> "$H/aibos-index/index.yaml"
@@ -66,6 +66,7 @@
       PIN() { sed -n "s/^  $1: *\"==\(.*\)\"/\1/p" "$D0/manifest.yaml"; }   # versions of the distribution (FL37)
       VV="$(PIN skill-video-analyse)"; AV="$(PIN assistant-anja)"
       ZV="$(tagver "$H/skill-5-8-zusammenfassung")"; MV="$(tagver "$H/skill-memo")"   # by the resolver: the highest
+      CV="$(tagver "$H/skill-cleanup")"                                              # dependency of Anja since 0.4.0
       YV="$(tagver "$H/worker-yt-dlp")"; NV="$(tagver "$H/worker-deno")"               # version, candidate or release
       YT="$(echo "${YV%-rc*}" | sed 's/\.[0-9]*$/.9/')"   # test version of worker-yt-dlp in the range of the skill
       if [ "$KV" != "$K" ]; then                    # the release wants another kernel (v0.6.2: 1.1.0 stays, F92):
@@ -96,7 +97,7 @@
       check "plan: worker-deno before worker-yt-dlp" [ "$(line "$OUT" "setup      worker-deno")" -lt "$(line "$OUT" "setup      worker-yt-dlp")" ]
       check "plan: machine part before the vault part" [ "$(line "$OUT" "machine part")" -lt "$(line "$OUT" "vault part")" ]
       check "plan: binding of the vault root" has "$OUT" "create $V/.aibos/config.yaml with aibos: $K"
-      for P in "skill-video-analyse $VV" "assistant-anja $AV" "skill-5-8-zusammenfassung $ZV" "skill-memo $MV"; do
+      for P in "skill-video-analyse $VV" "assistant-anja $AV" "skill-5-8-zusammenfassung $ZV" "skill-memo $MV" "skill-cleanup $CV"; do
          check "plan: new $P" has "$OUT" "new        $P"
       done
 
