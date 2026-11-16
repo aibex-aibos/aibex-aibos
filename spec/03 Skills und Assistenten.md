@@ -1,12 +1,12 @@
 ---
 title: "Skills und Assistenten"
-date: 2026-11-05
+date: 2026-11-16
 author: iHux
-status: Spec
-tags: [spec, aios, v0.6, skills, assistenten]
+status: Entwurf
+tags: [spec, aibos, v0.7, skills, assistenten]
 number: 03
 related:
-  - "Spec 01 AIbex AIOS v0.6 — Überblick"
+  - "Spec 01 AIbex AIBOS v0.7 — Überblick"
   - "Spec 02 Master-Kontext"
   - "Spec 04 Installation und Konfiguration"
   - "Spec 05 Projekte"
@@ -18,18 +18,19 @@ related:
   - "Memos 01–07, 09–11, 13, 18–20, 25, 26 (AA-AIbex-AIOS, @Memo/V0.3)"
   - "Memos 05, 07, 12, 17, 34, 35 (AA-AIbex-AIOS, @Memo/V0.5)"
   - "Memos 12, 23, 25–30 (AA-AIbex-AIOS, @Memo/V0.6)"
+  - "Memos 01–15 (AA-AIbex-AIOS, @Memo/V0.7): Umbenennung in AIBOS"
 ---
 
 # Skills und Assistenten
 
-Diese Spec regelt die Arten von Skills, ihre Versionen, das Ausführungsmodell, das Registrieren, die Assistenten mit ihrer Zuordnung zum Projekt, die Oberflächen, die Kernel-Skills im Vault sowie die Kernel-Skills `/aios-package`, `/aios-fetch`, `/aios-deploy`, `/aios-distribution`, `/aios-register`, `/aios-assistant`, `/aios-gui`, `/aios-memo` und den Alias `/gui`. Der Skill `/aios-context` und die Hooks stehen in Spec 02, `/aios-init`, `/aios-integrity` und `/aios-status` in Spec 05, Dateistrukturen, Formate und das CLI `aios` in Spec 04, Pakete, Hubs, Holen, Ausrollen und Distributionen in Spec 06, Arbeitspferde in Spec 07.
+Diese Spec regelt die Arten von Skills, ihre Versionen, das Ausführungsmodell, das Registrieren, die Assistenten mit ihrer Zuordnung zum Projekt, die Oberflächen, die Kernel-Skills im Vault sowie die Kernel-Skills `/aibos-package`, `/aibos-fetch`, `/aibos-deploy`, `/aibos-distribution`, `/aibos-register`, `/aibos-assistant`, `/aibos-gui`, `/aibos-memo` und den Alias `/gui`. Der Skill `/aibos-context` und die Hooks stehen in Spec 02, `/aibos-init`, `/aibos-integrity` und `/aibos-status` in Spec 05, Dateistrukturen, Formate und das CLI `aibos` in Spec 04, Pakete, Hubs, Holen, Ausrollen und Distributionen in Spec 06, Arbeitspferde in Spec 07.
 
 ## Arten von Skills
 
 | Art | Quelle | registriert in | Verwaltung |
 |---|---|---|---|
-| **Kernel-Skill** | `<installation>/skills/aios/<name>/` des laufenden Kernels (Spec 04) | im A/W als dünne Hülle in `<vault-root>/.claude/skills/aios-*/` und `<projekt>/.claude/skills/aios-*/` (*Kernel-Skills im Vault*); dazu im Block des Master-Kontexts (Spec 02) | Registrierung (siehe unten) |
-| **Alias** | in `aios` eingebaut | im A/W als Hülle in `<vault-root>/.claude/skills/gui/` und `<projekt>/.claude/skills/gui/` | Registrierung (siehe unten) |
+| **Kernel-Skill** | `<installation>/skills/aibos/<name>/` des laufenden Kernels (Spec 04) | im A/W als dünne Hülle in `<vault-root>/.claude/skills/aibos-*/` und `<projekt>/.claude/skills/aibos-*/` (*Kernel-Skills im Vault*); dazu im Block des Master-Kontexts (Spec 02) | Registrierung (siehe unten) |
+| **Alias** | in `aibos` eingebaut | im A/W als Hülle in `<vault-root>/.claude/skills/gui/` und `<projekt>/.claude/skills/gui/` | Registrierung (siehe unten) |
 | **Projekt-Skill** | `@!Skill/<name>/` oder `@!Package/<paket>/skills/<name>/` eines Masterspace der Kette | `<Projekt>/.claude/skills/<name>/` | Registrierung (siehe unten) |
 | **Assistenten-Skill** | `@!Assistant/<assistant>/@!Skill/<name>/` oder `@!Skill/<name>/` der Kette, genannt in `skills:` oder `gui:` der `ASSISTANT.md` | nicht registriert; der Kontext des Assistenten enthält ihn | Assistent (siehe unten) |
 
@@ -37,14 +38,14 @@ Innerhalb der Projekt- und Assistenten-Skills wird unterschieden:
 
 | | aus einem Paket | lokal |
 |---|---|---|
-| Herkunft | aus einem Paket, geholt mit `/aios-fetch` und ausgerollt (Spec 06) | im Projekt geschrieben (`@!Skill/`) |
+| Herkunft | aus einem Paket, geholt mit `/aibos-fetch` und ausgerollt (Spec 06) | im Projekt geschrieben (`@!Skill/`) |
 | Manifest | das Paket steht in `packages:` bzw. `lock.yaml` | steht in keinem Manifest |
 | Version | Pflicht | Pflicht; ein neuer lokaler Skill beginnt mit `0.1.0` |
-| Änderungen | nur über eine neue Version des Pakets; direkte Änderungen meldet `/aios-fetch` | frei |
+| Änderungen | nur über eine neue Version des Pakets; direkte Änderungen meldet `/aibos-fetch` | frei |
 
-Bis v0.5 lagen Kernel-Skills (damals *AIOS-Skills*) und der Alias global in `~/.claude/skills/`. Ab v0.6 registriert AIBOS keinen Skill global (Spec 01, I3); die globalen Hüllen entfernt der Umstieg (Spec 04).
+Bis v0.5 lagen Kernel-Skills (damals *AIBOS-Skills*) und der Alias global in `~/.claude/skills/`. Ab v0.6 registriert AIBOS keinen Skill global (Spec 01, I3); die globalen Hüllen entfernt der Umstieg (Spec 04).
 
-**Reservierte Namen:** Namen mit dem Präfix `aios-` sind Kernel-Skills vorbehalten, der Name `gui` dem Alias. Ein Blueprint `@!Skill/aios-…/` oder `@!Skill/gui/` in einer Kette wird nicht registriert; `/aios-context` und `/aios-register` melden ihn. `none` und `inherit` sind als Namen von Assistenten reserviert; ein Assistent mit einem dieser Namen wird nicht aufgelöst und gemeldet.
+**Reservierte Namen:** Namen mit dem Präfix `aibos-` sind Kernel-Skills vorbehalten, der Name `gui` dem Alias. Ein Blueprint `@!Skill/aibos-…/` oder `@!Skill/gui/` in einer Kette wird nicht registriert; `/aibos-context` und `/aibos-register` melden ihn. `none` und `inherit` sind als Namen von Assistenten reserviert; ein Assistent mit einem dieser Namen wird nicht aufgelöst und gemeldet.
 
 ## Format eines Skills
 
@@ -71,7 +72,7 @@ Ein Blueprint ohne gültige `version` gilt wie ein Blueprint mit falschem `name`
 
 ## Kernel-Skills im Vault
 
-Die Kernel-Skills (15 Skills `aios-*`; mit v0.6.4 neu `aios-attach`, `aios-sync`, `aios-detach`) erreichen die KI im A/W auf zwei Wegen (V0.6, Memos 23, 26–30):
+Die Kernel-Skills (16 Skills `aibos-*`; mit v0.6.4 neu `aibos-attach`, `aibos-sync`, `aibos-detach`, mit v0.6.4 auch `aibos-restore`) erreichen die KI im A/W auf zwei Wegen (V0.6, Memos 23, 26–30). Bis v0.6.6 hießen sie `aios-*`; beim Umbinden auf v0.7 ersetzt AIBOS deren Hüllen in jedem Projekt durch `aibos-*`, ohne Alias für die alten Namen (Spec 04, *Umstieg auf v0.7*; V0.7, Memo 05: F271):
 
 | Weg | trägt | wo |
 |---|---|---|
@@ -82,17 +83,17 @@ Die Kernel-Skills (15 Skills `aios-*`; mit v0.6.4 neu `aios-attach`, `aios-sync`
 
 ```markdown
 ---
-name: aios-init
+name: aibos-init
 description: "<Feld description des Kernel-Skills, ungekürzt>"
-allowed-tools: Bash(/Users/…/.aios/bin/aios --skill aios-init)
+allowed-tools: Bash(/Users/…/.aibos/bin/aibos --skill aibos-init)
 ---
 
-!`/Users/…/.aios/bin/aios --skill aios-init`
+!`/Users/…/.aibos/bin/aibos --skill aibos-init`
 ```
 
-`allowed-tools` nennt nur den eigenen Aufruf: Claude Code prüft einen Befehl in `` !`…` `` beim Laden gegen die Regeln, ohne `PreToolUse`, und bricht ohne Freigabe den Aufruf ab (V0.6, Memo 29). Alle weiteren Befehle des Skills gibt im A/W der Hook `PreToolUse` frei (Spec 02, *Freigabe*). Die Hülle hat keine `version`; ihre Version ist die des Kernels und steht in `.aios/registry` (Spec 04). Ob der Host `~` in `allowed-tools` auflöst, ist offen (Spec 01, O5); deshalb steht der absolute Pfad.
+`allowed-tools` nennt nur den eigenen Aufruf: Claude Code prüft einen Befehl in `` !`…` `` beim Laden gegen die Regeln, ohne `PreToolUse`, und bricht ohne Freigabe den Aufruf ab (V0.6, Memo 29). Alle weiteren Befehle des Skills gibt im A/W der Hook `PreToolUse` frei (Spec 02, *Freigabe*). Die Hülle hat keine `version`; ihre Version ist die des Kernels und steht in `.aibos/registry` (Spec 04). Ob der Host `~` in `allowed-tools` auflöst, ist offen (Spec 01, O5); deshalb steht der absolute Pfad.
 
-**Ortsprüfung:** `aios --skill <name>` gibt den Rumpf nur aus, wenn `cwd` in einem A/W liegt. Sonst schreibt es `Kein AIBOS-Workspace: <cwd>` auf stderr und endet mit Exit-Code 1 (V0.6, Memo 23).
+**Ortsprüfung:** `aibos --skill <name>` gibt den Rumpf nur aus, wenn `cwd` in einem A/W liegt. Sonst schreibt es `Kein AIBOS-Workspace: <cwd>` auf stderr und endet mit Exit-Code 1 (V0.6, Memo 23).
 
 **Vorrang:** Gibt es einen Skill gleichen Namens global in `~/.claude/skills/`, gewinnt beim Host der globale (persönlich vor Projekt). Darum entfernt der Umstieg die globalen Hüllen früherer Versionen, sobald kein Vault mehr an 0.5 gebunden ist (Spec 04, *Legacy und Umstieg*).
 
@@ -101,7 +102,7 @@ allowed-tools: Bash(/Users/…/.aios/bin/aios --skill aios-init)
 | Aspekt | Regel |
 |---|---|
 | **Veröffentlichung** | Ein Skill oder Assistent wird als Paket veröffentlicht: Tag `v<version>` im Repo des Pakets (Spec 06). Die `version` im Frontmatter eines Skills bzw. Assistenten ist seine eigene Version und muss nicht der des Pakets gleichen |
-| **Manifest** | `packages:` in `.aios/config.yaml` nennt je Paket einen Bereich, `lock.yaml` die aufgelöste Version (Spec 06) |
+| **Manifest** | `packages:` in `.aibos/config.yaml` nennt je Paket einen Bereich, `lock.yaml` die aufgelöste Version (Spec 06) |
 | **Übertrumpfung** | je Name: der nächstgelegene Eintrag in der Konfigurationskette gewinnt (Spec 04) |
 | **Ort** | Die Pakete eines Projekts liegen in `@/@!Package/` genau dieses Projekts |
 
@@ -112,103 +113,103 @@ Ein Skill hat keinen eigenen Steuerprozess (V0.5, Memo 12). Claude Code erkennt 
 | Wer | tut was |
 |---|---|
 | Modell | liest die Anleitung, schreibt jeden Befehl als Aufruf des Bash-Werkzeugs, wertet Ausgabe und Exit-Code aus, entscheidet über den nächsten Schritt |
-| Claude Code | führt den Befehl auf dem Rechner aus: eigener Prozess je Aufruf, Benutzerkonto und Profil des Users, Ordner der Session; vorher greift der Berechtigungsmodus der Session. Im A/W gibt der Hook `PreToolUse` einzelne Befehle des Weiterleiters `aios` ohne Rückfrage frei (Spec 02, *Freigabe*); alle anderen Befehle fragen wie gewohnt |
+| Claude Code | führt den Befehl auf dem Rechner aus: eigener Prozess je Aufruf, Benutzerkonto und Profil des Users, Ordner der Session; vorher greift der Berechtigungsmodus der Session. Im A/W gibt der Hook `PreToolUse` einzelne Befehle des Weiterleiters `aibos` ohne Rückfrage frei (Spec 02, *Freigabe*); alle anderen Befehle fragen wie gewohnt |
 | Skripte eines Skills | Werkzeugkästen mit Unterbefehlen, nur mit der Standardbibliothek von Python, aufgerufen über `python3` |
-| Arbeitspferde | externe Programme, aufgerufen über ihren Weiterleiter `~/.aios/bin/<programm>`, nie über den `PATH` des Users (Spec 07) |
+| Arbeitspferde | externe Programme, aufgerufen über ihren Weiterleiter `~/.aibos/bin/<programm>`, nie über den `PATH` des Users (Spec 07) |
 
 Regeln für Skill-Autoren:
 
 - **Zwischenwerte** (Pfade, Nummern) überleben einen Aufruf nicht; das `SKILL.md` sagt, dass sie aus der Ausgabe übernommen und wörtlich eingesetzt werden, oder fasst mehrere Schritte in einen Aufruf.
-- **Fehlt ein Arbeitspferd**, meldet der Skill, dass das Paket nicht vollständig geladen ist, und nennt höchstens `aios --fetch`; **Installationsanweisungen im Chat gibt es nicht**, und ein Skill löst nie ein setup aus (Spec 01, I10).
+- **Fehlt ein Arbeitspferd**, meldet der Skill, dass das Paket nicht vollständig geladen ist, und nennt höchstens `aibos --fetch`; **Installationsanweisungen im Chat gibt es nicht**, und ein Skill löst nie ein setup aus (Spec 01, I10).
 - Deterministisches und Prüfbares gehört in Skripte bzw. Arbeitspferde, Verständnis und Formulierung zum Modell.
 
-## Pakete — `/aios-package`, `/aios-fetch`, `/aios-deploy`
+## Pakete — `/aibos-package`, `/aibos-fetch`, `/aibos-deploy`
 
-Skills und Assistenten kommen als **Pakete** in ein Projekt: Ein Paket wird vom Hub **geholt** (`aios --fetch`, nach `@/@!Package/<name>/`), seine Elemente werden **ausgerollt** (`aios --deploy`), und ausgerollte Skills werden **registriert** (`aios --register`). Hubs, Aufruf, Ablauf, Marke, Abgleich, Entfernen, Ausrollen und Vorrang regelt Spec 06. Für diese Spec gilt:
+Skills und Assistenten kommen als **Pakete** in ein Projekt: Ein Paket wird vom Hub **geholt** (`aibos --fetch`, nach `@/@!Package/<name>/`), seine Elemente werden **ausgerollt** (`aibos --deploy`), und ausgerollte Skills werden **registriert** (`aibos --register`). Hubs, Aufruf, Ablauf, Marke, Abgleich, Entfernen, Ausrollen und Vorrang regelt Spec 06. Für diese Spec gilt:
 
 - Ein ausgerollter Skill aus `@!Package/<paket>/skills/<name>/` ist ein Projekt-Skill wie ein Blueprint `@!Skill/<name>/` desselben Masterspace, ein ausgerollter Assistent aus `@!Package/<paket>/assistants/<name>/` ein Assistent wie `@!Assistant/<name>/`. Nicht ausgerollte Elemente zählen nicht (Spec 06, H3).
 - Innerhalb eines Masterspace gewinnt der lokale Blueprint vor dem Element aus einem Paket; über Masterspaces hinweg gewinnt der nächstgelegene (Spec 06, *Vorrang*).
-- Lokale Blueprints in `@!Skill/` und `@!Assistant/` schreibt nur der User; AIOS schreibt sie nicht (Spec 01, I2).
+- Lokale Blueprints in `@!Skill/` und `@!Assistant/` schreibt nur der User; AIBOS schreibt sie nicht (Spec 01, I2).
 
 **Skills** (Kernel-Skills, damit es kein Henne-Ei-Problem gibt; V0.4, Memos 23, 25):
 
 | Skill | Rolle | Auslöser | ruft auf |
 |---|---|---|---|
-| `/aios-package` | **Paketmanager** für Anwender: holen, entfernen, aktualisieren, suchen, zeigen, was geholt ist, Hub-Liste pflegen; bedient sich der beiden Hilfs-Skills | „/aios-package", „installiere …", „hole …", „lade …", „entferne …", „deinstalliere …", „aktualisiere …", „welche Pakete bzw. Apps gibt es?", „was ist installiert?", „Hub hinzufügen"; englisch *install*, *remove*, *update*, *list packages* | `aios --library`, `aios --hubs`, `/aios-fetch`, `/aios-deploy`; bei einer Distribution `aios --install distribution-<name>` |
-| `/aios-fetch` | Hilfs-Skill: ein Paket laden (holen, Arbeitspferde einrichten, registrieren), abgleichen, `--upgrade`, `--remove`; zeigt im Plan das setup der Arbeitspferde (Spec 07) | „/aios-fetch", „Paket holen", „Paket laden" | `aios --fetch` |
-| `/aios-deploy` | Hilfs-Skill: Elemente eines geholten Pakets ausrollen (`--only`, `--all`) oder zeigen | „/aios-deploy", „ausrollen", „freischalten" | `aios --deploy` |
+| `/aibos-package` | **Paketmanager** für Anwender: holen, entfernen, aktualisieren, suchen, zeigen, was geholt ist, Hub-Liste pflegen; bedient sich der beiden Hilfs-Skills | „/aibos-package", „installiere …", „hole …", „lade …", „entferne …", „deinstalliere …", „aktualisiere …", „welche Pakete bzw. Apps gibt es?", „was ist installiert?", „Hub hinzufügen"; englisch *install*, *remove*, *update*, *list packages* | `aibos --library`, `aibos --hubs`, `/aibos-fetch`, `/aibos-deploy`; bei einer Distribution `aibos --install distribution-<name>` |
+| `/aibos-fetch` | Hilfs-Skill: ein Paket laden (holen, Arbeitspferde einrichten, registrieren), abgleichen, `--upgrade`, `--remove`; zeigt im Plan das setup der Arbeitspferde (Spec 07) | „/aibos-fetch", „Paket holen", „Paket laden" | `aibos --fetch` |
+| `/aibos-deploy` | Hilfs-Skill: Elemente eines geholten Pakets ausrollen (`--only`, `--all`) oder zeigen | „/aibos-deploy", „ausrollen", „freischalten" | `aibos --deploy` |
 
-`/aios-package` versteht unscharfe Namen („installiere mir den Rechner"): Es sucht mit `aios --library` in Namen und Beschreibungen der Pakete der Hub-Liste und fragt bei mehreren Treffern nach. Einen vollen Paketnamen `<hub>/<paket>` gibt es unverändert weiter. Meldet `aios --fetch`, dass ein Name in mehreren Hubs liegt, fragt es, welcher gemeint ist. Es fragt nach dem Ziel und schlägt das Root-Projekt vor. Wie jeder schreibende Skill holt es den Plan mit `--plan`, fragt im Chat und ruft erst nach Ja mit `--yes` auf (Spec 01, I7). Nach dem Holen sagt es, dass neue Skills ab dem nächsten Chat verfügbar sind, und nennt bei einer App ihre Oberfläche (*Oberflächen*).
+`/aibos-package` versteht unscharfe Namen („installiere mir den Rechner"): Es sucht mit `aibos --library` in Namen und Beschreibungen der Pakete der Hub-Liste und fragt bei mehreren Treffern nach. Einen vollen Paketnamen `<hub>/<paket>` gibt es unverändert weiter. Meldet `aibos --fetch`, dass ein Name in mehreren Hubs liegt, fragt es, welcher gemeint ist. Es fragt nach dem Ziel und schlägt das Root-Projekt vor. Wie jeder schreibende Skill holt es den Plan mit `--plan`, fragt im Chat und ruft erst nach Ja mit `--yes` auf (Spec 01, I7). Nach dem Holen sagt es, dass neue Skills ab dem nächsten Chat verfügbar sind, und nennt bei einer App ihre Oberfläche (*Oberflächen*).
 
-**Pakete der Grundausstattung** (Stand v0.5 mit `requires.aios: ">=0.4,<0.6"`; V0.5, Memo 41; für v0.6 bekommen sie Patch-Versionen mit der Obergrenze `<0.7`; V0.6, Memo 38):
+**Pakete der Grundausstattung** (für v0.7 je eine Minor-Version mit `requires.aibos: ">=0.7,<0.8"`; V0.7, Memo 10: F283, F284; die Versionen in der Tabelle sind die von v0.6):
 
 | Paket | Hub | Typ | Version | Inhalt |
 |---|---|---|---|---|
-| `skill-memo` | `aibex-aios` | `skill` | 6.0.1 | Skill `memo`: neutrale Fassung des Memo-Stils ohne Bezüge auf einen bestimmten Vault |
-| `assistant-gaertner` | `aibex-aios` | `assistant` | 0.3.0 | Assistent `gaertner`, Titel „Gärtner"; bodenständig, jede Antwort beginnt mit „👩‍🌾 " (V0.4, Memo 70), rechnet nur mit Äpfeln und Birnen; private Skills `apfel-birnen-algebra` 0.1.0 und `gaertner-gui` 0.1.0 (Oberfläche mit Apfel-Birnen-Rechner als HTML-Teil); Wissen: Grundlagen (Laden), Sortenkunde und Veredelung (Verfügbar) |
-| `assistant-astronom` | `aibex-aios` | `assistant` | 0.3.0 | Assistent `astronom`, Titel „Astronom"; poetisch-präzise, jede Antwort beginnt mit „💫 " (V0.4, Memo 70), rechnet nur mit Sonne und Mond; privater Skill `sonne-mond-zahlen` 0.1.0; keine Oberfläche. Nennt Sterndaten aus verfügbarem Wissen, ohne zu rechnen (V0.4, Memo 27) |
-| `app-taschenrechner` | `aibex-aios` | `app` | 0.5.0 | RPN-Taschenrechner nach dem HP-15C mit Funktionstasten A–D; Skills `taschenrechner` und `taschenrechner-gui` (Spec 06) |
-| `knowledge-orion` | `aibex-aios` | `knowledge` | 0.1.1 | die 20 hellsten Sterne des Orion: Name, Helligkeit, Radius, Entfernung, Temperatur, Spektralklasse, Art, als Tabelle in `knowledge/@@Orion/Sterne.md`, mit Quelle |
+| `skill-memo` | `aibex-aibos` | `skill` | 6.0.1 | Skill `memo`: neutrale Fassung des Memo-Stils ohne Bezüge auf einen bestimmten Vault |
+| `assistant-gaertner` | `aibex-aibos` | `assistant` | 0.3.0 | Assistent `gaertner`, Titel „Gärtner"; bodenständig, jede Antwort beginnt mit „👩‍🌾 " (V0.4, Memo 70), rechnet nur mit Äpfeln und Birnen; private Skills `apfel-birnen-algebra` 0.1.0 und `gaertner-gui` 0.1.0 (Oberfläche mit Apfel-Birnen-Rechner als HTML-Teil); Wissen: Grundlagen (Laden), Sortenkunde und Veredelung (Verfügbar) |
+| `assistant-astronom` | `aibex-aibos` | `assistant` | 0.3.0 | Assistent `astronom`, Titel „Astronom"; poetisch-präzise, jede Antwort beginnt mit „💫 " (V0.4, Memo 70), rechnet nur mit Sonne und Mond; privater Skill `sonne-mond-zahlen` 0.1.0; keine Oberfläche. Nennt Sterndaten aus verfügbarem Wissen, ohne zu rechnen (V0.4, Memo 27) |
+| `app-taschenrechner` | `aibex-aibos` | `app` | 0.5.0 | RPN-Taschenrechner nach dem HP-15C mit Funktionstasten A–D; Skills `taschenrechner` und `taschenrechner-gui` (Spec 06) |
+| `knowledge-orion` | `aibex-aibos` | `knowledge` | 0.1.1 | die 20 hellsten Sterne des Orion: Name, Helligkeit, Radius, Entfernung, Temperatur, Spektralklasse, Art, als Tabelle in `knowledge/@@Orion/Sterne.md`, mit Quelle |
 | `knowledge-scorpio` | `aibex-hub` | `knowledge` | 0.1.1 | ebenso für das Sternbild Skorpion, `knowledge/@@Skorpion/Sterne.md`; Testpaket für einen zweiten Hub |
 
 Paketnamen folgen dem Muster `<typ>-<name>` (Spec 06, *Paketnamen*); die Elemente darin behalten ihre Namen. `assistant-gaertner` und `assistant-astronom` sind neue Repos mit dem Inhalt von `assistent-gaertner` bzw. `assistent-astronom` 0.2.1; die alten Repos bleiben, ihr README verweist auf den neuen Namen (V0.5, Memo 05). Die Demo-Assistenten liegen in eigenen Paket-Repos. Ihre Inhalte enthalten keine Pfade oder Bezüge auf einen bestimmten Vault; der Rollentext nennt in einem Satz, dass es sich um einen Demo-Assistenten handelt, dessen Inhalte der Veranschaulichung dienen. Ihre Grenzen sind gewollt: Der Gärtner lehnt Sonne-Mond-Aufgaben freundlich ab, der Astronom Apfel-Birne-Aufgaben. So zeigt das Ergebnis, welcher Assistent und welcher Skill aktiv sind. Die Wissenspakete hängen nicht vom Astronomen ab und er nicht von ihnen; er findet ihr Wissen über die Kette (Spec 02, K6).
 
-Pakete holt nur der User; `aios --install` bietet es nicht an.
+Pakete holt nur der User; `aibos --install` bietet es nicht an.
 
-## Workspaces — `/aios-attach`, `/aios-sync`, `/aios-detach`, `/aios-restore`
+## Workspaces — `/aibos-attach`, `/aibos-sync`, `/aibos-detach`, `/aibos-restore`
 
-Die drei Handgriffe eines Workspace (Spec 06, *Workspaces*) und das Zurückholen (Spec 06, *Zurückholen*) haben je einen Kernel-Skill (V0.6, Memos 166, 170, 172: F170; Memo 204: F229). Jeder ist eine dünne Hülle um `aios --workspace`:
+Die drei Handgriffe eines Workspace (Spec 06, *Workspaces*) und das Zurückholen (Spec 06, *Zurückholen*) haben je einen Kernel-Skill (V0.6, Memos 166, 170, 172: F170; Memo 204: F229). Jeder ist eine dünne Hülle um `aibos --workspace`:
 
 | Skill | Aufruf | Bemerkung |
 |---|---|---|
-| `/aios-attach <pfad>` | `aios --workspace attach <pfad>` | nur mit Pfad: einen ausgelagerten Teilbaum zurückholen. Einen Workspace an einen neuen Rechner anbinden (`attach <repo>`) geht nur im Terminal, weil es dort noch keinen Vault gibt |
-| `/aios-sync [<pfad>]` | `aios --workspace sync [<pfad>] [--only]` | Projektbaum abgleichen; „Projekt" oder kein Wort: ohne Pfad (Projekt der Session), „Workspace"/„Vault": Pfad der Vault-Root; „nur das Projekt", „nur die Root", „ohne Unterprojekte": mit `--only` (V0.6, Memo 227: H42). Vor jedem Push den Plan, auch für den ganzen Workspace (R34) |
-| `/aios-detach [<pfad>]` | `aios --workspace detach [<pfad>]`, `aios --workspace remove <pfad>` | Teilbaum auslagern bzw. Workspace lösen; Worte wie bei `/aios-sync`, den ganzen Workspace sagt Claude vorher ausdrücklich an. „aus dem Workspace entfernen", „nicht mehr im Workspace", „überall entfernen": `remove` mit Pfad; Claude sagt dazu, dass es auf allen Rechnern wirkt und das Repo am Remote bleibt, und unterscheidet es von „auslagern" (nur dieser Rechner) und von `/aios-package` (Pakete) (V0.6, Memo 226) |
-| `/aios-restore …` | `aios --workspace history …`, `aios --workspace restore …` | Sätze wie „hol die gelöschte Datei … zurück", „zeig frühere Fassungen von …", „setz das Projekt auf den Stand von gestern zurück": erst `history` zeigen, die gewählte Fassung nennen, dann `restore` mit Plan und Rückfrage |
+| `/aibos-attach <pfad>` | `aibos --workspace attach <pfad>` | nur mit Pfad: einen ausgelagerten Teilbaum zurückholen. Einen Workspace an einen neuen Rechner anbinden (`attach <repo>`) geht nur im Terminal, weil es dort noch keinen Vault gibt |
+| `/aibos-sync [<pfad>]` | `aibos --workspace sync [<pfad>] [--only]` | Projektbaum abgleichen; „Projekt" oder kein Wort: ohne Pfad (Projekt der Session), „Workspace"/„Vault": Pfad der Vault-Root; „nur das Projekt", „nur die Root", „ohne Unterprojekte": mit `--only` (V0.6, Memo 227: H42). Vor jedem Push den Plan, auch für den ganzen Workspace (R34) |
+| `/aibos-detach [<pfad>]` | `aibos --workspace detach [<pfad>]`, `aibos --workspace remove <pfad>` | Teilbaum auslagern bzw. Workspace lösen; Worte wie bei `/aibos-sync`, den ganzen Workspace sagt Claude vorher ausdrücklich an. „aus dem Workspace entfernen", „nicht mehr im Workspace", „überall entfernen": `remove` mit Pfad; Claude sagt dazu, dass es auf allen Rechnern wirkt und das Repo am Remote bleibt, und unterscheidet es von „auslagern" (nur dieser Rechner) und von `/aibos-package` (Pakete) (V0.6, Memo 226) |
+| `/aibos-restore …` | `aibos --workspace history …`, `aibos --workspace restore …` | Sätze wie „hol die gelöschte Datei … zurück", „zeig frühere Fassungen von …", „setz das Projekt auf den Stand von gestern zurück": erst `history` zeigen, die gewählte Fassung nennen, dann `restore` mit Plan und Rückfrage |
 
-**Ablauf:** den Befehl mit `--plan` ausführen, ohne Ausnahme auch beim ganzen Workspace und nach einem Wunsch wie „sync" oder „push" (V0.6, Memos 216, 217: R34); den Plan zeigen; bei `/aios-sync` dazu die ausgehenden Commits je Repo und die Commits, die nicht aus der laufenden Session stammen, mit einer eigenen Frage nennen (Regel *Weiter*); einmal fragen; nach Ja mit `--yes` ausführen und das Ergebnis kurz melden, mit den Hinweisen (Repos ohne Remote mit dem vorgeschlagenen Befehl, angehaltene Repos mit Grund). Bei `sync: auto` bietet Claude `/aios-sync` für das Projekt nach jedem Commit an (V0.6, Memo 203: B33) (Spec 02, *Regel des Workspace*).
+**Ablauf:** den Befehl mit `--plan` ausführen, ohne Ausnahme auch beim ganzen Workspace und nach einem Wunsch wie „sync" oder „push" (V0.6, Memos 216, 217: R34); den Plan zeigen; bei `/aibos-sync` dazu die ausgehenden Commits je Repo und die Commits, die nicht aus der laufenden Session stammen, mit einer eigenen Frage nennen (Regel *Weiter*); einmal fragen; nach Ja mit `--yes` ausführen und das Ergebnis kurz melden, mit den Hinweisen (Repos ohne Remote mit dem vorgeschlagenen Befehl, angehaltene Repos mit Grund). Bei `sync: auto` bietet Claude `/aibos-sync` für das Projekt nach jedem Commit an (V0.6, Memo 203: B33) (Spec 02, *Regel des Workspace*).
 
-## Distributionen — `/aios-distribution`
+## Distributionen — `/aibos-distribution`
 
-Kernel-Skill zum Zusammenstellen einer Distribution (Spec 06, *Distributionen*; V0.5, Memos 34, 35). Auslöser: „/aios-distribution", „Distribution zusammenstellen", „Distribution anlegen".
+Kernel-Skill zum Zusammenstellen einer Distribution (Spec 06, *Distributionen*; V0.5, Memos 34, 35). Auslöser: „/aibos-distribution", „Distribution zusammenstellen", „Distribution anlegen".
 
 | # | Schritt | Ergebnis |
 |---|---|---|
 | 1 | Name und Zweck klären | `distribution-<name>`, `description` |
-| 2 | Ausgangsprojekt wählen (Standard: Projekt der Session) | Pakete mit Versionen aus `lock.yaml`, Kernel aus `aios:` |
-| 3 | ergänzen oder streichen (Auswahl aus `aios --library`) | Zusammenstellung; Abhängigkeiten erscheinen nicht in `depends` |
-| 4 | prüfen mit dem Resolver | alle Pakete auflösbar, exakte Versionen, `kernel:` passt zu `requires.aios`, keine Konflikte |
-| 5 | Plan zeigen, fragen, Repo anlegen | lokales Repo `distribution-<name>/` mit `manifest.yaml`, `README.md` und Lizenz, Ort nach den Vorgaben des Users, sonst `@Package/`; lokaler Commit und lokaler Tag `v<version>`, nicht gepusht (V0.5, Memo 56); geprüft wird vorher ein Entwurf im Scratchpad mit `aios --install … --from <entwurf> --plan` in einem leeren Probe-Vault |
-| 6 | Probe vorschlagen | `aios --install distribution-<name> --from <repo> <leerer Vault>`; den leeren Vault legt der Skill auf Wunsch in einem Test- oder Scratchpad-Ordner an, nie im Vault des Users |
+| 2 | Ausgangsprojekt wählen (Standard: Projekt der Session) | Pakete mit Versionen aus `lock.yaml`, Kernel aus `aibos:` |
+| 3 | ergänzen oder streichen (Auswahl aus `aibos --library`) | Zusammenstellung; Abhängigkeiten erscheinen nicht in `depends` |
+| 4 | prüfen mit dem Resolver | alle Pakete auflösbar, exakte Versionen, `kernel:` passt zu `requires.aibos`, keine Konflikte |
+| 5 | Plan zeigen, fragen, Repo anlegen | lokales Repo `distribution-<name>/` mit `manifest.yaml`, `README.md` und Lizenz, Ort nach den Vorgaben des Users, sonst `@Package/`; lokaler Commit und lokaler Tag `v<version>`, nicht gepusht (V0.5, Memo 56); geprüft wird vorher ein Entwurf im Scratchpad mit `aibos --install … --from <entwurf> --plan` in einem leeren Probe-Vault |
+| 6 | Probe vorschlagen | `aibos --install distribution-<name> --from <repo> <leerer Vault>`; den leeren Vault legt der Skill auf Wunsch in einem Test- oder Scratchpad-Ordner an, nie im Vault des Users |
 | 7 | melden | Ort, Inhalt, nächster Schritt: lokal taggen, veröffentlichen |
 
-Der Skill veröffentlicht nicht; das bleibt dem User bzw. Anja (`anja-veroeffentlichen`), jeder Schritt nach außen mit eigener Rückfrage. `aios --library` und `aios --install … --plan` gibt im A/W der Hook `PreToolUse` frei (Spec 02, *Freigabe*); das Anlegen des Repos mit `git` fragt der Host nach Plan und Rückfrage wie gewohnt.
+Der Skill veröffentlicht nicht; das bleibt dem User bzw. Anja (`anja-veroeffentlichen`), jeder Schritt nach außen mit eigener Rückfrage. `aibos --library` und `aibos --install … --plan` gibt im A/W der Hook `PreToolUse` frei (Spec 02, *Freigabe*); das Anlegen des Repos mit `git` fragt der Host nach Plan und Rückfrage wie gewohnt.
 
-## Registrieren — `/aios-register`
+## Registrieren — `/aibos-register`
 
 Registrieren macht die Kernel-Skills, den Alias `gui` und die geltenden Projekt-Skills **für Claude Code aufrufbar**.
 
 **Algorithmus** (für das Projekt der Session; registriert wird nur, wenn `cwd` ein initialisiertes Projekt mit `@/` in einem A/W ist, sonst nichts):
 
-0. Die Hüllen der Kernel-Skills des laufenden Kernels und die Hülle des Alias `gui` (*Kernel-Skills im Vault*, *`/gui`*) gehören zur Sollmenge jedes Projekts und der Vault-Root. Sie werden wie Skills aus der Kette verglichen (Schritte 2–4), mit `source: kernel` und der Version des Kernels in `.aios/registry` (Spec 04). Ist das Projekt nicht die Vault-Root, prüft die Registrierung zusätzlich die Hüllen an der Vault-Root.
-1. Alle `<D>/@/@!Skill/<name>/` und die ausgerollten `<D>/@/@!Package/<paket>/skills/<name>/` (Spec 06) der Master-Space-Kette sammeln (private Skills eines Assistenten in `@!Assistant/…/@!Skill/` bzw. `…/assistants/…/@!Skill/` gehören nicht dazu). Bei gleichem Namen gewinnt der nächstgelegene Masterspace, darin der lokale Blueprint vor dem Paket (Spec 06). Übersprungen und gemeldet werden reservierte Namen (`aios-*`, `gui`), ungültige Namen, Ordner ohne `SKILL.md`, Skills, deren `name` nicht dem Verzeichnisnamen entspricht, und Skills ohne gültige `version`.
-2. Mit `<Projekt>/.claude/skills/` und `<Projekt>/.aios/registry` vergleichen.
+0. Die Hüllen der Kernel-Skills des laufenden Kernels und die Hülle des Alias `gui` (*Kernel-Skills im Vault*, *`/gui`*) gehören zur Sollmenge jedes Projekts und der Vault-Root. Sie werden wie Skills aus der Kette verglichen (Schritte 2–4), mit `source: kernel` und der Version des Kernels in `.aibos/registry` (Spec 04). Ist das Projekt nicht die Vault-Root, prüft die Registrierung zusätzlich die Hüllen an der Vault-Root.
+1. Alle `<D>/@/@!Skill/<name>/` und die ausgerollten `<D>/@/@!Package/<paket>/skills/<name>/` (Spec 06) der Master-Space-Kette sammeln (private Skills eines Assistenten in `@!Assistant/…/@!Skill/` bzw. `…/assistants/…/@!Skill/` gehören nicht dazu). Bei gleichem Namen gewinnt der nächstgelegene Masterspace, darin der lokale Blueprint vor dem Paket (Spec 06). Übersprungen und gemeldet werden reservierte Namen (`aibos-*`, `gui`), ungültige Namen, Ordner ohne `SKILL.md`, Skills, deren `name` nicht dem Verzeichnisnamen entspricht, und Skills ohne gültige `version`.
+2. Mit `<Projekt>/.claude/skills/` und `<Projekt>/.aibos/registry` vergleichen.
 3. **neu**: kopieren; **geändert** (anderer Inhalt oder andere Quelle des Blueprints, oder die Kopie in `.claude/skills/` wurde verändert): ersetzen; **weggefallen** (in der Registry, aber nicht mehr in der Kette oder nicht mehr gültig): entfernen. Skills in `.claude/skills/`, die nicht in der Registry stehen, bleiben unberührt und werden gemeldet, wenn ein Blueprint denselben Namen hat.
-4. `.aios/registry` schreiben (Format Spec 04). Eine alte `.aios/manifest` aus v0.3 wird dabei entfernt.
+4. `.aibos/registry` schreiben (Format Spec 04). Eine alte `.aibos/manifest` aus v0.3 wird dabei entfernt.
 
 | Aufruf | Rückfrage | Anlass |
 |---|---|---|
-| SessionStart-Hook (`aios --context --sync --yes`) | nein | jeder Session-Start in einem A/W |
-| `aios --init` | mit dem Plan von `aios --init` | Initialisieren und Ergänzen eines Projekts (Spec 05) |
-| `aios --activate v0.6.<n> <vault-root>` | mit dem Plan von `aios --activate` | Bindung eines Vaults: Hüllen an der Vault-Root und in allen Projekten des Vaults (Spec 04) |
-| `aios --fetch`, `aios --deploy`, `aios --install <distribution> <vault>` | mit dem jeweiligen Plan | nach dem Holen bzw. Ausrollen; bei `aios --install` immer im Ziel-Vault, unabhängig vom Arbeitsverzeichnis (Spec 06) |
-| `/aios-register`, `aios --register [<pfad>]`, `aios --context --sync` | ja, mit Vorschau | manueller Anstoß, z. B. nach `/aios-fetch`; der Skill holt mit `--plan` die Vorschau, fragt im Chat und führt nach Ja `--yes` aus |
+| SessionStart-Hook (`aibos --context --sync --yes`) | nein | jeder Session-Start in einem A/W |
+| `aibos --init` | mit dem Plan von `aibos --init` | Initialisieren und Ergänzen eines Projekts (Spec 05) |
+| `aibos --activate v0.7.<n> <vault-root>` | mit dem Plan von `aibos --activate` | Bindung eines Vaults: Hüllen an der Vault-Root und in allen Projekten des Vaults (Spec 04) |
+| `aibos --fetch`, `aibos --deploy`, `aibos --install <distribution> <vault>` | mit dem jeweiligen Plan | nach dem Holen bzw. Ausrollen; bei `aibos --install` immer im Ziel-Vault, unabhängig vom Arbeitsverzeichnis (Spec 06) |
+| `/aibos-register`, `aibos --register [<pfad>]`, `aibos --context --sync` | ja, mit Vorschau | manueller Anstoß, z. B. nach `/aibos-fetch`; der Skill holt mit `--plan` die Vorschau, fragt im Chat und führt nach Ja `--yes` aus |
 
-**Wirksamkeit:** Claude Code übernimmt Skills, die nach dem Start einer Session angelegt werden, nicht zuverlässig in diese Session (V0.1, Memo 16). Die Registrierung beim Session-Start stellt deshalb den Stand für den **nächsten** Chat her. Ändert sie etwas, meldet der Hook `AIOS-SKILLS: <Änderungen> — effective from the next chat` (z. B. `AIOS-SKILLS: new memo; changed shared — effective from the next chat`); übersprungene Blueprints meldet er als `AIOS-WARNING`, z. B. `AIOS-WARNING: skill ohne-version has no version, not registered`. Weil die Kopie im Projekt selbst liegt, ist ein Skill aus einem Masterspace oberhalb auch dann verfügbar, wenn das Projekt ein eigenes Git-Repo ist (V0.1, Memo 27). `/aios-register`, `/aios-package`, `/aios-fetch`, `/aios-deploy` und `/aios-init` sagen nach dem Registrieren: „Der Skill ist ab dem nächsten Chat verfügbar (oder nach `/reload-skills`)." Ob `/reload-skills` das zuverlässig leistet, ist offen (Spec 01, O1).
+**Wirksamkeit:** Claude Code übernimmt Skills, die nach dem Start einer Session angelegt werden, nicht zuverlässig in diese Session (V0.1, Memo 16). Die Registrierung beim Session-Start stellt deshalb den Stand für den **nächsten** Chat her. Ändert sie etwas, meldet der Hook `AIBOS-SKILLS: <Änderungen> — effective from the next chat` (z. B. `AIBOS-SKILLS: new memo; changed shared — effective from the next chat`); übersprungene Blueprints meldet er als `AIBOS-WARNING`, z. B. `AIBOS-WARNING: skill ohne-version has no version, not registered`. Weil die Kopie im Projekt selbst liegt, ist ein Skill aus einem Masterspace oberhalb auch dann verfügbar, wenn das Projekt ein eigenes Git-Repo ist (V0.1, Memo 27). `/aibos-register`, `/aibos-package`, `/aibos-fetch`, `/aibos-deploy` und `/aibos-init` sagen nach dem Registrieren: „Der Skill ist ab dem nächsten Chat verfügbar (oder nach `/reload-skills`)." Ob `/reload-skills` das zuverlässig leistet, ist offen (Spec 01, O1).
 
 ## Assistenten
 
-Ein Assistent ist eine Rolle, die AIOS dem KI-Assistenten des Hosts gibt: wer spricht, was er weiß, welche Skills und welche Oberfläche er hat. **Abbildung auf Claude Code (v0.6):** Der Assistent ist dem Projekt zugeordnet; die Hooks laden ihn als Kontext in jeden Chat des Projekts (Spec 02, *Assistent der Session*). Die Agentenfunktion von Claude Code (`.claude/agents/`, Subagenten) wird nicht verwendet.
+Ein Assistent ist eine Rolle, die AIBOS dem KI-Assistenten des Hosts gibt: wer spricht, was er weiß, welche Skills und welche Oberfläche er hat. **Abbildung auf Claude Code (v0.7):** Der Assistent ist dem Projekt zugeordnet; die Hooks laden ihn als Kontext in jeden Chat des Projekts (Spec 02, *Assistent der Session*). Die Agentenfunktion von Claude Code (`.claude/agents/`, Subagenten) wird nicht verwendet.
 
 ### Aufbau
 
@@ -252,26 +253,26 @@ tools: [read, search]
 | Feld | Pflicht | Regel |
 |---|---|---|
 | `name` | ja | gleich dem Verzeichnisnamen; Kleinbuchstaben, Ziffern, Bindestriche; nicht `none` oder `inherit` |
-| `title` | ja | Anzeigename für `/aios-assistant` und die Bestätigung „<Titel> aktiv" |
+| `title` | ja | Anzeigename für `/aibos-assistant` und die Bestätigung „<Titel> aktiv" |
 | `version` | ja | Semver `MAJOR.MINOR.PATCH`; ein neuer lokaler Assistent beginnt mit `0.1.0` |
 | `description` | ja | eine Zeile |
 | `prompt` | nein | Name einer Datei in `@!Prompt/` |
 | `skills` | nein | Namen von Skills |
 | `gui` | nein | Name des Skills mit der Oberfläche des Assistenten; muss in `skills` stehen (siehe *Oberflächen*) |
 | `model` | nein | Wunsch an den Host, Modell je Host; in der Desktop-App nur ein Hinweis an den User |
-| `tools` | nein | Wunsch an den Host, neutrale Namen; in v0.6 nur dokumentierend, nicht erzwungen |
+| `tools` | nein | Wunsch an den Host, neutrale Namen; in v0.7 nur dokumentierend, nicht erzwungen |
 
-**Auflösung von `prompt`, `skills` und `gui`:** zuerst im Assistentenordner (`<assistant>/@!Prompt/<prompt>.md`, `<assistant>/@!Skill/<skill>/SKILL.md`), danach in den Masterspaces der Kette vom Projekt aufwärts (`<D>/@/@!Prompt/…`, `<D>/@/@!Skill/…`, `<D>/@/@!Package/<paket>/skills/…`); der nächstgelegene Treffer gewinnt. Ein nicht gefundener Name, ein Skill ohne gültige `version` und ein `gui`, das nicht in `skills` steht, sind Fehler, die `aios --context --assistant` meldet.
+**Auflösung von `prompt`, `skills` und `gui`:** zuerst im Assistentenordner (`<assistant>/@!Prompt/<prompt>.md`, `<assistant>/@!Skill/<skill>/SKILL.md`), danach in den Masterspaces der Kette vom Projekt aufwärts (`<D>/@/@!Prompt/…`, `<D>/@/@!Skill/…`, `<D>/@/@!Package/<paket>/skills/…`); der nächstgelegene Treffer gewinnt. Ein nicht gefundener Name, ein Skill ohne gültige `version` und ein `gui`, das nicht in `skills` steht, sind Fehler, die `aibos --context --assistant` meldet.
 
-**Assistenten der Kette:** alle `<D>/@/@!Assistant/<name>/ASSISTANT.md` und `<D>/@/@!Package/<paket>/assistants/<name>/ASSISTANT.md`; bei gleichem Namen gewinnt der nächstgelegene Masterspace, darin der lokale Assistent vor dem Paket. `name` muss dem Verzeichnisnamen entsprechen, `version` muss gültig sein; ein Assistent, der das nicht erfüllt, wird nicht aufgelöst und von `aios --context --assistants` und `/aios-assistant` gemeldet. Das Frontmatter wird mit der YAML-Untermenge von Spec 04 gelesen (mit Blocktexten wie `description: >`); `model` darf ein einzelner Wert (`model: opus`) oder je Host angegeben sein. Assistenten gibt es nur in einem mit AIOS aktivierten Vault. `aios --context --assistants` listet sie mit Titel, Version und Beschreibung.
+**Assistenten der Kette:** alle `<D>/@/@!Assistant/<name>/ASSISTANT.md` und `<D>/@/@!Package/<paket>/assistants/<name>/ASSISTANT.md`; bei gleichem Namen gewinnt der nächstgelegene Masterspace, darin der lokale Assistent vor dem Paket. `name` muss dem Verzeichnisnamen entsprechen, `version` muss gültig sein; ein Assistent, der das nicht erfüllt, wird nicht aufgelöst und von `aibos --context --assistants` und `/aibos-assistant` gemeldet. Das Frontmatter wird mit der YAML-Untermenge von Spec 04 gelesen (mit Blocktexten wie `description: >`); `model` darf ein einzelner Wert (`model: opus`) oder je Host angegeben sein. Assistenten gibt es nur in einem mit AIBOS aktivierten Vault. `aibos --context --assistants` listet sie mit Titel, Version und Beschreibung.
 
-**Wissen des Assistenten:** Der Assistentenordner wird nach den Klassen von Spec 02 eingeteilt, als wäre er ein Masterspace: Dateien und Ordner ohne Präfix werden geladen (ohne `ASSISTANT.md`), `@@…` ist verfügbar, `@!…` (auch `@!Prompt`, `@!Skill`) verborgen. Dateien, deren Name mit `.` beginnt (z. B. `.aios-deploy`), werden übergangen.
+**Wissen des Assistenten:** Der Assistentenordner wird nach den Klassen von Spec 02 eingeteilt, als wäre er ein Masterspace: Dateien und Ordner ohne Präfix werden geladen (ohne `ASSISTANT.md`), `@@…` ist verfügbar, `@!…` (auch `@!Prompt`, `@!Skill`) verborgen. Dateien, deren Name mit `.` beginnt (z. B. `.aibos-deploy`), werden übergangen.
 
-**Kontext eines Assistenten:** `aios --context --assistant <name>` gibt in `<aios-assistant name="…" title="…" version="…" src="…">` … `</aios-assistant name="…">` aus: einen Block `<aios-assistant-meta>` mit `description`, `model`, `tools`, `skills`, `gui`, dann als `<aios-file class="…">` den Prompt (`prompt`), den Text der `ASSISTANT.md` ohne Frontmatter (`assistant`), die geladenen Dateien des Assistentenordners (`load`), das Inhaltsverzeichnis seines verfügbaren Wissens (`<aios-available>`) und die `SKILL.md` aller genannten Skills (`skill`). Die Endmarke zeigt, dass alles gelesen wurde. Diese Ausgabe verwenden die Hooks (Spec 02) und `/aios-assistant`.
+**Kontext eines Assistenten:** `aibos --context --assistant <name>` gibt in `<aibos-assistant name="…" title="…" version="…" src="…">` … `</aibos-assistant name="…">` aus: einen Block `<aibos-assistant-meta>` mit `description`, `model`, `tools`, `skills`, `gui`, dann als `<aibos-file class="…">` den Prompt (`prompt`), den Text der `ASSISTANT.md` ohne Frontmatter (`assistant`), die geladenen Dateien des Assistentenordners (`load`), das Inhaltsverzeichnis seines verfügbaren Wissens (`<aibos-available>`) und die `SKILL.md` aller genannten Skills (`skill`). Die Endmarke zeigt, dass alles gelesen wurde. Diese Ausgabe verwenden die Hooks (Spec 02) und `/aibos-assistant`.
 
 ### Zuordnung
 
-Der Assistent ist eine **Eigenschaft des Projekts** (Spec 01, Grundregel 8): Er steht ausschließlich im Projekt und gilt für alle User gleich (V0.3, Memo 04). Der Schlüssel `assistant:` in `<Projekt>/.aios/config.yaml` (oder `§<Vault>/.aios/config.yaml`) hat genau einen von drei Werten:
+Der Assistent ist eine **Eigenschaft des Projekts** (Spec 01, Grundregel 8): Er steht ausschließlich im Projekt und gilt für alle User gleich (V0.3, Memo 04). Der Schlüssel `assistant:` in `<Projekt>/.aibos/config.yaml` (oder `§<Vault>/.aibos/config.yaml`) hat genau einen von drei Werten:
 
 | Wert | Bedeutung |
 |---|---|
@@ -280,11 +281,11 @@ Der Assistent ist eine **Eigenschaft des Projekts** (Spec 01, Grundregel 8): Er 
 | `inherit` | der Assistent des übergeordneten Projekts |
 
 - **Fehlt der Schlüssel, gilt `inherit`.** Ein neues Projekt erbt also, ohne dass etwas geschrieben werden muss.
-- `inherit` wird nach der Konfigurationskette von unten nach oben aufgelöst (Spec 04), bis eine `.aios/config.yaml` `none` oder `<name>` festlegt. Legt bis zur Vault-Root niemand etwas fest, gibt es keinen Assistenten.
+- `inherit` wird nach der Konfigurationskette von unten nach oben aufgelöst (Spec 04), bis eine `.aibos/config.yaml` `none` oder `<name>` festlegt. Legt bis zur Vault-Root niemand etwas fest, gibt es keinen Assistenten.
 - Ändert sich der Assistent eines übergeordneten Projekts, ändert sich der eines darunterliegenden Projekts nur bei `inherit` mit.
-- `assistant` in `~/.aios/config.yaml` ist nicht erlaubt; der Rechner eines Users legt keinen Assistenten fest.
+- `assistant` in `~/.aibos/config.yaml` ist nicht erlaubt; der Rechner eines Users legt keinen Assistenten fest.
 - Ist der zugeordnete Name in einem Unterprojekt nicht auflösbar, meldet der Session-Start das als Warnung, und der Chat läuft ohne Assistent. Ein Unterprojekt kann einen geerbten Assistenten mit einer eigenen Fassung gleichen Namens überschreiben (nächstgelegener Masterspace).
-- `.aios/config.yaml` ist versioniert; ein Wechsel erreicht andere User in einer geteilten Ablage sofort, in einem Git-Repo nach Commit und Pull.
+- `.aibos/config.yaml` ist versioniert; ein Wechsel erreicht andere User in einer geteilten Ablage sofort, in einem Git-Repo nach Commit und Pull.
 
 **Beispiel:** Die Vault-Root wechselt von `gaertner` auf `astronom`.
 
@@ -299,22 +300,22 @@ Der Assistent ist eine **Eigenschaft des Projekts** (Spec 01, Grundregel 8): Er 
 
 Ein Ordner ohne `@/` ist noch kein Projekt; dort hat `PROJECT-UNINITIALIZED` Vorrang (Spec 02). Die Zuordnung gilt für ihn, sobald er initialisiert ist.
 
-### Wechsel — `/aios-assistant`
+### Wechsel — `/aibos-assistant`
 
-Auslöser: `/aios-assistant <Name>[: <Titel>]`, `/aios-assistant --none`, `/aios-assistant --inherit`, z. B. `/aios-assistant Gärtner: Teste Apfel-Birne`. Jeder Aufruf ist eine **Zuordnung zum Projekt**; eine Aktivierung nur für den laufenden Chat gibt es nicht (V0.3, Memo 07). Wer einen anderen Assistenten ausprobieren will, legt dafür ein Unterprojekt an.
+Auslöser: `/aibos-assistant <Name>[: <Titel>]`, `/aibos-assistant --none`, `/aibos-assistant --inherit`, z. B. `/aibos-assistant Gärtner: Teste Apfel-Birne`. Jeder Aufruf ist eine **Zuordnung zum Projekt**; eine Aktivierung nur für den laufenden Chat gibt es nicht (V0.3, Memo 07). Wer einen anderen Assistenten ausprobieren will, legt dafür ein Unterprojekt an.
 
 | Aufruf | CLI | schreibt im Projekt der Session | Wirkung im laufenden Chat |
 |---|---|---|---|
-| `/aios-assistant <Name>` | `aios --assistant <name>` | `assistant: <name>` | sofortiger Wechsel in die Rolle |
-| `/aios-assistant --none` | `aios --assistant none` | `assistant: none` | verlässt sofort die Rolle |
-| `/aios-assistant --inherit` | `aios --assistant inherit` | `assistant: inherit` | übernimmt sofort den Assistenten des übergeordneten Projekts |
+| `/aibos-assistant <Name>` | `aibos --assistant <name>` | `assistant: <name>` | sofortiger Wechsel in die Rolle |
+| `/aibos-assistant --none` | `aibos --assistant none` | `assistant: none` | verlässt sofort die Rolle |
+| `/aibos-assistant --inherit` | `aibos --assistant inherit` | `assistant: inherit` | übernimmt sofort den Assistenten des übergeordneten Projekts |
 
 Mit `--to <projekt>` schreibt der Aufruf in ein anderes Projekt der Kette, z. B. die Vault-Root für den Standard des Vaults; der laufende Chat wechselt dann nur, wenn sich dadurch sein eigener wirksamer Assistent ändert.
 
 **Ablauf:**
 
 1. `<Name>` gegen `title` bzw. `name` aller Assistenten der Kette auflösen (ohne Rücksicht auf Groß-/Kleinschreibung; Umlaute gelten als `ae`, `oe`, `ue`, `ss`, sodass „Gärtner" auch `gaertner` trifft). Kein oder mehrdeutiger Treffer: verfügbare Assistenten listen.
-2. `aios --assistant <wert> [--to <projekt>] --plan` zeigt, was sich ändert, und fragt einmal nach (I7), z. B.
+2. `aibos --assistant <wert> [--to <projekt>] --plan` zeigt, was sich ändert, und fragt einmal nach (I7), z. B.
 
    ```
    project G-Garten: Gärtner → Astronom
@@ -322,8 +323,8 @@ Mit `--to <projekt>` schreibt der Aufruf in ein anderes Projekt der Kette, z. B.
    ```
 
    Hat der User den Wechsel in seinem Aufruf schon ausdrücklich bestätigt, entfällt die Rückfrage.
-3. Nach Ja `aios --assistant <wert> [--to <projekt>] --yes --session <session-id>`: schreibt `assistant:` in `.aios/config.yaml` (nur diese Zeile; Kommentare und andere Zeilen bleiben) und setzt den Merker der Session auf den neuen wirksamen Assistenten (Spec 02). Die Session-ID nennt die Hülle in einer Textzeile mit dem Platzhalter `${CLAUDE_SESSION_ID}`, den Claude Code im Text eines Skills ersetzt (V0.3, Memo 31; Spec 04).
-4. Ist der neue wirksame Assistent nicht `none`: `aios --context --assistant <name>` ausführen und die Ausgabe vollständig lesen. Bei `none`: die bisherige Rolle ablegen.
+3. Nach Ja `aibos --assistant <wert> [--to <projekt>] --yes --session <session-id>`: schreibt `assistant:` in `.aibos/config.yaml` (nur diese Zeile; Kommentare und andere Zeilen bleiben) und setzt den Merker der Session auf den neuen wirksamen Assistenten (Spec 02). Die Session-ID nennt die Hülle in einer Textzeile mit dem Platzhalter `${CLAUDE_SESSION_ID}`, den Claude Code im Text eines Skills ersetzt (V0.3, Memo 31; Spec 04).
+4. Ist der neue wirksame Assistent nicht `none`: `aibos --context --assistant <name>` ausführen und die Ausgabe vollständig lesen. Bei `none`: die bisherige Rolle ablegen.
 5. Titel setzen, wenn einer angegeben ist (unten).
 6. Kurz bestätigen („Astronom aktiv" bzw. „kein Assistent"), `model` gegebenenfalls als Hinweis nennen, danach in der Rolle antworten.
 
@@ -336,25 +337,25 @@ Der Titel ist der **Titel des Chats**: der Name der Session, der in der Desktop-
 | Situation | Titel |
 |---|---|
 | Dialog *Projekt initialisieren* (Spec 02) | der im Dialog gewählte Titel, für diesen Chat |
-| `/aios-assistant <Name>: <Titel>` | `<Titel>`, für diesen Chat |
-| `/aios-assistant <Name>` ohne Titel | unverändert |
-| neuer Chat, auch mit automatisch geladenem Assistenten | der Titel, den die App selbst vergibt; AIOS setzt keinen |
+| `/aibos-assistant <Name>: <Titel>` | `<Titel>`, für diesen Chat |
+| `/aibos-assistant <Name>` ohne Titel | unverändert |
+| neuer Chat, auch mit automatisch geladenem Assistenten | der Titel, den die App selbst vergibt; AIBOS setzt keinen |
 | Compaction, Resume | unverändert |
 
-Setzen: AIOS setzt den Titel nicht selbst, weil die Session-ID von Claude Code nicht die der Desktop-App ist (V0.3, Memo 59, A4; V0.4, Memo 20). Claude schlägt den Titel vor und bittet den User, den Chat umzubenennen: in der Desktop-App in der Seitenleiste, in der CLI mit `/rename <Titel>`. AIOS fügt den Assistenten nicht in den Titel ein; welcher Assistent aktiv ist, sagt Claude in seiner Bestätigung.
+Setzen: AIBOS setzt den Titel nicht selbst, weil die Session-ID von Claude Code nicht die der Desktop-App ist (V0.3, Memo 59, A4; V0.4, Memo 20). Claude schlägt den Titel vor und bittet den User, den Chat umzubenennen: in der Desktop-App in der Seitenleiste, in der CLI mit `/rename <Titel>`. AIBOS fügt den Assistenten nicht in den Titel ein; welcher Assistent aktiv ist, sagt Claude in seiner Bestätigung.
 
-## Oberflächen — `/aios-gui` und `/gui`
+## Oberflächen — `/aibos-gui` und `/gui`
 
-Eine Oberfläche ist eine **Abkürzung zu Prompts und Skills** für Anwender, die keine Befehle kennen. Alles läuft weiter über den Assistenten und die Regeln von AIOS, z. B. die Rückfrage vor dem Schreiben (I7).
+Eine Oberfläche ist eine **Abkürzung zu Prompts und Skills** für Anwender, die keine Befehle kennen. Alles läuft weiter über den Assistenten und die Regeln von AIBOS, z. B. die Rückfrage vor dem Schreiben (I7).
 
 | Aufruf | Oberfläche | Inhalt |
 |---|---|---|
-| `/aios-gui` | **AIOS-Oberfläche**, gleich für alle Projekte | Aufgaben von AIOS (Tabelle unten) |
+| `/aibos-gui` | **AIBOS-Oberfläche**, gleich für alle Projekte | Aufgaben von AIBOS (Tabelle unten) |
 | `/gui` | **Oberfläche des Assistenten der Session** | was der Assistent seinem Anwender anbietet, z. B. beim Gärtner den Apfel-Birnen-Rechner |
 
 ### Beschreibung einer Oberfläche
 
-Eine Oberfläche ist in erster Linie eine **Beschreibung** (V0.3, Memo 25): eine Datei `gui.yaml` im Ordner des Oberflächen-Skills, daneben optionale HTML-Teile. Der Oberflächen-Skill ist ein gewöhnlicher Skill mit eigenem Namen (z. B. `gaertner-gui`), mit `SKILL.md` und `version`; er kann auch unter seinem Namen aufgerufen werden. Ein Assistent hat **eine** Oberfläche, seine Startseite; weitere Werkzeuge sind Kacheln darauf. Eine App hat ebenso eine Oberfläche (`contents.gui`, Spec 06); sie wird über ihren Skill aufgerufen oder über die Kachel *Apps* von `/aios-gui`, nicht über `/gui` (V0.4, Memo 29).
+Eine Oberfläche ist in erster Linie eine **Beschreibung** (V0.3, Memo 25): eine Datei `gui.yaml` im Ordner des Oberflächen-Skills, daneben optionale HTML-Teile. Der Oberflächen-Skill ist ein gewöhnlicher Skill mit eigenem Namen (z. B. `gaertner-gui`), mit `SKILL.md` und `version`; er kann auch unter seinem Namen aufgerufen werden. Ein Assistent hat **eine** Oberfläche, seine Startseite; weitere Werkzeuge sind Kacheln darauf. Eine App hat ebenso eine Oberfläche (`contents.gui`, Spec 06); sie wird über ihren Skill aufgerufen oder über die Kachel *Apps* von `/aibos-gui`, nicht über `/gui` (V0.4, Memo 29).
 
 ```yaml
 title: Gärtner
@@ -384,55 +385,55 @@ tiles:
 | `tiles[].html` | eines von drei | Dateiname eines HTML-Teils im Ordner des Oberflächen-Skills; läuft in der Oberfläche ohne Claude, z. B. ein Rechner |
 | `tiles[].icon` | nein | ein neutrales Wort für ein Symbol, z. B. `calculator`, `book`, `gear` |
 
-`gui.yaml` wird mit PyYAML gelesen (nicht mit der Untermenge von Spec 04). Ein HTML-Teil einer App darf Platzhalter `{{aios-data <datei>}}` enthalten; `aios --gui` setzt dafür den Inhalt von `@Data/<paket>/<datei>` des Projekts der Session als JSON ein (`null`, wenn die Datei fehlt), damit die Oberfläche gespeicherte Daten der App zeigt (V0.4, Memo 49). Ein HTML-Teil ist ein Fragment ohne `<html>`, `<head>` und `<body>`, mit eingebettetem CSS und JavaScript und ohne Zugriff auf das Netz außer auf die vom Host erlaubten Quellen. Er darf die Hilfsfunktion `sendPrompt(text)` des Hosts verwenden.
+`gui.yaml` wird mit PyYAML gelesen (nicht mit der Untermenge von Spec 04). Ein HTML-Teil einer App darf Platzhalter `{{aibos-data <datei>}}` enthalten; `aibos --gui` setzt dafür den Inhalt von `@Data/<paket>/<datei>` des Projekts der Session als JSON ein (`null`, wenn die Datei fehlt), damit die Oberfläche gespeicherte Daten der App zeigt (V0.4, Memo 49). Ein HTML-Teil ist ein Fragment ohne `<html>`, `<head>` und `<body>`, mit eingebettetem CSS und JavaScript und ohne Zugriff auf das Netz außer auf die vom Host erlaubten Quellen. Er darf die Hilfsfunktion `sendPrompt(text)` des Hosts verwenden.
 
 ### Darstellung
 
 | Host | Darstellung |
 |---|---|
-| Desktop-App mit HTML-Oberflächen | `aios --gui --html` erzeugt aus der Beschreibung ein HTML-Fragment: Überschrift, Intro, Kacheln als Schaltflächen (`prompt` und `skill` über `sendPrompt`, verbunden in einem `<script>`-Block, weil Hosts Inline-Handler wie `onclick` entfernen; alle Skripte, auch die der HTML-Teile, stehen am Ende auf oberster Ebene, weil die Desktop-App nur solche Skripte ausführt (V0.3, Memo 60)), HTML-Teile eingebettet, darunter die Zeile „If a tile only fills the input field, press Enter. If nothing happens, name the tile in the chat." Claude zeigt es mit dem Werkzeug des Hosts für HTML-Oberflächen im Chat. Nennt der User danach eine Kachel im Chat, weil die Kacheln nicht reagieren, bietet Claude dieselben Kacheln als Menü an (A10; V0.4, Memo 31) |
+| Desktop-App mit HTML-Oberflächen | `aibos --gui --html` erzeugt aus der Beschreibung ein HTML-Fragment: Überschrift, Intro, Kacheln als Schaltflächen (`prompt` und `skill` über `sendPrompt`, verbunden in einem `<script>`-Block, weil Hosts Inline-Handler wie `onclick` entfernen; alle Skripte, auch die der HTML-Teile, stehen am Ende auf oberster Ebene, weil die Desktop-App nur solche Skripte ausführt (V0.3, Memo 60)), HTML-Teile eingebettet, darunter die Zeile „If a tile only fills the input field, press Enter. If nothing happens, name the tile in the chat." Claude zeigt es mit dem Werkzeug des Hosts für HTML-Oberflächen im Chat. Nennt der User danach eine Kachel im Chat, weil die Kacheln nicht reagieren, bietet Claude dieselben Kacheln als Menü an (A10; V0.4, Memo 31) |
 | CLI und Desktop-App ohne HTML-Oberflächen (Spec 01, O4) | Menü mit dem Auswahlwerkzeug (`AskUserQuestion`), höchstens 4 Einträge je Ebene, bei mehr Kacheln mit „Weitere …"; Kacheln mit `html` fehlen dort und werden als Hinweis genannt |
 
-Die Oberfläche erscheint, wenn `/aios-gui` oder `/gui` aufgerufen wird; sie ist nicht dauerhaft sichtbar.
+Die Oberfläche erscheint, wenn `/aibos-gui` oder `/gui` aufgerufen wird; sie ist nicht dauerhaft sichtbar.
 
 ### `/gui`
 
-`/gui` ist ein **Alias**: eine Hülle, die wie die Kernel-Skills im A/W an der Vault-Root und in jedem Projekt registriert wird (*Kernel-Skills im Vault*), mit `allowed-tools: Bash(<weiterleiter> --gui --session *)`. Es gibt nur diesen einen Alias (V0.3, Memo 25). Er gehört zum Assistenten: Er zeigt dessen Oberfläche und steht nicht im Block der Kernel-Skills; ohne Assistenten verweist er auf `/aios-gui` (V0.6, Memo 12). Der Rumpf entsteht beim Aufruf mit `aios --gui --session ${CLAUDE_SESSION_ID}`:
+`/gui` ist ein **Alias**: eine Hülle, die wie die Kernel-Skills im A/W an der Vault-Root und in jedem Projekt registriert wird (*Kernel-Skills im Vault*), mit `allowed-tools: Bash(<weiterleiter> --gui --session *)`. Es gibt nur diesen einen Alias (V0.3, Memo 25). Er gehört zum Assistenten: Er zeigt dessen Oberfläche und steht nicht im Block der Kernel-Skills; ohne Assistenten verweist er auf `/aibos-gui` (V0.6, Memo 12). Der Rumpf entsteht beim Aufruf mit `aibos --gui --session ${CLAUDE_SESSION_ID}`:
 
 1. Assistent bestimmen: der Assistent der Session aus dem Merker, wenn das `cwd` gleich dem im Merker ist (Spec 02); sonst die Zuordnung des Projekts.
-2. Hat er ein `gui:`, gibt `aios --gui` den Rumpf des Oberflächen-Skills aus, erweitert um die Anweisung, die Oberfläche nach *Darstellung* zu zeigen.
-3. Ist kein Assistent aktiv oder nennt er kein `gui:`: „The assistant <title> has no surface." bzw. „No assistant active.", jeweils mit „AIOS surface: `/aios-gui`".
+2. Hat er ein `gui:`, gibt `aibos --gui` den Rumpf des Oberflächen-Skills aus, erweitert um die Anweisung, die Oberfläche nach *Darstellung* zu zeigen.
+3. Ist kein Assistent aktiv oder nennt er kein `gui:`: „The assistant <title> has no surface." bzw. „No assistant active.", jeweils mit „AIBOS surface: `/aibos-gui`".
 
 Weil der Rumpf beim Aufruf aufgelöst wird, zeigt `/gui` nach einem Wechsel des Assistenten sofort die neue Oberfläche, ohne neue Registrierung.
 
 ### Oberfläche einer App
 
-Die Oberfläche einer App ist der Skill, den `contents.gui` ihres Pakets nennt (Spec 06). Er ruft `aios --gui --skill <oberfläche> [--html]` auf: Überschrift und Anweisung *Show the surface* bzw. das Fragment mit den Platzhaltern der App. `aios --gui --apps` listet die Oberflächen der ausgerollten Apps der Kette, für die Kachel *Apps* von `/aios-gui`.
+Die Oberfläche einer App ist der Skill, den `contents.gui` ihres Pakets nennt (Spec 06). Er ruft `aibos --gui --skill <oberfläche> [--html]` auf: Überschrift und Anweisung *Show the surface* bzw. das Fragment mit den Platzhaltern der App. `aibos --gui --apps` listet die Oberflächen der ausgerollten Apps der Kette, für die Kachel *Apps* von `/aibos-gui`.
 
-### `/aios-gui`
+### `/aibos-gui`
 
-Kernel-Skill mit der Oberfläche von AIOS selbst. Ihre Beschreibung liegt im Kernel-Skill (`skills/aios/aios-gui/gui.yaml`) und hat diese Kacheln:
+Kernel-Skill mit der Oberfläche von AIBOS selbst. Ihre Beschreibung liegt im Kernel-Skill (`skills/aibos/aibos-gui/gui.yaml`) und hat diese Kacheln:
 
 | Kachel | sendet |
 |---|---|
-| Projekt initialisieren | `/aios-init` (Dialog *Projekt initialisieren*, Spec 02) |
-| Kontext und Konfiguration | `/aios-context`, danach `aios --config` |
-| Assistent zuordnen | `/aios-assistant` mit Auswahl aus `aios --context --assistants`, `none`, `inherit` |
-| Pakete | `/aios-package` (suchen, holen, zeigen, was geholt ist) |
-| Apps | Oberflächen der ausgerollten Apps der Kette (`contents.gui`, Spec 06); die Kachel sendet einen Prompt, Claude holt die Liste mit `aios --gui --apps` und zeigt sie als Auswahl; eine Auswahl ruft den Oberflächen-Skill der App auf, z. B. `/taschenrechner-gui`; ohne Apps der Hinweis auf `/aios-package` |
-| Pakete abgleichen und Skills registrieren | `/aios-fetch` (Abgleich), `/aios-register` |
-| Integrität prüfen | `/aios-integrity` |
-| Projektstatus | `/aios-status` |
-| Memo schreiben | `/memo` oder `/aios-memo` (Vorrang siehe unten) |
+| Projekt initialisieren | `/aibos-init` (Dialog *Projekt initialisieren*, Spec 02) |
+| Kontext und Konfiguration | `/aibos-context`, danach `aibos --config` |
+| Assistent zuordnen | `/aibos-assistant` mit Auswahl aus `aibos --context --assistants`, `none`, `inherit` |
+| Pakete | `/aibos-package` (suchen, holen, zeigen, was geholt ist) |
+| Apps | Oberflächen der ausgerollten Apps der Kette (`contents.gui`, Spec 06); die Kachel sendet einen Prompt, Claude holt die Liste mit `aibos --gui --apps` und zeigt sie als Auswahl; eine Auswahl ruft den Oberflächen-Skill der App auf, z. B. `/taschenrechner-gui`; ohne Apps der Hinweis auf `/aibos-package` |
+| Pakete abgleichen und Skills registrieren | `/aibos-fetch` (Abgleich), `/aibos-register` |
+| Integrität prüfen | `/aibos-integrity` |
+| Projektstatus | `/aibos-status` |
+| Memo schreiben | `/memo` oder `/aibos-memo` (Vorrang siehe unten) |
 
-## Memo-Stil — `/aios-memo`
+## Memo-Stil — `/aibos-memo`
 
 Kernel-Skill, damit in jedem Projekt eines A/W ein wohldefinierter Memo-Stil verfügbar ist, ohne dass ein Memo-Skill ausgerollt werden muss (V0.3, Memo 18–20). Vergleich: Unter Linux gibt es immer `nano`, auch ohne einen anderen Editor.
 
 | Aspekt | Regel |
 |---|---|
 | Inhalt | der Rumpf von `memo==6.0.0` (Nummer, Dateiname, Header-Block, Struktur, Formatierung, Obsidian-LaTeX); er wird nicht an spätere Versionen von `memo` angeglichen |
-| Version | wie bei allen Kernel-Skills: registrierte Hülle, Rumpf aus der für den Vault gültigen AIOS-Version |
-| `@Memo/` | legt der Skill an, wenn er das erste Memo eines Projekts schreibt und der Ordner fehlt; `aios --init` legt ihn nicht an (Spec 05) |
-| Vorrang | Ist im Projekt ein Skill `memo` registriert (`memo` in `.aios/registry`), gibt `aios --skill aios-memo` statt des Rumpfs nur aus: „Use `/memo` — the skill `memo` is registered in this project." Zusätzlich sagt die Beschreibung von `aios-memo`: „Nur verwenden, wenn kein Skill `memo` verfügbar ist." |
-| Regeln, die auf `memo` verweisen | gelten ersatzweise mit `aios-memo`, wenn `memo` nicht ausgerollt oder nicht registriert ist |
+| Version | wie bei allen Kernel-Skills: registrierte Hülle, Rumpf aus der für den Vault gültigen AIBOS-Version |
+| `@Memo/` | legt der Skill an, wenn er das erste Memo eines Projekts schreibt und der Ordner fehlt; `aibos --init` legt ihn nicht an (Spec 05) |
+| Vorrang | Ist im Projekt ein Skill `memo` registriert (`memo` in `.aibos/registry`), gibt `aibos --skill aibos-memo` statt des Rumpfs nur aus: „Use `/memo` — the skill `memo` is registered in this project." Zusätzlich sagt die Beschreibung von `aibos-memo`: „Nur verwenden, wenn kein Skill `memo` verfügbar ist." |
+| Regeln, die auf `memo` verweisen | gelten ersatzweise mit `aibos-memo`, wenn `memo` nicht ausgerollt oder nicht registriert ist |

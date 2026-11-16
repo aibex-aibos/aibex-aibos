@@ -1,6 +1,6 @@
 # Workspaces
 
-Dieses Tutorial führt in etwa 20 Minuten durch Workspaces von AIbex AIOS. Ein **Workspace** ist eine Vault-Root, die in `.aios/workspace.yaml` ihre Projekte nennt, jedes ein eigenes Git-Repo an seinem eigenen Remote. Damit kommt ein ganzer Vault auf einen zweiten Rechner und bleibt dort abgeglichen. Drei Handgriffe genügen, je für den ganzen Workspace oder mit Pfad für einen Teilbaum:
+Dieses Tutorial führt in etwa 20 Minuten durch Workspaces von AIbex AIBOS. Ein **Workspace** ist eine Vault-Root, die in `.aibos/workspace.yaml` ihre Projekte nennt, jedes ein eigenes Git-Repo an seinem eigenen Remote. Damit kommt ein ganzer Vault auf einen zweiten Rechner und bleibt dort abgeglichen. Drei Handgriffe genügen, je für den ganzen Workspace oder mit Pfad für einen Teilbaum:
 
 | Handgriff | Bedeutung |
 |---|---|
@@ -10,16 +10,16 @@ Dieses Tutorial führt in etwa 20 Minuten durch Workspaces von AIbex AIOS. Ein *
 
 Dazu kommt `remove`: ein Projekt aus dem Workspace entfernen, auf allen Rechnern (Abschnitt 7).
 
-Voraussetzung: AIBOS v0.6.6 ist installiert, der Vault `~/tmp/§Demo` ist ein AIBOS-Workspace (Tutorial 01) und hat ein eigenes Git-Repo. Die Projekte des Beispiels sind Paket-Repos des Hubs `aibex-aios`; zum Klonen genügt Lesezugriff.
+Voraussetzung: AIBOS v0.6.6 ist installiert, der Vault `~/tmp/§Demo` ist ein AIBOS-Workspace (Tutorial 01) und hat ein eigenes Git-Repo. Die Projekte des Beispiels sind Paket-Repos des Hubs `aibex-aibos`; zum Klonen genügt Lesezugriff.
 
 ## 1. Das Manifest in der Vault-Root
 
-Haben die Projekte deines Vaults schon Remotes, legt `aios --workspace sync` an der Vault-Root die Datei selbst an: mit allen Repos, die ein Remote haben, und einem Commit nur dieser Datei. Für dieses Beispiel schreibst du sie von Hand, weil die Projekte noch nicht da sind. Schreib die Datei `~/tmp/§Demo/.aios/workspace.yaml`:
+Haben die Projekte deines Vaults schon Remotes, legt `aibos --workspace sync` an der Vault-Root die Datei selbst an: mit allen Repos, die ein Remote haben, und einem Commit nur dieser Datei. Für dieses Beispiel schreibst du sie von Hand, weil die Projekte noch nicht da sind. Schreib die Datei `~/tmp/§Demo/.aibos/workspace.yaml`:
 
 ```yaml
 schema: 1
 remotes:
-  aibex: https://github.com/aibex-aios
+  aibex: https://github.com/aibex-aibos
 projects:
   - name: app-taschenrechner
     remote: aibex
@@ -44,7 +44,7 @@ projects:
 | `path` | Ort unter der Vault-Root, ohne `..`; die Reihenfolge der Einträge ist egal, Eltern werden vor Kindern geklont |
 | `groups` | Gruppen für `--group` |
 
-Committe die Datei im Repo der Vault-Root: `git add .aios/workspace.yaml` und `git commit -m "Workspace"`.
+Committe die Datei im Repo der Vault-Root: `git add .aibos/workspace.yaml` und `git commit -m "Workspace"`.
 
 Die drei Projekte sind **Paket-Repos**: Sie haben ein `manifest.yaml` und kein `@/`. Ihre Namen sind klein geschrieben und bleiben, wie sie im Hub stehen. Eigene Projekte mit `@/` bekommen am Remote einen Namen nach dem Schema `<Workspace>-<Ordnername>`, hier etwa `Demo-W-Werkstatt`.
 
@@ -52,20 +52,20 @@ Die drei Projekte sind **Paket-Repos**: Sie haben ein `manifest.yaml` und kein `
 
 ```bash
 cd ~/tmp/§Demo
-aios --workspace sync --plan
+aibos --workspace sync --plan
 ```
 
 ```
 => sync the workspace ~/tmp/§Demo
    plan:
-      clone https://github.com/aibex-aios/app-taschenrechner (v0.4.0) -> W-Werkstatt/app-taschenrechner
-      clone https://github.com/aibex-aios/skill-memo (main) -> W-Werkstatt/skill-memo
-      clone https://github.com/aibex-aios/knowledge-orion (main) -> W-Werkstatt/wissen/knowledge-orion
-      make the newly cloned projects runnable (aios --fetch, registration)
+      clone https://github.com/aibex-aibos/app-taschenrechner (v0.4.0) -> W-Werkstatt/app-taschenrechner
+      clone https://github.com/aibex-aibos/skill-memo (main) -> W-Werkstatt/skill-memo
+      clone https://github.com/aibex-aibos/knowledge-orion (main) -> W-Werkstatt/wissen/knowledge-orion
+      make the newly cloned projects runnable (aibos --fetch, registration)
    (plan only, nothing written)
 ```
 
-Ohne `--plan` fragt `aios` einmal und klont:
+Ohne `--plan` fragt `aibos` einmal und klont:
 
 ```
    W-Werkstatt/app-taschenrechner: cloned (v0.4.0)
@@ -76,12 +76,12 @@ Ohne `--plan` fragt `aios` einmal und klont:
 
 Ein Zweig wird ausgecheckt, ein Tag als lokaler Zweig `ws/v0.4.0`, nie als *detached HEAD*. Jedes Projekt wird im Repo darüber ausgeschlossen, mit einem eigenen Commit nur dieser Zeile. Neu geklonte Projekte mit `@/` macht sync gleich lauffähig: Pakete und Arbeitspferde aus `lock.yaml`, registrierte Skills.
 
-Im Chat heißt derselbe Handgriff `/aios-sync`; Claude zeigt den Plan und fragt einmal.
+Im Chat heißt derselbe Handgriff `/aibos-sync`; Claude zeigt den Plan und fragt einmal.
 
 ## 3. Status und Integrität
 
 ```bash
-aios --workspace status
+aibos --workspace status
 ```
 
 ```
@@ -93,18 +93,18 @@ skill-memo          W-Werkstatt/skill-memo               main       ok        ok
 knowledge-orion     W-Werkstatt/wissen/knowledge-orion   main       ok        ok      ok
 ```
 
-`aios --integrity` prüft die Projekte des Workspace mit; Paket-Repos ohne `@/` erscheinen als `foreign repo`, ein fehlender Klon als `missing: clone`.
+`aibos --integrity` prüft die Projekte des Workspace mit; Paket-Repos ohne `@/` erscheinen als `foreign repo`, ein fehlender Klon als `missing: clone`.
 
 ## 4. Abgleichen ohne Verlust
 
-Ein zweiter `aios --workspace sync` arbeitet wie ein Cloud-Laufwerk: Was du geändert, neu angelegt oder gelöscht hast, **sichert** er selbst (ohne dass du committest), neue Stände anderer Rechner **führt er zusammen**. Hast du dieselbe Datei geändert wie ein anderer Rechner, gilt dessen Fassung, und deine liegt als `… (Konflikt <Rechner> <Datum>).md` daneben. Geheimnisse wie `.env` bleiben lokal. Fehlen in einem Projekt viele Dateien (mehr als 10 oder ganz `@/`), fragt sync, ob das Löschen gewollt ist, und stellt sonst wieder her, etwa:
+Ein zweiter `aibos --workspace sync` arbeitet wie ein Cloud-Laufwerk: Was du geändert, neu angelegt oder gelöscht hast, **sichert** er selbst (ohne dass du committest), neue Stände anderer Rechner **führt er zusammen**. Hast du dieselbe Datei geändert wie ein anderer Rechner, gilt dessen Fassung, und deine liegt als `… (Konflikt <Rechner> <Datum>).md` daneben. Geheimnisse wie `.env` bleiben lokal. Fehlen in einem Projekt viele Dateien (mehr als 10 oder ganz `@/`), fragt sync, ob das Löschen gewollt ist, und stellt sonst wieder her, etwa:
 
 ```
    W-Werkstatt: saved (1 new, 2 changed, 0 deleted)
    W-Werkstatt: moved (merged with origin/main)
 ```
 
-Ohne Pfad gleicht sync das Projekt ab, in dem du stehst, an der Vault-Root den ganzen Workspace; mit Pfad nur diesen Teilbaum: `aios --workspace sync W-Werkstatt/skill-memo`. Mit `--only` nur das eine Projekt ohne seine Unterprojekte, etwa die Vault-Root allein: `aios --workspace sync ~/tmp/§Demo --only`. Frühere Fassungen zeigt `aios --workspace history <datei>`, gelöschte Dateien `history <projekt> --deleted`; zurück holt sie `aios --workspace restore <datei>` bzw. `restore <projekt> --at 2026-11-06` (im Chat `/aios-restore`).
+Ohne Pfad gleicht sync das Projekt ab, in dem du stehst, an der Vault-Root den ganzen Workspace; mit Pfad nur diesen Teilbaum: `aibos --workspace sync W-Werkstatt/skill-memo`. Mit `--only` nur das eine Projekt ohne seine Unterprojekte, etwa die Vault-Root allein: `aibos --workspace sync ~/tmp/§Demo --only`. Frühere Fassungen zeigt `aibos --workspace history <datei>`, gelöschte Dateien `history <projekt> --deleted`; zurück holt sie `aibos --workspace restore <datei>` bzw. `restore <projekt> --at 2026-11-06` (im Chat `/aibos-restore`).
 
 ## 5. Hinausbringen
 
@@ -125,55 +125,55 @@ Zwei Sicherungen gehören dazu:
 Liegt das Repo der Vault-Root bei GitHub, z. B. `https://github.com/du/Demo`, bindet ein Befehl den ganzen Workspace an einen anderen Rechner. AIBOS muss dort installiert sein (README, *Install*); der Befehl läuft im Terminal, weil es noch keinen Vault gibt:
 
 ```bash
-~/.aios/bin/aios --workspace attach https://github.com/du/Demo ~/tmp/§Demo --plan
+~/.aibos/bin/aibos --workspace attach https://github.com/du/Demo ~/tmp/§Demo --plan
 ```
 
 ```
 => attach the workspace https://github.com/du/Demo to this machine
    plan:
       clone https://github.com/du/Demo -> ~/tmp/§Demo (vault root)
-      (install the bound kernel version if it is missing (aios --install))
+      (install the bound kernel version if it is missing (aibos --install))
       (then sync: clone the projects of workspace.yaml, parents before children; reconcile packages and workhorses; register the skills)
    (plan only, nothing written)
 ```
 
-Danach ist der Rechner bereit, ohne `aios --activate`: Die Bindung reist in `config.yaml` mit. Im allerersten Chat dort ist `/aios-sync` noch kein Slash-Befehl, „sync den Workspace" in Worten wirkt aber schon; ab dem zweiten Chat geht auch der Slash-Befehl.
+Danach ist der Rechner bereit, ohne `aibos --activate`: Die Bindung reist in `config.yaml` mit. Im allerersten Chat dort ist `/aibos-sync` noch kein Slash-Befehl, „sync den Workspace" in Worten wirkt aber schon; ab dem zweiten Chat geht auch der Slash-Befehl.
 
 ## 7. Platz sparen: Teilbäume auslagern
 
 Ein Rechner muss nicht alles tragen. `detach` mit Pfad lagert einen Teilbaum aus, aber nur, wenn nichts verloren gehen kann:
 
 ```bash
-aios --workspace detach W-Werkstatt/wissen/knowledge-orion --plan
+aibos --workspace detach W-Werkstatt/wissen/knowledge-orion --plan
 ```
 
 ```
 => detach W-Werkstatt/wissen/knowledge-orion on this machine
    plan:
       move W-Werkstatt/wissen/knowledge-orion with 1 repo(s) to the trash (~/.Trash), checked: nothing is lost
-      (placeholder W-Werkstatt/wissen/knowledge-orion/DETACHED.md and W-Werkstatt/wissen/knowledge-orion/DETACHED.command; entry in .aios/workspace.local.yaml)
+      (placeholder W-Werkstatt/wissen/knowledge-orion/DETACHED.md and W-Werkstatt/wissen/knowledge-orion/DETACHED.command; entry in .aibos/workspace.local.yaml)
    (plan only, nothing written)
 ```
 
-Geprüft wird jedes Repo im Teilbaum: Remote erreichbar, nichts offen, nichts ungepusht, kein Stash, keine ignorierten Dateien außer neu erzeugbaren. Sonst nennt `detach` die Hindernisse und ändert nichts. Der Ordner bleibt mit seinem Namen stehen und enthält `DETACHED.md` und `DETACHED.command`. Zurück geht es mit `aios --workspace attach W-Werkstatt/wissen/knowledge-orion`, im Chat mit `/aios-attach …` oder im Finder mit einem Doppelklick auf `DETACHED.command`. Die Auslagerung gilt nur für diesen Rechner; `sync` holt ausgelagerte Teilbäume nie von selbst zurück.
+Geprüft wird jedes Repo im Teilbaum: Remote erreichbar, nichts offen, nichts ungepusht, kein Stash, keine ignorierten Dateien außer neu erzeugbaren. Sonst nennt `detach` die Hindernisse und ändert nichts. Der Ordner bleibt mit seinem Namen stehen und enthält `DETACHED.md` und `DETACHED.command`. Zurück geht es mit `aibos --workspace attach W-Werkstatt/wissen/knowledge-orion`, im Chat mit `/aibos-attach …` oder im Finder mit einem Doppelklick auf `DETACHED.command`. Die Auslagerung gilt nur für diesen Rechner; `sync` holt ausgelagerte Teilbäume nie von selbst zurück.
 
 `detach` ohne Pfad löst den ganzen Workspace und legt den Vault-Ordner in den Papierkorb, nach derselben Prüfung für alle Repos.
 
 Soll ein Projekt **ganz aus dem Workspace**, auf allen Rechnern, hilft `remove`:
 
 ```bash
-aios --workspace remove W-Werkstatt/wissen/knowledge-orion --plan
+aibos --workspace remove W-Werkstatt/wissen/knowledge-orion --plan
 ```
 
-Es prüft wie `detach`, legt den Teilbaum ohne Platzhalter in den Papierkorb, trägt ihn in `workspace.yaml` unter `removed:` ein und committet nur diese Datei. Das Repo am Remote bleibt. Der nächste sync bringt den Eintrag hinaus; auf einem anderen Rechner entfernt sync das Projekt dann ebenso, nach derselben Prüfung. Zurück geht es mit `aios --workspace attach W-Werkstatt/wissen/knowledge-orion`. Im Chat versteht `/aios-detach` „entferne … aus dem Workspace".
+Es prüft wie `detach`, legt den Teilbaum ohne Platzhalter in den Papierkorb, trägt ihn in `workspace.yaml` unter `removed:` ein und committet nur diese Datei. Das Repo am Remote bleibt. Der nächste sync bringt den Eintrag hinaus; auf einem anderen Rechner entfernt sync das Projekt dann ebenso, nach derselben Prüfung. Zurück geht es mit `aibos --workspace attach W-Werkstatt/wissen/knowledge-orion`. Im Chat versteht `/aibos-detach` „entferne … aus dem Workspace".
 
 ## 8. Laufender Abgleich: sync auto, manual, off
 
-`sync:` in `.aios/config.yaml` der Vault-Root legt fest, wie der Workspace abgleicht; mit `workspace.yaml` gilt `auto`:
+`sync:` in `.aibos/config.yaml` der Vault-Root legt fest, wie der Workspace abgleicht; mit `workspace.yaml` gilt `auto`:
 
 | Wert | Wirkung |
 |---|---|
-| `auto` | ein neuer Chat holt sein Projekt und führt es zusammen, wenn es dabei nichts zu sichern und keinen Konflikt gibt (`AIOS-SYNC: … updated from …`), und Claude bietet nach jedem Commit `/aios-sync` für das Projekt an |
+| `auto` | ein neuer Chat holt sein Projekt und führt es zusammen, wenn es dabei nichts zu sichern und keinen Konflikt gibt (`AIBOS-SYNC: … updated from …`), und Claude bietet nach jedem Commit `/aibos-sync` für das Projekt an |
 | `manual` | abgeglichen wird nur auf Wunsch |
 | `off` | `attach` und `sync` verweigern |
 
@@ -189,16 +189,16 @@ Insgesamt gibt es vier Arten, einen Vault über Rechner zu führen:
 ## 9. Einfrieren
 
 ```bash
-aios --workspace freeze
+aibos --workspace freeze
 ```
 
-`freeze` schreibt den Commit jedes Projekts in den Abschnitt `workspace:` von `.aios/lock.yaml` der Vault-Root. So lässt sich ein Stand festhalten.
+`freeze` schreibt den Commit jedes Projekts in den Abschnitt `workspace:` von `.aibos/lock.yaml` der Vault-Root. So lässt sich ein Stand festhalten.
 
 ## 10. Was du gesehen hast
 
 | Begriff | im Tutorial |
 |---|---|
-| Workspace, Vault-Root | `§Demo` mit `.aios/workspace.yaml` |
+| Workspace, Vault-Root | `§Demo` mit `.aibos/workspace.yaml` |
 | Paket-Repo, Namensschema | Paket-Repos klein und unverändert; eigene Projekte `<Workspace>-<Ordnername>` |
 | sync | klonen, sichern, zusammenführen (Konfliktkopie), lauffähig machen, Manifest nachführen, pushen ohne Tags; Geheimnisse bleiben lokal; große Löschung nur auf Wunsch |
 | history, restore | frühere Fassungen und gelöschte Dateien zeigen und zurückholen; Papierkorb für nicht Gesichertes |
@@ -206,6 +206,6 @@ aios --workspace freeze
 | detach | Teilbaum auslagern, Workspace lösen, nur ohne Verlust; Papierkorb |
 | remove | Projekt aus dem Workspace entfernen, auf allen Rechnern; `removed:` in `workspace.yaml` |
 | sync:, Arten | `auto`, `manual`, `off`; Lokal-, Cloud-, AIBOS- und Netz-Drive; Cloud-Ordner immer `off` |
-| Einfrieren | `aios --workspace freeze`, Abschnitt `workspace:` in `lock.yaml` |
+| Einfrieren | `aibos --workspace freeze`, Abschnitt `workspace:` in `lock.yaml` |
 
-Die vollständigen Regeln stehen in Spec 06 *Pakete und Workspaces*, Abschnitt *Workspaces*, und in Spec 05 *Projekte*, installiert unter `~/.aios/versions/v0.6.6/doc/spec/`.
+Die vollständigen Regeln stehen in Spec 06 *Pakete und Workspaces*, Abschnitt *Workspaces*, und in Spec 05 *Projekte*, installiert unter `~/.aibos/versions/v0.6.6/doc/spec/`.

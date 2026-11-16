@@ -1,18 +1,18 @@
-# Dokumentation von AIbex AIOS
+# Dokumentation von AIbex AIBOS
 
-Inhaltsverzeichnis der Dokumentation, die mit jeder Version installiert wird, unter `~/.aios/versions/v<version>/doc/` (mit `aios --install --system` unter `/opt/aios/v<version>/doc/`). Im A/W gibt der Hook `Read` unter `doc/` der gebundenen Version ohne Rückfrage frei (Spec 02, *Freigabe*, R2). Den Ordner selbst kann eine Session nicht auflisten; deshalb stehen hier die genauen Dateinamen.
+Inhaltsverzeichnis der Dokumentation, die mit jeder Version installiert wird, unter `~/.aibos/versions/v<version>/doc/` (mit `aibos --install --system` unter `/opt/aibos/v<version>/doc/`). Im A/W gibt der Hook `Read` unter `doc/` der gebundenen Version ohne Rückfrage frei (Spec 02, *Freigabe*, R2). Den Ordner selbst kann eine Session nicht auflisten; deshalb stehen hier die genauen Dateinamen.
 
 ## Spec — `doc/spec/`
 
 | Datei | Inhalt |
 |---|---|
-| `01 AIbex AIOS v0.6 — Überblick.md` | Definition, Begriffe, Grundregeln, Umfang, Vorabversionen, Invarianten, Abnahmetest |
-| `02 Master-Kontext.md` | Vault, Projekt und Kette, Arten von Vaults, Klassen, Block der Kernel-Skills, `aios --context`, Hooks mit Freigabe, Legacy-Modus |
+| `01 AIbex AIBOS v0.7 — Überblick.md` | Definition, Begriffe, Grundregeln, Umfang, Vorabversionen, Invarianten, Abnahmetest |
+| `02 Master-Kontext.md` | Vault, Projekt und Kette, Arten von Vaults, Klassen, Block der Kernel-Skills, `aibos --context`, Hooks mit Freigabe, Legacy-Modus |
 | `03 Skills und Assistenten.md` | Arten von Skills, Versionen, Ausführungsmodell, Kernel-Skills, Assistenten und ihre Zuordnung, Oberflächen |
-| `04 Installation und Konfiguration.md` | Dateistrukturen, Formate, CLI `aios`, Versionen und Aktivierung, Weiterleiter, Distributionen, Umstieg |
-| `05 Projekte.md` | Struktur und Name eines Projekts, `/aios-init`, Konsistenzprüfung, `/aios-integrity`, `/aios-status` |
+| `04 Installation und Konfiguration.md` | Dateistrukturen, Formate, CLI `aibos`, Versionen und Aktivierung, Weiterleiter, Distributionen, Umstieg |
+| `05 Projekte.md` | Struktur und Name eines Projekts, `/aibos-init`, Konsistenzprüfung, `/aibos-integrity`, `/aibos-status` |
 | `06 Pakete und Workspaces.md` | Paket-Manifest, Versionen und Bereiche, Hubs, Resolver, Holen, Ausrollen, Distributionen, Lock, `@Data/`, Workspaces, Rückfluss |
-| `07 Arbeitspferde.md` | Pakete `worker-<name>`, Installation je Version, Weiterleiter, Abläufe, `aios --worker` |
+| `07 Arbeitspferde.md` | Pakete `worker-<name>`, Installation je Version, Weiterleiter, Abläufe, `aibos --worker` |
 
 ## Tutorials — `doc/tutorials/`
 

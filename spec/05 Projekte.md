@@ -1,12 +1,12 @@
 ---
 title: "Projekte"
-date: 2026-11-05
+date: 2026-11-16
 author: iHux
-status: Spec
-tags: [spec, aios, v0.6, projekte]
+status: Entwurf
+tags: [spec, aibos, v0.7, projekte]
 number: 05
 related:
-  - "Spec 01 AIbex AIOS v0.6 — Überblick"
+  - "Spec 01 AIbex AIBOS v0.7 — Überblick"
   - "Spec 02 Master-Kontext"
   - "Spec 03 Skills und Assistenten"
   - "Spec 04 Installation und Konfiguration"
@@ -14,15 +14,16 @@ related:
   - "Memo 06 Projekt, Root-Projekt und Projektstatus (AA-AIbex-AIOS, @Memo/V0.1)"
   - "Memos 08, 14–18, 21–24, 27, 28 (AA-AIbex-AIOS, @Memo/V0.3)"
   - "Memos 10, 24, 35 (AA-AIbex-AIOS, @Memo/V0.5)"
+  - "Memos 01–15 (AA-AIbex-AIOS, @Memo/V0.7): Umbenennung in AIBOS"
 ---
 
 # Projekte
 
-Diese Spec regelt, was zu einem Projekt gehört (Struktur und Name), wie `aios --init` ein Projekt anlegt oder ergänzt, was die Konsistenzprüfung beim Start und `/aios-integrity` prüfen, und wie `/aios-status` den Stand eines Projekts rekonstruiert. Der Dialog *Projekt initialisieren* und die Hook-Ausgaben `PROJECT-UNINITIALIZED` und `PROJECT-INCOMPLETE` stehen in Spec 02, Dateistrukturen und das CLI in Spec 04.
+Diese Spec regelt, was zu einem Projekt gehört (Struktur und Name), wie `aibos --init` ein Projekt anlegt oder ergänzt, was die Konsistenzprüfung beim Start und `/aibos-integrity` prüfen, und wie `/aibos-status` den Stand eines Projekts rekonstruiert. Der Dialog *Projekt initialisieren* und die Hook-Ausgaben `PROJECT-UNINITIALIZED` und `PROJECT-INCOMPLETE` stehen in Spec 02, Dateistrukturen und das CLI in Spec 04.
 
 ## Struktur eines Projekts
 
-Ein Projekt ist ein Ordner mit `@/` (Spec 01). Seine **Struktur** ist vollständig, wenn alle vier Punkte erfüllt sind. Initialisieren, Konsistenzprüfung und `/aios-integrity` verwenden genau diese Prüfung, damit sie nicht auseinanderlaufen (V0.3, Memo 22, 27).
+Ein Projekt ist ein Ordner mit `@/` (Spec 01). Seine **Struktur** ist vollständig, wenn alle vier Punkte erfüllt sind. Initialisieren, Konsistenzprüfung und `/aibos-integrity` verwenden genau diese Prüfung, damit sie nicht auseinanderlaufen (V0.3, Memo 22, 27).
 
 | # | Punkt | erfüllt, wenn | Name der Lücke |
 |---|---|---|---|
@@ -33,7 +34,7 @@ Ein Projekt ist ein Ordner mit `@/` (Spec 01). Seine **Struktur** ist vollständ
 
 Jedes Projekt hat damit ein eigenes Repo, auch das Root-Projekt und jedes Unterprojekt eines Projekts mit Repo (Spec 01, Grundregel 9). Ein gemeinsames Repo für mehrere Projekte ist nicht vorgesehen. Ein Ausschluss darüber darf breiter sein als das Projekt, z. B. `/P-Projekte/` für alle Projekte darunter.
 
-Nicht zur Struktur gehören `@Memo/` (legt der Memo-Skill an, Spec 03), `@Data/` (legen Apps an, Spec 06), der Name (Hinweis, siehe *Namensregel*) und der Abgleich der Pakete mit `lock.yaml` (`aios --fetch`, Spec 06).
+Nicht zur Struktur gehören `@Memo/` (legt der Memo-Skill an, Spec 03), `@Data/` (legen Apps an, Spec 06), der Name (Hinweis, siehe *Namensregel*) und der Abgleich der Pakete mit `lock.yaml` (`aibos --fetch`, Spec 06).
 
 ## Namensregel
 
@@ -43,23 +44,23 @@ Projekte tragen einen Namen aus **Prefix** und **Namensteilen**, getrennt durch 
 |---|---|
 | Form | `<Prefix>-<Teil>[-<Teil>…]`, ohne Leerzeichen und ohne `/` |
 | Prefix | Großbuchstaben und Ziffern, beginnt mit einem Großbuchstaben |
-| Prefix und Pfad | Der Prefix ist der Prefix des übergeordneten Ordners plus **ein Großbuchstabe** (Standard, typisch der Anfangsbuchstabe: `PA` → `PAA`, `PAG`) oder wahlweise plus **eine Zahl** (`PB` → `PB1`, `PB12`; immer erlaubt, z. B. bei Blogs oder YouTube-Projekten). Der Vorschlag verwendet immer den Großbuchstaben. Das gilt auch über Container hinweg (`PA-AIbex-AIOS` ohne `@/` → `PAA-…`). Direkt unter der Vault-Root ist der Prefix des übergeordneten Ordners leer: ein Großbuchstabe (`P-Projekte`, `T-Test`). Hat der übergeordnete Ordner keinen regelkonformen Namen, wird nur die Form geprüft |
+| Prefix und Pfad | Der Prefix ist der Prefix des übergeordneten Ordners plus **ein Großbuchstabe** (Standard, typisch der Anfangsbuchstabe: `PA` → `PAA`, `PAG`) oder wahlweise plus **eine Zahl** (`PB` → `PB1`, `PB12`; immer erlaubt, z. B. bei Blogs oder YouTube-Projekten). Der Vorschlag verwendet immer den Großbuchstaben. Das gilt auch über Container hinweg (`PA-AIbex-AIBOS` ohne `@/` → `PAA-…`). Direkt unter der Vault-Root ist der Prefix des übergeordneten Ordners leer: ein Großbuchstabe (`P-Projekte`, `T-Test`). Hat der übergeordnete Ordner keinen regelkonformen Namen, wird nur die Form geprüft |
 | Namensteil | beginnt mit einem Großbuchstaben oder einer Ziffer (`V0.3`, `KI`, `2026`); ein Teil, der mit einem Kleinbuchstaben beginnt, verstößt gegen die Regel |
 
 Die Vault-Root ist von der Namensregel ausgenommen. Ob ein Prefix unter Geschwistern eindeutig ist, wird nicht geprüft.
 
-**Vorschlag:** Bei einem Verstoß bildet `aios --init` einen regelkonformen Vorschlag: Leerzeichen und `_` werden zu `-`, jeder Namensteil beginnt groß, und vor den Namen tritt der Prefix des übergeordneten Ordners plus der Anfangsbuchstabe des ersten Teils (z. B. `§Demo/labor neu` → `L-Labor-Neu`). Beginnt der Name schon mit einem Prefix, also mit einem ersten Namensteil nur aus Großbuchstaben und Ziffern, der mit einem Großbuchstaben beginnt, wird nur dieser ersetzt: durch den Prefix des übergeordneten Ordners plus den ersten Buchstaben des alten Prefix (`G-Garten/B-Beet` → `GB-Beet`, `G-Garten/AT-Test` → `GA-Test`, `§Demo/KI-Tools` → `K-Tools`; V0.4, Memo 19, L6). Ein gültiger Prefix bleibt. Ein Wort in Großbuchstaben wie `KI` geht dabei im Vorschlag verloren; der User kann mit seinem eigenen Namen fortfahren (Wahl (2)).
+**Vorschlag:** Bei einem Verstoß bildet `aibos --init` einen regelkonformen Vorschlag: Leerzeichen und `_` werden zu `-`, jeder Namensteil beginnt groß, und vor den Namen tritt der Prefix des übergeordneten Ordners plus der Anfangsbuchstabe des ersten Teils (z. B. `§Demo/labor neu` → `L-Labor-Neu`). Beginnt der Name schon mit einem Prefix, also mit einem ersten Namensteil nur aus Großbuchstaben und Ziffern, der mit einem Großbuchstaben beginnt, wird nur dieser ersetzt: durch den Prefix des übergeordneten Ordners plus den ersten Buchstaben des alten Prefix (`G-Garten/B-Beet` → `GB-Beet`, `G-Garten/AT-Test` → `GA-Test`, `§Demo/KI-Tools` → `K-Tools`; V0.4, Memo 19, L6). Ein gültiger Prefix bleibt. Ein Wort in Großbuchstaben wie `KI` geht dabei im Vorschlag verloren; der User kann mit seinem eigenen Namen fortfahren (Wahl (2)).
 
-**Verstoß beim Anlegen:** Entscheidungsdialog mit drei Wahlmöglichkeiten (V0.3, Memo 17): (1) mit dem Vorschlag fortfahren, (2) mit dem Namen des Users fortfahren, (3) abbrechen. **Verstoß bei bestehenden Projekten:** Konsistenzprüfung und `/aios-integrity` nennen ihn nur als Hinweis; das Projekt bleibt vollständig bzw. integer, weil der User mit seinem eigenen Namen fortfahren darf (V0.3, Memo 28).
+**Verstoß beim Anlegen:** Entscheidungsdialog mit drei Wahlmöglichkeiten (V0.3, Memo 17): (1) mit dem Vorschlag fortfahren, (2) mit dem Namen des Users fortfahren, (3) abbrechen. **Verstoß bei bestehenden Projekten:** Konsistenzprüfung und `/aibos-integrity` nennen ihn nur als Hinweis; das Projekt bleibt vollständig bzw. integer, weil der User mit seinem eigenen Namen fortfahren darf (V0.3, Memo 28).
 
-## Initialisieren — `/aios-init`
+## Initialisieren — `/aibos-init`
 
-Macht einen Ordner zum Projekt oder ergänzt ein bestehendes Projekt um die fehlenden Teile der Struktur. Auslöser: `/aios-init`, Wahl „initialisieren" im Dialog *Projekt initialisieren* (Spec 02), Ergänzung nach `PROJECT-INCOMPLETE` (Spec 02) oder nach `/aios-integrity`. Die Arbeit macht `aios --init [<pfad>] [--assistant <wert>] [--name <name>] [--accept-name]`.
+Macht einen Ordner zum Projekt oder ergänzt ein bestehendes Projekt um die fehlenden Teile der Struktur. Auslöser: `/aibos-init`, Wahl „initialisieren" im Dialog *Projekt initialisieren* (Spec 02), Ergänzung nach `PROJECT-INCOMPLETE` (Spec 02) oder nach `/aibos-integrity`. Die Arbeit macht `aibos --init [<pfad>] [--assistant <wert>] [--name <name>] [--accept-name]`.
 
 | Option | Bedeutung |
 |---|---|
 | `<pfad>` | der Ordner; Standard `cwd`. Er muss in einem A/W liegen (I4); er muss noch nicht existieren |
-| `--assistant <wert>` | schreibt `assistant: <wert>` in `<pfad>/.aios/config.yaml` (Spec 03); `inherit` wird nicht geschrieben |
+| `--assistant <wert>` | schreibt `assistant: <wert>` in `<pfad>/.aibos/config.yaml` (Spec 03); `inherit` wird nicht geschrieben |
 | `--name <name>` | legt den Ordner unter diesem Namen an bzw. benennt einen bestehenden Ordner um (Wahl (1) des Namensdialogs) |
 | `--accept-name` | fährt trotz Verstoß gegen die Namensregel fort (Wahl (2)) |
 
@@ -71,54 +72,54 @@ Macht einen Ordner zum Projekt oder ergänzt ein bestehendes Projekt um die fehl
 | 2 | Name | prüfen (*Namensregel*), außer an der Vault-Root. Bei einem Verstoß ohne `--name` oder `--accept-name` nennt der Plan den Verstoß und den Vorschlag, und `--yes` bricht mit Exit 2 ab, ohne zu schreiben |
 | 3 | `@/` | anlegen, mit `.gitkeep` (S1) |
 | 4 | Repo | `git init` mit dem Branch `main`, falls das Projekt kein eigenes Repo hat (S2); fehlende Zeilen der `.gitignore`-Vorlage ergänzen, vorhandene Zeilen bleiben (S3) |
-| 5 | Repo darüber | falls es ein Repo darüber gibt und S4 nicht erfüllt ist: `/<relativer pfad>/` in dessen `.gitignore` eintragen, versionierte Dateien des Projekts mit `git rm -r --cached` aus der Versionierung nehmen (die Dateien bleiben liegen, die alte Historie bleibt dort) und nur diese Änderungen dort committen: „AIOS: <relativer pfad> als eigenes Projekt ausgeschlossen" (V0.3, Memo 23, 24). Die so herausgenommenen Dateien committet Schritt 8 im neuen Repo, damit sie versioniert bleiben (A14) |
+| 5 | Repo darüber | falls es ein Repo darüber gibt und S4 nicht erfüllt ist: `/<relativer pfad>/` in dessen `.gitignore` eintragen, versionierte Dateien des Projekts mit `git rm -r --cached` aus der Versionierung nehmen (die Dateien bleiben liegen, die alte Historie bleibt dort) und nur diese Änderungen dort committen: „AIBOS: <relativer pfad> als eigenes Projekt ausgeschlossen" (V0.3, Memo 23, 24). Die so herausgenommenen Dateien committet Schritt 8 im neuen Repo, damit sie versioniert bleiben (A14) |
 | 6 | Zuordnung | mit `--assistant` den Schlüssel `assistant:` schreiben |
-| 7 | Registrieren | Hüllen der Kernel-Skills und des Alias sowie Projekt-Skills registrieren (wie `aios --context --sync --yes`, Spec 03; V0.3, Memo 21; V0.6, Memo 30) |
-| 8 | Commit | im Projekt nur die Dateien committen, die AIOS angelegt oder geändert hat (`.gitignore`, `@/.gitkeep`, `.aios/config.yaml`), dazu die Dateien, die Schritt 5 aus dem Repo darüber übernommen hat (A14): bei einem neuen Repo „AIOS: Projekt initialisiert", sonst „AIOS: Projekt ergänzt". Ist nach dem Stagen nichts geändert (`git diff --cached --quiet`), entfällt der Commit ohne Meldung (A16). Scheitert ein Commit (z. B. ohne Git-Identität), nur eine Warnung |
+| 7 | Registrieren | Hüllen der Kernel-Skills und des Alias sowie Projekt-Skills registrieren (wie `aibos --context --sync --yes`, Spec 03; V0.3, Memo 21; V0.6, Memo 30) |
+| 8 | Commit | im Projekt nur die Dateien committen, die AIBOS angelegt oder geändert hat (`.gitignore`, `@/.gitkeep`, `.aibos/config.yaml`), dazu die Dateien, die Schritt 5 aus dem Repo darüber übernommen hat (A14): bei einem neuen Repo „AIBOS: Projekt initialisiert", sonst „AIBOS: Projekt ergänzt". Ist nach dem Stagen nichts geändert (`git diff --cached --quiet`), entfällt der Commit ohne Meldung (A16). Scheitert ein Commit (z. B. ohne Git-Identität), nur eine Warnung |
 | 9 | Abschluss | Hinweis, dass Master-Kontext und Skills für das Projekt ab dem nächsten Chat vollständig gelten |
 
-`aios --init` legt **kein** `@Memo/` an (V0.3, Memo 18). Fehlt nichts, meldet es „nichts zu tun" ohne Rückfrage (I8). An der Vault-Root ist `aios --init` erlaubt; dort entfallen die Schritte 2 und 5 (V0.3, Memo 23). `--plan` zeigt den Plan und schreibt nichts; mit `--yes` gibt `aios --init` nur eine Ergebniszeile und Fehler aus (Spec 04).
+`aibos --init` legt **kein** `@Memo/` an (V0.3, Memo 18). Fehlt nichts, meldet es „nichts zu tun" ohne Rückfrage (I8). An der Vault-Root ist `aibos --init` erlaubt; dort entfallen die Schritte 2 und 5 (V0.3, Memo 23). `--plan` zeigt den Plan und schreibt nichts; mit `--yes` gibt `aibos --init` nur eine Ergebniszeile und Fehler aus (Spec 04).
 
 **Ablauf des Skills:**
 
-1. `aios --init "<pfad>" --plan` ausführen.
-2. Kommt der Aufruf aus `PROJECT-UNINITIALIZED`, den Dialog *Projekt initialisieren* zeigen (Spec 02); sonst den Plan zeigen und einmal fragen. Nach `PROJECT-INCOMPLETE` oder `/aios-integrity` nennt der Plan nur die fehlenden Schritte.
+1. `aibos --init "<pfad>" --plan` ausführen.
+2. Kommt der Aufruf aus `PROJECT-UNINITIALIZED`, den Dialog *Projekt initialisieren* zeigen (Spec 02); sonst den Plan zeigen und einmal fragen. Nach `PROJECT-INCOMPLETE` oder `/aibos-integrity` nennt der Plan nur die fehlenden Schritte.
 3. Meldet der Plan einen Verstoß gegen die Namensregel: Namensdialog mit (1) Vorschlag, (2) eigener Name, (3) abbrechen. Liegt die Session im umzubenennenden Ordner, sagt der Skill vorher, dass der Chat danach ins umbenannte Projekt wechseln muss (Desktop-App: Werkzeug zum Wechsel des Arbeitsverzeichnisses; CLI: neu starten).
-4. Nach Ja `aios --init "<pfad>" --yes` mit den gewählten Optionen ausführen und das Ergebnis kurz melden.
+4. Nach Ja `aibos --init "<pfad>" --yes` mit den gewählten Optionen ausführen und das Ergebnis kurz melden.
 
 ## Konsistenzprüfung
 
-Beim ersten Start einer Session (`source` `startup`) prüft der SessionStart-Hook die Struktur des Projekts der Session nach S1–S4 und meldet Lücken mit `PROJECT-INCOMPLETE` (Spec 02; V0.3, Memo 14, 22). Die Prüfung schreibt nichts (I7); die Ergänzung bietet Claude an und führt sie nach Ja mit `aios --init` aus. Geprüft wird nur das Projekt der Session, nicht seine Unterprojekte, und nur die Struktur, nicht der Commit-Stand. Eine Vault-Root ohne `@/` ist ein Container und wird nicht geprüft (V0.3, Memo 15).
+Beim ersten Start einer Session (`source` `startup`) prüft der SessionStart-Hook die Struktur des Projekts der Session nach S1–S4 und meldet Lücken mit `PROJECT-INCOMPLETE` (Spec 02; V0.3, Memo 14, 22). Die Prüfung schreibt nichts (I7); die Ergänzung bietet Claude an und führt sie nach Ja mit `aibos --init` aus. Geprüft wird nur das Projekt der Session, nicht seine Unterprojekte, und nur die Struktur, nicht der Commit-Stand. Eine Vault-Root ohne `@/` ist ein Container und wird nicht geprüft (V0.3, Memo 15).
 
-## Integrität — `/aios-integrity`
+## Integrität — `/aibos-integrity`
 
-Prüft auf Anforderung des Users die **Integrität** eines Projekts und aller seiner Unterprojekte und berichtet die Ergebnisse (V0.3, Memo 27, 28). Auslöser: `/aios-integrity`, „Integrität". Die Arbeit macht `aios --integrity [<pfad>]`; es schreibt nie.
+Prüft auf Anforderung des Users die **Integrität** eines Projekts und aller seiner Unterprojekte und berichtet die Ergebnisse (V0.3, Memo 27, 28). Auslöser: `/aibos-integrity`, „Integrität". Die Arbeit macht `aibos --integrity [<pfad>]`; es schreibt nie.
 
-| | Konsistenzprüfung | `/aios-integrity` |
+| | Konsistenzprüfung | `/aibos-integrity` |
 |---|---|---|
 | Auslöser | automatisch, erster Start einer Session | nur auf Anforderung |
 | Umfang | Projekt der Session | Projekt und alle Unterprojekte |
 | Prüfungen | Struktur (S1–S4) | Struktur (S1–S4) und Commit-Stand |
 
-**Projekte:** `<pfad>` (Standard `cwd`) und alle Ordner darunter mit `@/`, beliebig tief, auch durch Container hindurch und auch Unterprojekte von Unterprojekten. Nicht durchsucht werden Ordner, deren Name mit `.` beginnt (u. a. `.git`, `.claude`, `.aios`), Ordner, deren Name mit `@` beginnt (Masterspaces, `@Memo/`), und `node_modules`. Ist `<pfad>` selbst ein Container, werden nur die Projekte darunter geprüft.
+**Projekte:** `<pfad>` (Standard `cwd`) und alle Ordner darunter mit `@/`, beliebig tief, auch durch Container hindurch und auch Unterprojekte von Unterprojekten. Nicht durchsucht werden Ordner, deren Name mit `.` beginnt (u. a. `.git`, `.claude`, `.aibos`), Ordner, deren Name mit `@` beginnt (Masterspaces, `@Memo/`), und `node_modules`. Ist `<pfad>` selbst ein Container, werden nur die Projekte darunter geprüft.
 
 | Prüfung | erfüllt, wenn | Bericht |
 |---|---|---|
 | **Init** | S1–S4 erfüllt | `ok` oder kurz `missing: <n> parts`; die Lücken stehen unter *Notes* (A15) |
 | **Commit** | `git status --porcelain` des eigenen Repos ist leer; neue, nicht versionierte Dateien zählen mit | `ok`, `<n> changed, <m> new` oder `—` (kein eigenes Repo) |
 
-**Workspace:** Hat `<pfad>`, ein Projekt darüber oder ein geprüftes Projekt darunter eine `.aios/workspace.yaml` (Spec 06), prüft `aios --integrity` zusätzlich jedes Projekt daraus, das unter `<pfad>` liegt (F2; V0.4, Memos 15, 73). Ein fehlender Klon erscheint als eigene Zeile mit Init `missing: clone` und gilt als nicht integer. Ein Fremd-Repo ohne `@/` (Spec 06) erscheint mit Init `foreign repo`; geprüft werden nur Klon und Commit, nicht S1–S4. Ist die Revision im ausgecheckten Zweig nicht enthalten oder zeigt `origin` auf ein anderes Repo als `workspace.yaml`, nennt der Bericht das unter *Notes*. Ein ausgelagerter Teilbaum (Spec 06, *detach*) erscheint als eine Zeile mit Init `detached` und gilt als integer; seine Projekte werden nicht geprüft (V0.6, Memo 170: F169).
+**Workspace:** Hat `<pfad>`, ein Projekt darüber oder ein geprüftes Projekt darunter eine `.aibos/workspace.yaml` (Spec 06), prüft `aibos --integrity` zusätzlich jedes Projekt daraus, das unter `<pfad>` liegt (F2; V0.4, Memos 15, 73). Ein fehlender Klon erscheint als eigene Zeile mit Init `missing: clone` und gilt als nicht integer. Ein Fremd-Repo ohne `@/` (Spec 06) erscheint mit Init `foreign repo`; geprüft werden nur Klon und Commit, nicht S1–S4. Ist die Revision im ausgecheckten Zweig nicht enthalten oder zeigt `origin` auf ein anderes Repo als `workspace.yaml`, nennt der Bericht das unter *Notes*. Ein ausgelagerter Teilbaum (Spec 06, *detach*) erscheint als eine Zeile mit Init `detached` und gilt als integer; seine Projekte werden nicht geprüft (V0.6, Memo 170: F169).
 
 Ein Projekt ist **integer**, wenn Init und Commit erfüllt sind. **Hinweise** (`Notes`) ändern daran nichts:
 
 - **Push-Stand:** Hat ein Repo einen Upstream, nennt der Bericht Commits, die noch nicht gepusht sind (voraus), und Commits, die lokal fehlen (hinter). Grundlage ist der lokale Stand ohne `git fetch`, also ohne Netz. Ein Repo ohne Remote ist zulässig.
 - **Namensregel:** ein Verstoß nach *Namensregel*.
-- **Kopien in `.agents/`:** Liegen in `<Projekt>/.agents/skills/<name>/` Kopien mit Marke `.aios-deploy`, deren Version nicht dem registrierten oder geholten Stand entspricht oder deren Skill es in der Kette nicht mehr gibt, nennt der Bericht sie als veraltet. AIOS ändert und entfernt sie nicht (V0.5, Memos 10, 24, Option C).
-- **Bindung im Projekt:** Ein `aios:` oder `legacy:` in der `.aios/config.yaml` eines Projekts (nicht der Vault-Root) nennt der Bericht als übergangen (Spec 04, *Formate*; V0.6, Memo 16, F4).
-- **`@/` ohne getrackte Datei:** Enthält `@/` im eigenen Repo keine getrackte Datei, fehlt es in jedem Klon; der Bericht empfiehlt, `@/.gitkeep` zu committen (V0.6, Memo 199: B32). `aios --init` legt `@/` mit `.gitkeep` an.
-- **Bindung und Markierung zugleich:** Stehen `aios:` und `legacy:` in der `.aios/config.yaml` der Vault-Root, nennt der Bericht, dass `aios:` gilt (V0.6, Memo 17, F7).
+- **Kopien in `.agents/`:** Liegen in `<Projekt>/.agents/skills/<name>/` Kopien mit Marke `.aibos-deploy`, deren Version nicht dem registrierten oder geholten Stand entspricht oder deren Skill es in der Kette nicht mehr gibt, nennt der Bericht sie als veraltet. AIBOS ändert und entfernt sie nicht (V0.5, Memos 10, 24, Option C).
+- **Bindung im Projekt:** Ein `aibos:` oder `legacy:` in der `.aibos/config.yaml` eines Projekts (nicht der Vault-Root) nennt der Bericht als übergangen (Spec 04, *Formate*; V0.6, Memo 16, F4).
+- **`@/` ohne getrackte Datei:** Enthält `@/` im eigenen Repo keine getrackte Datei, fehlt es in jedem Klon; der Bericht empfiehlt, `@/.gitkeep` zu committen (V0.6, Memo 199: B32). `aibos --init` legt `@/` mit `.gitkeep` an.
+- **Bindung und Markierung zugleich:** Stehen `aibos:` und `legacy:` in der `.aibos/config.yaml` der Vault-Root, nennt der Bericht, dass `aibos:` gilt (V0.6, Memo 17, F7).
 
-Registrierte Skills, geholte Pakete und Blueprints gehören nicht zur Integrität; den Abgleich macht `aios --fetch` (Spec 06).
+Registrierte Skills, geholte Pakete und Blueprints gehören nicht zur Integrität; den Abgleich macht `aibos --fetch` (Spec 06).
 
 **Bericht:**
 
@@ -140,17 +141,17 @@ Notes
 Result: 2 of 4 projects integer
 ```
 
-Die Einrückung zeigt die Verschachtelung. `aios --integrity` endet mit Exit 0, wenn alle Projekte integer sind, sonst mit Exit 1.
+Die Einrückung zeigt die Verschachtelung. `aibos --integrity` endet mit Exit 0, wenn alle Projekte integer sind, sonst mit Exit 1.
 
 **Ablauf des Skills:**
 
-1. `aios --integrity "<pfad>"` ausführen und den Bericht zeigen.
-2. Für Projekte mit Mängeln bei *Init* anbieten, sie mit `aios --init` zu ergänzen: die Pläne (`--plan`) zusammen zeigen, einmal fragen, nach Ja je Projekt `aios --init --yes` ausführen, danach die Prüfung wiederholen.
+1. `aibos --integrity "<pfad>"` ausführen und den Bericht zeigen.
+2. Für Projekte mit Mängeln bei *Init* anbieten, sie mit `aibos --init` zu ergänzen: die Pläne (`--plan`) zusammen zeigen, einmal fragen, nach Ja je Projekt `aibos --init --yes` ausführen, danach die Prüfung wiederholen.
 3. Nicht committete Änderungen nur nennen, nicht anbieten: Die Commit-Nachricht gehört dem User (I9).
 
-## Projektstatus — `/aios-status`
+## Projektstatus — `/aibos-status`
 
-Rekonstruiert eine kurze Übersicht, **was im Projekt erledigt wurde und was offen ist**. Der Status wird nicht gespeichert. Auslöser: `/aios-status`, „Projektstatus", „Wo stehen wir?". Er läuft nur auf Anforderung.
+Rekonstruiert eine kurze Übersicht, **was im Projekt erledigt wurde und was offen ist**. Der Status wird nicht gespeichert. Auslöser: `/aibos-status`, „Projektstatus", „Wo stehen wir?". Er läuft nur auf Anforderung.
 
 | Quelle | ausgewertet |
 |---|---|
@@ -172,4 +173,4 @@ Offen
 Zuletzt: <hash> <Commit-Nachricht> (<Datum>)
 ```
 
-Gespeichert wird der Status nur auf ausdrücklichen Wunsch, dann als gewöhnliches Memo nach `/memo` bzw. `/aios-memo`.
+Gespeichert wird der Status nur auf ausdrücklichen Wunsch, dann als gewöhnliches Memo nach `/memo` bzw. `/aibos-memo`.
