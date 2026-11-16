@@ -40,9 +40,9 @@ Ein Chat im Root-Projekt ist erlaubt; die Kette besteht dann nur aus dem Root-Ma
 
 | `<vault-root>/.aibos/config.yaml` (bzw. `.aios/config.yaml`) | Art | Modus (`--id`) | Wirkung der Hooks |
 |---|---|---|---|
-| `aibos:` ≥ 0.7.0 | **A/W** | `aibos-<version>` | AIBOS-Verhalten nach dieser Spec |
+| `aibos:` ≥ 0.6.0 (in der Praxis ≥ 0.7.0, V0.7, Memo 23: FL26) | **A/W** | `aibos-<version>` | AIBOS-Verhalten nach dieser Spec |
 | `aios:` 0.6.x in `.aios/config.yaml` | **A/W mit Altbindung** | `aios-<version>` (vom Kernel 0.6.x) | Der Weiterleiter ruft den Kernel dieser Version (Spec 04, *Umstieg auf v0.7*); er verhält sich nach der Spec seiner Version (Tag `v0.6.6`) |
-| eine Bindung unter 0.6.0 | **Vault ohne Bindung** | `none` | keine (V0.7, Memo 16: FL9) |
+| `aios:` unter 0.6.0 in `.aios/config.yaml` | **Vault ohne Bindung** | `none` | keine (V0.7, Memo 16: FL9) |
 | `legacy: ai-brain` | **Legacy-Vault** | `legacy` | Legacy-Modus (unten) |
 | keines von beiden | **Vault ohne Bindung** | `none` | keine; wie außerhalb eines Vaults |
 | keine Vault-Root | **außerhalb eines Vaults** | `none` | keine |

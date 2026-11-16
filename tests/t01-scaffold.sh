@@ -81,3 +81,29 @@ print(aibos.version()); print(p.prefix()); print(p.user_dir()); print(p.claude_d
    assert_eq "$(ls "$SRC/skills")" "aibos" "only AIBOS skills"
    assert_eq "$(sed -n 's/^version: //p' "$SRC/manifest.yaml")" "$(cat "$SRC/VERSION")" "manifest.yaml: version as VERSION"
    assert_contains "$(cat "$SRC/manifest.yaml")" "type: kernel" "manifest.yaml: type kernel"
+
+#===============================================================================
+# v0.7: the code compiles with the oldest python3 found, because aibos --install runs from a
+# clone with the python3 of the system (macOS: 3.9) (V0.7, memo 23: FL27)
+#===============================================================================
+
+   OLDEST=""; OLDV=""
+   for P in /usr/bin/python3 $(type -ap python3) /opt/homebrew/bin/python3.11 /usr/local/bin/python3; do
+      [ -x "$P" ] || continue
+      V="$("$P" -c 'import sys; print("%d %d" % sys.version_info[:2])' 2>/dev/null)" || continue
+      read -r MA MI <<< "$V"; N=$((MA * 100 + MI))
+      { [ -z "$OLDV" ] || [ "$N" -lt "$OLDV" ]; } && { OLDEST="$P"; OLDV="$N"; }
+   done
+   if [ -n "$OLDEST" ]; then
+      OUT="$("$OLDEST" -c "import ast, pathlib, sys
+bad = []
+for f in sorted(pathlib.Path(sys.argv[1]).glob('*.py')):
+    try:
+        ast.parse(f.read_text(encoding='utf-8'), str(f))
+    except SyntaxError as e:
+        bad.append(f'{f.name}:{e.lineno}: {e.msg}')
+print('\n'.join(bad))" "$SRC/lib/aibos" 2>&1)"
+      assert_eq "$OUT" "" "lib/aibos compiles with $OLDEST ($((OLDV / 100)).$((OLDV % 100)))"
+   else
+      fail "no python3 found for the check of the syntax"
+   fi

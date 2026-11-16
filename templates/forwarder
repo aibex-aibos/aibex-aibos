@@ -7,13 +7,14 @@
       echo "          aibos ---version  # print version of this forwarder"
       echo "          aibos ---help     # this help"
       echo '   order: AIBOS_HOME, aibos --activate v<version> (that version), aibos: in'
-      echo '          .aibos/config.yaml of the vault root, otherwise aibos --context: ai-brain with'
+      echo '          .aibos/config.yaml of the vault root, else aios: 0.6.x in .aios/config.yaml'
+      echo '          (Altbindung, its bin/aios), otherwise aibos --context: ai-brain with'
       echo '          legacy: ai-brain there, else nothing; everything else: highest installed'
-      echo '          version; aibos --install distribution-*: always the highest installed'
-      echo '          version, at least 0.5; aibos --remove-version and aibos --vaults: always the highest'
-      echo '          installed version; aibos --context with a version below 0.5: its aibos-context;'
+      echo '          version; aibos --install distribution-*, aibos --remove-version and aibos --vaults:'
+      echo '          always the highest installed version; a binding below 0.6 counts as none;'
       echo '          aibos --workspace <cmd> <path>: the binding of the vault at <path>;'
-      echo '          the working directory is gone: the first absolute path, else a message'
+      echo '          the working directory is gone: the first absolute path, else a message;'
+      echo '          until AIBOS 0.8 also AIOS_HOME, AIOS_PREFIX and the name aios'
       echo '   see also: aibos, ai-brain'
       exit 1
    fi
@@ -23,14 +24,15 @@
 #===============================================================================
 
    if [ "$*" == "---version" ]; then
-      echo "0.4.3"; exit 0
+      echo "0.5.0"; exit 0
    fi
 
 #===============================================================================
 # helpers: installations, versions, activation
 #===============================================================================
 
-   PREFIX="${AIBOS_PREFIX:-/opt/aibos}"
+   AIBOS_HOME="${AIBOS_HOME:-$AIOS_HOME}"           # AIOS_<x> until AIBOS 0.8 (spec 04, F268)
+   PREFIX="${AIBOS_PREFIX:-${AIOS_PREFIX:-/opt/aibos}}"
 
    installed() {                                    # print "v<version>|<path>", user wins
       local F LINE NAME VAL SEEN=""
@@ -89,23 +91,36 @@
       done
    }
 
-   activation() {                                   # print "<version>|<config>" or nothing
-      local ROOT LINE F                             # only the vault root binds (spec 04, I14)
+   config() {                                       # config.yaml of the vault root: .aibos/, else .aios/ (F270)
+      local ROOT
       ROOT="$(vault_root)" || return 1              # outside a vault: never activated
-      F="$ROOT/.aibos/config.yaml"
-      [ "$ROOT" != "$(cd "$HOME" 2>/dev/null && pwd -P)" ] && [ -f "$F" ] || return 1
-      LINE="$(grep -E -m1 '^aibos:' "$F")"
-      if [[ "$LINE" =~ ^aibos:[[:space:]]*[\"\']?v?([0-9][^\"\'[:space:]#]*) ]]; then
-         echo "${BASH_REMATCH[1]}|$F"; return 0
+      [ "$ROOT" != "$(cd "$HOME" 2>/dev/null && pwd -P)" ] || return 1
+      if [ -f "$ROOT/.aibos/config.yaml" ]; then echo "$ROOT/.aibos/config.yaml"; return 0; fi
+      if [ -f "$ROOT/.aios/config.yaml" ]; then echo "$ROOT/.aios/config.yaml"; return 0; fi
+      return 1
+   }
+
+   activation() {                                   # print "<version>|<config>" or nothing
+      local LINE F KEY V                            # only the vault root binds (spec 04, I14)
+      F="$(config)" || return 1
+      case "$F" in */.aios/config.yaml) KEY=aios;; *) KEY=aibos;; esac
+      LINE="$(grep -E -m1 "^$KEY:" "$F")"
+      if [[ "$LINE" =~ ^[a-z]+:[[:space:]]*[\"\']?v?([0-9][^\"\'[:space:]#]*) ]]; then
+         V="${BASH_REMATCH[1]}"
+         [ "$KEY" == aios ] && [[ "$V" =~ ^0\.[0-5](\.|$) ]] && return 1   # aios: below 0.6: none (FL9)
+         echo "$V|$F"; return 0
       fi
       return 1
    }
 
    marked() {                                       # legacy: ai-brain at the vault root (spec 02)
-      local ROOT F
-      ROOT="$(vault_root)" || return 1
-      F="$ROOT/.aibos/config.yaml"
-      [ -f "$F" ] && grep -Eq '^legacy:[[:space:]]*["'"'"']?ai-brain["'"'"']?[[:space:]]*(#.*)?$' "$F"
+      local F
+      F="$(config)" || return 1
+      grep -Eq '^legacy:[[:space:]]*["'"'"']?ai-brain["'"'"']?[[:space:]]*(#.*)?$' "$F"
+   }
+
+   program() {                                      # bin/aibos of an installation, bin/aios of 0.6.x (FL6, FL11)
+      if [ -x "$1/bin/aibos" ] || [ ! -x "$1/bin/aios" ]; then echo "$1/bin/aibos"; else echo "$1/bin/aios"; fi
    }
 
    log() {                                          # errors outside an A/W only into the log (spec 02)
@@ -119,29 +134,20 @@
       if [ -n "$AIBOS_HOME" ]; then
          KIND=aibos; TARGET="$AIBOS_HOME/bin/aibos"; WHY="AIBOS_HOME=$AIBOS_HOME"; return 0
       fi
-      if [ "$ARG1" == "--install" ] && [[ "$ARG2" =~ ^([A-Za-z0-9._-]+/)?distribution- ]]; then
-         if E="$(highest)"; then                    # independent of cwd (V0.5, step 9)
-            if newer v0.5.0 "${E%%|*}"; then
-               KIND=old; TARGET="${E%%|*}"; WHY="distributions need AIBOS 0.5 or later, highest installed ${E%%|*}"
-               return 0
-            fi
-            KIND=aibos; TARGET="${E#*|}/bin/aibos"; WHY="aibos --install distribution-*: highest installed ${E%%|*}"
-            return 0
-         fi
-      fi
-      if [ "$ARG1" == "--remove-version" ] || [ "$ARG1" == "--vaults" ]; then
+      if [[ "$ARG1" == "--install" && "$ARG2" =~ ^([A-Za-z0-9._-]+/)?distribution- ]] \
+            || [ "$ARG1" == "--remove-version" ] || [ "$ARG1" == "--vaults" ]; then
          if E="$(highest)"; then                    # independent of cwd: the newest kernel knows all vaults (V0.6, B21)
-            KIND=aibos; TARGET="${E#*|}/bin/aibos"; WHY="aibos $ARG1: highest installed ${E%%|*}"; return 0
+            KIND=aibos; TARGET="$(program "${E#*|}")"; WHY="aibos $ARG1: highest installed ${E%%|*}"; return 0
          fi
       fi
       if [ "$ARG1" == "--activate" ] && [[ "$ARG2" =~ ^v([0-9][^[:space:]]*)$ ]] \
             && E="$(lookup "${BASH_REMATCH[1]}")"; then
-         KIND=aibos; TARGET="$E/bin/aibos"; WHY="aibos --activate $ARG2"; return 0   # V0.3, memo 54 (A1)
+         KIND=aibos; TARGET="$(program "$E")"; WHY="aibos --activate $ARG2"; return 0   # V0.3, memo 54 (A1)
       fi
       if A="$(activation)"; then
-         WHY="aibos: ${A%%|*} in ${A#*|}"
+         case "${A#*|}" in */.aios/config.yaml) WHY="aios: ${A%%|*} in ${A#*|}";; *) WHY="aibos: ${A%%|*} in ${A#*|}";; esac
          if E="$(lookup "${A%%|*}")"; then
-            KIND=aibos; TARGET="$E/bin/aibos"; return 0
+            KIND=aibos; TARGET="$(program "$E")"; return 0
          fi
          KIND=missing; TARGET="v${A%%|*}"; return 0
       fi
@@ -154,7 +160,7 @@
          return 0
       fi
       if E="$(highest)"; then
-         KIND=aibos; TARGET="${E#*|}/bin/aibos"; WHY="not activated, highest installed ${E%%|*}"
+         KIND=aibos; TARGET="$(program "${E#*|}")"; WHY="not activated, highest installed ${E%%|*}"
          return 0
       fi
       KIND=none; WHY="no installation of AIBOS found"
@@ -238,17 +244,7 @@
    fi
    case "$KIND" in
       aibos)
-         if [ "$1" == "--context" ] && [ "$2" == "--permit" ] && [ -z "$AIBOS_HOME" ]; then
-            V="$(cat "${TARGET%/bin/aibos}/VERSION" 2>/dev/null)"           # below 0.6: no --permit,
-            if [[ "$V" =~ ^0\.([0-5])\. ]] || [ -z "$V" ]; then exit 0; fi  # the host asks (V0.6, memo 47)
-         fi
          [ -x "$TARGET" ] || { echo "*** aibos: $TARGET not found ($WHY)" >&2; exit 1; }
-         if [ "$1" == "--context" ] && [ -x "${TARGET%/aibos}/aibos-context" ]; then   # versions below 0.5
-            V="$(cat "${TARGET%/bin/aibos}/VERSION" 2>/dev/null)"                   # have aibos-context
-            if [ -n "$V" ] && newer v0.5.0 "v$V"; then                             # (V0.5, memo 63, B3)
-               shift; exec "${TARGET%/aibos}/aibos-context" "$@"
-            fi
-         fi
          exec "$TARGET" "$@"
          ;;
       quiet)                                        # outside an A/W: nothing (spec 02, I12)
@@ -274,11 +270,6 @@
          fi
          [ -n "$TARGET" ] || exit 0                 # no ai-brain: no output
          exec "$TARGET" "$@"
-         ;;
-      old)
-         echo "*** aibos: $WHY" >&2
-         echo "    run: aibos --install v0.5.<n> (or ./bin/aibos --install distribution-… in a clone)" >&2
-         exit 1
          ;;
       missing)
          if [ "$1" == "--context" ]; then           # hooks: never output, only the log (spec 04)

@@ -69,7 +69,7 @@ Die Begründungen stehen in den Memos der Konzeptprojekte unter `§AIBOS/A-AIOS/
 | **AIBOS** | AIbex AIBOS; bis v0.6.6 AIbex AIOS |
 | **Vault** | ein Ordner, dessen Name mit `§` beginnt (z. B. `§Demo`), mit allem darunter; in der Regel ein Obsidian-Vault. Ein Vault hat eine Bindung an AIBOS oder nicht |
 | **Vault-Root** | das `§`-Verzeichnis selbst; der einzige Ort einer Bindung (`aibos:`) oder Markierung (`legacy:`) |
-| **AIBOS-Workspace (A/W)** | ein Vault, dessen `<vault>/.aibos/config.yaml` eine Bindung `aibos:` an eine Version ≥ 0.7.0 enthält, oder ein Vault mit Altbindung (V0.6, Memo 14; V0.7, Memo 05) |
+| **AIBOS-Workspace (A/W)** | ein Vault, dessen `<vault>/.aibos/config.yaml` eine Bindung `aibos:` an eine Version ≥ 0.6.0 enthält (in der Praxis ≥ 0.7.0), oder ein Vault mit Altbindung (V0.6, Memo 14; V0.7, Memo 05) |
 | **Arbeitsverzeichnis** | das `cwd`, das der Host den Hooks bei jedem Prompt mitgibt (V0.6, Memos 13, 31) |
 | **AIBOS-Verhalten** | AIBOS beeinflusst den Kontext der KI: Master-Kontext, Kernel-Skills, Assistent, Freigabe von Befehlen (Spec 02) |
 | **Masterspace** | ein Verzeichnis namens `@`; Container von Unterverzeichnissen je einer Klasse |

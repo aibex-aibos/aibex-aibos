@@ -10,7 +10,7 @@
    mk() { mkdir -p "$(dirname "$1")"; printf '%s' "$2" > "$1"; }
    D="$SANDBOX/work/§Demo"; mk "$D/.aibos/config.yaml" $'aibos: 0.6.0\n'; mk "$D/@/a.md" $'# A\n'
    mk "$D/P/@/p.md" $'# P\n'
-   O="$SANDBOX/work/§Alt"; mk "$O/.aibos/config.yaml" $'aibos: 0.5.1\n'; mk "$O/@/a.md" $'# A\n'
+   O="$SANDBOX/work/§Alt"; mk "$O/.aios/config.yaml" $'aios: 0.5.1\n'; mk "$O/@/a.md" $'# A\n'
    N="$SANDBOX/work/§Ohne"; mk "$N/@/a.md" $'# A\n'
    F="$HOME/.aibos/bin/aibos"
    PJ() { python3 -c 'import json,sys; print(json.dumps({"session_id": "t", "hook_event_name": "PreToolUse", "tool_name": sys.argv[3], "tool_input": {"command": sys.argv[2]}, "cwd": sys.argv[1]}))' "$1" "$2" "${3:-Bash}"; }

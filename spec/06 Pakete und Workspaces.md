@@ -115,7 +115,7 @@ Fehlende Teile einer Version zählen als `0` (`0.4` = `0.4.0`). Vorabversionen e
 
 **Version des Kernels:** Für `requires.aibos` zählt die AIBOS-Version **ohne Vorabkennung**: `0.4.0-dev` und `0.4.0-rc1` gelten als `0.4.0` (V0.4, Memo 18, L1). So lassen sich Pakete auch mit Entwicklungsständen und Release-Kandidaten holen.
 
-**Alter Schlüssel bis 0.8:** Fehlt `requires.aibos`, liest AIBOS `requires.aios`; der Bereich gilt unverändert (V0.7, Memo 10: F283). Pakete mit der Obergrenze `<0.7` lassen sich deshalb mit v0.7 nicht holen: `aibos --fetch` lehnt sie ab, ohne zu schreiben, mit `*** <paket> <version> needs a version for AIBOS <version> (requires.aios <bereich>)`.
+**Alter Schlüssel bis 0.8:** Fehlt `requires.aibos`, liest AIBOS `requires.aios`; der Bereich gilt unverändert (V0.7, Memo 10: F283). Pakete mit der Obergrenze `<0.7` lassen sich deshalb mit v0.7 nicht holen: `aibos --fetch` lehnt sie ab, ohne zu schreiben; die Konfliktliste des Resolvers nennt als Grund `<paket> <version> needs a version for AIBOS <version> (requires.aios <bereich>)` (V0.7, Memo 23: FL25).
 
 **Standardbereich:** Wird ein Paket ohne Bereich geholt, gilt ab Version 1.0 `~=X.Y` der höchsten Version, die zur Bindung passt (`requires.aibos`; V0.6, Memo 50, B1; `memo` 6.0.0 → `~=6.0`), darunter `~=0.Y.Z` (`app-taschenrechner` 0.1.0 → `~=0.1.0`, also `>=0.1.0,<0.2.0`). Vor 1.0 bleibt ein Paket damit in seiner Minor-Version, weil dort jede Minor-Version brechen darf (V0.4, Memo 19, L5).
 

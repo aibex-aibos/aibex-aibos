@@ -37,7 +37,7 @@
 # forwarder: own options, arguments passed unchanged
 #===============================================================================
 
-   assert_eq "$(aibos ---version)" "0.4.3" "---version"
+   assert_eq "$(aibos ---version)" "0.5.0" "---version"
 
 #===============================================================================
 # the working directory is gone (V0.6, memo 204: H34)
@@ -170,12 +170,10 @@
    assert_eq "$(run "$V/Sterne" aibos --context --activate v0.2.0)" "sys-0.1.0 aibos --context --activate v0.2.0" "only aibos --activate, not aibos --context --activate"
 
 #===============================================================================
-# aibos --install distribution-*: the highest installed version, at least 0.5 (V0.5, step 9)
+# aibos --install distribution-*: the highest installed version (V0.5, step 9; v0.7: no lower limit, FL9)
 #===============================================================================
 
-   OUT="$(run "$V/Sterne" aibos --install distribution-demo)"; RC=$?
-   assert_eq "$RC" "1" "distribution below 0.5: exit 1"
-   assert_contains "$OUT" "distributions need AIBOS 0.5 or later, highest installed v0.2.0" "distribution below 0.5: message"
+   assert_eq "$(run "$V/Sterne" aibos --install distribution-demo)" "sys-0.2.0 aibos --install distribution-demo" "distribution: highest installed version"
    fake_install "$AIBOS_PREFIX/v0.5.0" "sys-0.5.0"
    printf 'v0.5.0: %s\n' "$AIBOS_PREFIX/v0.5.0" >> "$AIBOS_PREFIX/installations.yaml"
    assert_eq "$(run "$V/Sterne" aibos --install distribution-demo "$V")" "sys-0.5.0 aibos --install distribution-demo $V" "distribution: highest version, not that of cwd"
@@ -186,20 +184,25 @@
    rm -rf "$V/.aibos" "$AIBOS_PREFIX/v0.5.0"
 
 #===============================================================================
-# aibos --context with a version below 0.5: its aibos-context (V0.5, memo 63, B3)
+# v0.7: Altbindung aios: 0.6.x in .aios/config.yaml calls bin/aios of that version; aios: below 0.6
+# counts as no binding; AIOS_HOME and AIOS_PREFIX until 0.8 (spec 04, Weiterleiter; FL6, FL9, FL11)
 #===============================================================================
 
-   fake_install "$AIBOS_PREFIX/v0.4.0" "sys-0.4.0"; echo "0.4.0" > "$AIBOS_PREFIX/v0.4.0/VERSION"
-   printf '#!/bin/bash\necho "sys-0.4.0 aibos-context $*"\n' > "$AIBOS_PREFIX/v0.4.0/bin/aibos-context"
-   chmod +x "$AIBOS_PREFIX/v0.4.0/bin/aibos-context"
-   printf 'v0.4.0: %s\n' "$AIBOS_PREFIX/v0.4.0" >> "$AIBOS_PREFIX/installations.yaml"
-   mkdir -p "$V/.aibos"; printf 'aibos: 0.4.0\n' > "$V/.aibos/config.yaml"
-   assert_eq "$(run "$V/Sterne" aibos --context --session)" "sys-0.4.0 aibos-context --session" "0.4: aibos --context --session -> aibos-context --session"
-   assert_eq "$(run "$V/Sterne" aibos --context)" "sys-0.4.0 aibos-context " "0.4: aibos --context -> aibos-context (no arguments)"
-   assert_eq "$(run "$V/Sterne" aibos --fetch)" "sys-0.4.0 aibos --fetch" "0.4: other commands unchanged"
-   echo "0.5.0" > "$AIBOS_PREFIX/v0.4.0/VERSION"
-   assert_eq "$(run "$V/Sterne" aibos --context --session)" "sys-0.4.0 aibos --context --session" "0.5 or later: aibos --context stays"
-   rm -rf "$V/.aibos" "$AIBOS_PREFIX/v0.4.0"
+   mkdir -p "$AIBOS_PREFIX/v0.6.6/bin"
+   printf '#!/bin/bash\necho "sys-0.6.6 aios $*"\n' > "$AIBOS_PREFIX/v0.6.6/bin/aios"; chmod +x "$AIBOS_PREFIX/v0.6.6/bin/aios"
+   printf 'v0.6.6: %s\n' "$AIBOS_PREFIX/v0.6.6" >> "$AIBOS_PREFIX/installations.yaml"
+   mkdir -p "$V/.aios"; printf 'aios: 0.6.6\n' > "$V/.aios/config.yaml"
+   assert_eq "$(run "$V/Sterne" aibos --context --session)" "sys-0.6.6 aios --context --session" "Altbindung: bin/aios of 0.6.6"
+   assert_contains "$(run "$V/Sterne" aibos ---which)" "why=aios: 0.6.6 in $V/.aios/config.yaml" "Altbindung: ---which names .aios/config.yaml"
+   printf 'aios: 0.5.1\n' > "$V/.aios/config.yaml"
+   assert_eq "$(run "$V/Sterne" aibos --context --id)" "id=- files=0 cwd=$V/Sterne mode=none" "aios: below 0.6: no binding (FL9)"
+   printf 'legacy: ai-brain\n' > "$V/.aios/config.yaml"
+   assert_contains "$(run "$V/Sterne" aibos --context --id)" "mode=legacy" "legacy: ai-brain in .aios/config.yaml"
+   mkdir -p "$V/.aibos"; printf 'aibos: 0.2.0\n' > "$V/.aibos/config.yaml"; printf 'aios: 0.6.6\n' > "$V/.aios/config.yaml"
+   assert_eq "$(run "$V/Sterne" aibos --fetch)" "sys-0.2.0 aibos --fetch" ".aibos/ wins over .aios/"
+   rm -rf "$V/.aibos" "$V/.aios" "$AIBOS_PREFIX/v0.6.6"; sed -i.bak -e '/^v0.6.6:/d' -e '/^v0.5.0:/d' "$AIBOS_PREFIX/installations.yaml"
+   assert_eq "$(cd "$V/Sterne" && AIOS_HOME="$AIBOS_PREFIX/v0.1.0" aibos --z)" "sys-0.1.0 aibos --z" "AIOS_HOME until 0.8"
+   assert_eq "$(cd "$V/Sterne" && env -u AIBOS_PREFIX AIOS_PREFIX="$AIBOS_PREFIX" aibos --z)" "sys-0.2.0 aibos --z" "AIOS_PREFIX until 0.8"
 
    rm -f "$HOME/.aibos/installations.yaml" "$AIBOS_PREFIX/installations.yaml"
    assert_exit 1 aibos --z
