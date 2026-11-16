@@ -29,7 +29,8 @@ Memos und ToDos im Projekt `~/Workspace/§AIBOS/A-AIOS/AA-AIbex-AIOS/` (Regeln `
 | `@Memo/V0.3/` | v0.3 (abgeschlossen, Tag `v0.3.1`); in Memos 01–11 heißt der Assistent noch *Agent* (Memo 13) |
 | `@Memo/V0.2/` | v0.2 (abgeschlossen, Tag `v0.2.0`) |
 | `@Memo/V0.1/`, `@Spec/V0.1/` | Grundlage aus v0.1 (abgeschlossen, Tag `v0.1.0`) |
-| `@Memo/V0.7/`, `@Memo/V0.8/`, `@Memo/V0.99/` | Ideen für spätere Versionen (Workflows v0.7, Wissen v0.8) bzw. ohne Version, nicht Teil der laufenden Arbeit; bis 2026-10-27 lagen sie in `V0.6/` und `V0.7/` (`@Memo/07`) |
+| `@Memo/V0.7/` | v0.7: Umbenennung von AIOS in AIBOS (ab 2026-11-16, `@Memo/08`) |
+| `@Memo/V0.8/`, `@Memo/V0.99/` | Wissen v0.8 (dazu Ideen zu Workflows, Memos 49–53) bzw. Ideen ohne Version; bis 2026-10-27 lagen Wissen und Workflows in `V0.7/` und `V0.6/` (`@Memo/07`), die Workflows bis 2026-11-16 in `V0.7/01–05` (`@Memo/08`) |
 
 ## Stand ermitteln
 
