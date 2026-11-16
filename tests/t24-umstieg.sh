@@ -100,3 +100,63 @@ except package.ManifestError as e:
    assert_eq "$(PY "$O" "from aibos import config; c = config.load('.'); print(c.kind, c.binding)")" "aibos 0.7.0" ".aibos/ wins over .aios/"
    mk "$O/P/.aios/config.yaml" $'aios: 0.6.6\n'; rm -rf "$O/.aibos" "$O/.aios"
    assert_eq "$(PY "$O/P" "from aibos import config; print(config.load('.').binding)")" "None" ".aios/ counts only at the vault root"
+
+#===============================================================================
+# step 5: installing 0.7 over a real 0.6.6 from the tag v0.6.6 of this repo (FL18): changeover
+# ~/.aios -> ~/.aibos with a link, alias aios, hooks rewritten; 0.6.6 runs on (spec 04, Umstieg auf v0.7)
+#===============================================================================
+
+   export HOME="$SANDBOX/home5" AIBOS_CLAUDE_DIR="$SANDBOX/home5/.claude"; mkdir -p "$HOME"   # a fresh user
+   export AIOS_PREFIX="$SANDBOX/opt/aios" AIOS_CLAUDE_DIR="$AIBOS_CLAUDE_DIR"     # the names 0.6.6 reads
+   export GIT_AUTHOR_NAME=t GIT_AUTHOR_EMAIL=t@t GIT_COMMITTER_NAME=t GIT_COMMITTER_EMAIL=t@t
+   unset AIOS_HOME
+   YAML="$(python3 -c 'import os, yaml; print(os.path.dirname(yaml.__file__))')"
+   mkdir -p "$SANDBOX/fake"
+   printf '#!/bin/bash\ncp -R "%s" "$(dirname "$1")"/lib/python*/site-packages/\n' "$YAML" > "$SANDBOX/fake/pip"
+   chmod +x "$SANDBOX/fake/pip"
+   export AIOS_PIP="$SANDBOX/fake/pip" AIBOS_PIP="$SANDBOX/fake/pip"            # PyYAML without network
+   K66="$SANDBOX/k066"; mkdir -p "$K66"
+   git -C "$SRC" archive v0.6.6 | tar -x -C "$K66"
+   G -C "$K66" init -q; G -C "$K66" add -A; G -C "$K66" commit -q -m v0.6.6; G -C "$K66" tag v0.6.6
+   K07="$SANDBOX/k070"                             # sandbox clone of the working tree with a tag v0.7.0
+   (cd "$SRC" && git -c core.quotePath=false ls-files -co --exclude-standard) | while IFS= read -r F; do
+      mkdir -p "$K07/$(dirname "$F")"; cp -p "$SRC/$F" "$K07/$F"
+   done
+   G -C "$K07" init -q; G -C "$K07" add -A; G -C "$K07" commit -q -m v0.7.0; G -C "$K07" tag v0.7.0
+
+   OUT="$(at "$SANDBOX" "$K66/bin/aios" --install v0.6.6 --yes)"; RC=$?
+   [ "$RC" == "0" ] && [ -x "$HOME/.aios/bin/aios" ] && [ -d "$HOME/.aios/versions/v0.6.6" ] && ok || fail "0.6.6 installed: $OUT"
+   V="$SANDBOX/work/§Sechs"; mkdir -p "$V/PA"
+   at "$SANDBOX" "$HOME/.aios/bin/aios" --activate v0.6.6 "$V" --yes >/dev/null
+   at "$V/PA" "$HOME/.aios/bin/aios" --init --yes >/dev/null
+   assert_contains "$(at "$V/PA" "$HOME/.aios/bin/aios" --context --id)" "mode=aios-0.6.6" "before: vault on 0.6.6"
+
+   OUT="$(at "$SANDBOX" "$K07/bin/aibos" --install v0.7.0 --plan)"; RC=$?
+   assert_eq "$RC" "0" "changeover: --plan exit 0"
+   assert_contains "$OUT" "move $HOME/.aios to $HOME/.aibos and leave $HOME/.aios as a link to it (until AIBOS 0.8)" "changeover: plan moves ~/.aios"
+   assert_contains "$OUT" "then: the plan of the installation in ~/.aibos" "changeover: the second plan is named (FL30)"
+   [ -d "$HOME/.aios" ] && [ ! -L "$HOME/.aios" ] && [ ! -e "$HOME/.aibos" ] && ok || fail "changeover: --plan writes nothing"
+
+   OUT="$(at "$SANDBOX" "$K07/bin/aibos" --install v0.7.0 --yes)"; RC=$?
+   assert_eq "$RC" "0" "changeover: exit 0"
+   [ -L "$HOME/.aios" ] && [ "$(cd "$HOME/.aios" && pwd -P)" == "$(cd "$HOME/.aibos" && pwd -P)" ] && ok || fail "~/.aios is a link to ~/.aibos"
+   [ -d "$HOME/.aibos/versions/v0.6.6" ] && [ -d "$HOME/.aibos/versions/v0.7.0" ] && ok || fail "both versions under ~/.aibos"
+   assert_contains "$(head -2 "$HOME/.aibos/bin/aibos")" "# forwarder: ~/.aibos/bin/aibos" "forwarder 0.5.0 in ~/.aibos/bin"
+   assert_eq "$(readlink "$HOME/.aibos/bin/aios")" "aibos" "alias ~/.aibos/bin/aios -> aibos (FL29)"
+   SETTINGS="$(cat "$AIBOS_CLAUDE_DIR/settings.json")"
+   assert_eq "$(grep -c "$HOME/.aibos/bin/aibos --context --" <<< "$SETTINGS")" "3" "three hooks with ~/.aibos/bin/aibos"
+   assert_not_contains "$SETTINGS" "/.aios/bin/aios --context" "hooks of 0.6.6 replaced in place (F269)"
+
+   assert_contains "$(at "$V/PA" "$HOME/.aibos/bin/aibos" --context --id)" "mode=aios-0.6.6" "after: the Altbindung runs with 0.6.6 (P19)"
+   assert_contains "$(at "$V/PA" "$HOME/.aios/bin/aios" --context --id)" "mode=aios-0.6.6" "after: wrappers of 0.6.6 (~/.aios/bin/aios) still work"
+   assert_contains "$(at "$V/PA" "$HOME/.aios/bin/aios" --skill aios-status)" "# Projektstatus" "after: a kernel skill of 0.6.6"
+   assert_eq "$(at "$SANDBOX" "$HOME/.aibos/bin/aibos" --version)" "0.7.0" "aibos without binding: the highest version"
+
+   assert_contains "$(at "$SANDBOX" "$K07/bin/aibos" --install v0.7.0 --yes)" "nothing to do" "second install: nothing to do (I8)"
+   OUT="$(echo n | at "$SANDBOX" "$HOME/.aibos/bin/aibos" --uninstall)"
+   assert_contains "$OUT" "remove the alias $HOME/.aibos/bin/aios" "uninstall: removes the alias"
+   assert_contains "$OUT" "remove the link $HOME/.aios" "uninstall: removes the link"
+   mkdir -p "$SANDBOX/both/.aios" "$SANDBOX/both/.aibos"
+   OUT="$(at "$SANDBOX" env HOME="$SANDBOX/both" "$K07/bin/aibos" --install v0.7.0 --plan)"; RC=$?
+   [ "$RC" != "0" ] && ok || fail "~/.aios and ~/.aibos both: abort"
+   assert_contains "$OUT" "both exist" "~/.aios and ~/.aibos both: message"

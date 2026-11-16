@@ -484,6 +484,18 @@ def plan_forwarders(plan, src):
             target.write_text(text, encoding="utf-8")
             target.chmod(0o755)
         plan.add(what, put)
+    alias = target.parent / legacy.OLD_KEY          # ~/.aibos/bin/aios until AIBOS 0.8 (F268, FL29)
+    if not alias.is_symlink():
+        if alias.exists() and not is_forwarder(alias.read_text(encoding="utf-8", errors="replace")):
+            warn(f"{alias} is not an AIBOS forwarder, left untouched; the alias aios is missing")
+        else:
+            def link():
+                alias.parent.mkdir(parents=True, exist_ok=True)
+                if alias.exists():
+                    alias.unlink()
+                alias.symlink_to(target.name)
+            plan.add(f"alias {alias} -> {target.name} (the name aios until AIBOS 0.8)"
+                     + (", in place of the forwarder of AIOS" if alias.exists() else ""), link)
     for tool in TOOLS + OLD_TOOLS:
         old = paths.bin_dir() / tool
         if old.is_file():
@@ -514,11 +526,11 @@ def merge_hooks(settings):
                 if rest or not group.get("hooks"):
                     groups.append(dict(group, hooks=rest))
             hooks[event] = groups
-    for event, legacy in LEGACY_HOOKS.items():
+    for event, brain in LEGACY_HOOKS.items():
         groups = []
         for group in hooks.get(event, []):
-            gone = [h for h in group.get("hooks", []) if is_command(h, legacy)]
-            rest = [h for h in group.get("hooks", []) if not is_command(h, legacy)]
+            gone = [h for h in group.get("hooks", []) if is_command(h, brain)]
+            rest = [h for h in group.get("hooks", []) if not is_command(h, brain)]
             if gone:
                 removed.setdefault(event, []).append(dict(group, hooks=gone))
             if rest or not gone:
@@ -532,7 +544,7 @@ def merge_hooks(settings):
         found = False
         for g in groups:
             for h in g.get("hooks", []):
-                if is_command(h, cmd):
+                if is_command(h, cmd) or is_command(h, legacy.old_command(cmd)):   # hooks of AIOS 0.6 (F269)
                     found = True
                     if h.get("command") != full:     # in place, with the absolute path (F10)
                         h["command"] = full
@@ -558,6 +570,7 @@ def unmerge_hooks(settings, backup):
         groups = []
         for group in hooks[event]:
             rest = [h for h in group.get("hooks", []) if not is_command(h, cmd)
+                    and not is_command(h, legacy.old_command(cmd))
                     and not is_command(h, OLD_AIOS_HOOKS[event])]
             if rest or not group.get("hooks"):
                 groups.append(dict(group, hooks=rest))
@@ -879,6 +892,37 @@ def older_vaults(tag):
     return lines
 
 
+def changeover(system=False):
+    """The changeover from AIOS (spec 04, Umstieg auf v0.7; F267, FL14): (text, action) to move
+    ~/.aios to ~/.aibos and, with --system, /opt/aios to /opt/aibos, each leaving a link."""
+    steps = []
+    pairs = [(paths.home() / legacy.OLD_DIR, paths.user_dir(), False)]
+    prefix = paths.prefix()
+    if system and prefix.name == "aibos":
+        pairs.append((prefix.with_name("aios"), prefix, True))
+    for old, new, shared in pairs:
+        if old.is_symlink() or not old.is_dir():
+            continue
+        if new.exists():
+            raise Abort(f"{old} and {new} both exist; move the one you do not need away, then run "
+                        "aibos --install again (spec 04, Umstieg auf v0.7)")
+        if not shared or os.access(old.parent, os.W_OK):
+            def move(old=old, new=new):
+                old.rename(new)
+                old.symlink_to(new)
+            steps.append((f"move {old} to {new} and leave {old} as a link to it (until AIBOS 0.8)", move))
+        else:
+            sudo = shutil.which(paths.sudo_cmd())
+            if not sudo:
+                raise Abort(f"--system needs sudo to move {old} to {new}")
+            def move(old=old, new=new, sudo=sudo):
+                run([sudo, "mv", str(old), str(new)])
+                run([sudo, "ln", "-s", str(new), str(old)])
+            steps.append((f"move {old} to {new} and leave {old} as a link: sudo mv, sudo ln -s "
+                          "(sudo may ask for your password)", move))
+    return steps
+
+
 def install(version, system=False):
     repo = find_repo()
     tag = choose_version(repo, version)
@@ -886,6 +930,15 @@ def install(version, system=False):
     if missing:                                     # checked by aibos --install itself (V0.6, memo 07)
         raise Abort("the basic kit is missing (" + "; ".join(kit_lines(missing))
                     + "); install it, then run aibos --install again")
+    steps = changeover(system)
+    if steps:                                       # own plan first: the next one sees ~/.aibos (FL30)
+        first = Plan()
+        for text, action in steps:
+            first.add(text, action)
+        first.add("then: the plan of the installation in ~/.aibos")
+        say("=> changeover from AIbex AIOS to AIbex AIBOS (spec 04, Umstieg auf v0.7)")
+        if not confirm(first, "change over?", "changeover cancelled"):
+            return 1
     plan = Plan()
     root, entries = plan_root(plan, system=system)
     known = installations()
@@ -1018,6 +1071,12 @@ def uninstall():
     target = paths.forwarder()
     if target.is_file() and is_forwarder(target.read_text(encoding="utf-8", errors="replace")):
         plan.add(f"remove the forwarder {target}", target.unlink)
+    alias = target.parent / legacy.OLD_KEY
+    if alias.is_symlink():
+        plan.add(f"remove the alias {alias}", alias.unlink)
+    link = paths.home() / legacy.OLD_DIR
+    if link.is_symlink() and link.resolve() == paths.user_dir().resolve():
+        plan.add(f"remove the link {link}", link.unlink)
     for tool in TOOLS + OLD_TOOLS:
         if (paths.bin_dir() / tool).is_file():
             plan.add(f"legacy: ~/bin/{tool} stays untouched; remove it yourself if you like")

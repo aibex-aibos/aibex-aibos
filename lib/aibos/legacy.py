@@ -55,6 +55,11 @@ def url(text):
     return GITHUB_ORG.sub(lambda m: m.group(1) + NEW_ORG, text) if text else text
 
 
+def old_command(cmd):
+    """The hook command of AIOS 0.4 to 0.6 for a hook command of AIBOS: aios --context --… (F269)."""
+    return OLD_KEY + cmd[len(NEW_KEY):] if cmd.startswith(NEW_KEY + " ") else cmd
+
+
 def requires_key(requires):
     """The key of requires: aibos, else aios (F283); None if neither is there."""
     if not isinstance(requires, dict):
