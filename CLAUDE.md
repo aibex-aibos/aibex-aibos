@@ -12,7 +12,7 @@ Regeln für Sessions, die an AIbex AIOS arbeiten, ob sie im Repo laufen oder im 
 | Stand der Umsetzung | `STATUS.md`: alle Schritte des freigegebenen Implementierungsplans mit ☐/☑; liegt in jedem Paket-Repo mit Implementierungsplan, auch hier (V0.6, Memos 123, 126: F102) |
 | Code | `bin/` (Bash: `aios`; `aios --context` für Hooks und lesende Skills), `templates/forwarder` (Weiterleiter `~/.aios/bin/aios`), `lib/aios/` (Python) |
 | Skills | `skills/aios/<name>/SKILL.md` (AIOS-Skills); Pakete (Skills, Assistenten, Wissen, Arbeitspferde, Distributionen) in eigenen Paket-Repos unter `~/git/AIbex/<paket>/` oder im Konzeptprojekt unter `@Package/<paket>/` |
-| Ort dieses Repos | `~/Workspace/§AIBOS/A-AIOS/AA-AIbex-AIOS/@Package/aibex-aios/` im Konzeptprojekt; am alten Ort `~/git/AIbex/aibex-aios` steht ein Link (Konzept-Repo V0.6, Memo 178) |
+| Ort dieses Repos | `~/Workspace/§AIBOS/A-AIOS/AA-AIbex-AIOS/@Package/aibex-aios/` im Konzeptprojekt; bis 2026-11-05 `~/git/AIbex/aibex-aios` (Konzept-Repo V0.6, Memo 178; der alte Klon dort liegt seit 2026-11-16 im Papierkorb, V0.7, Memo 11) |
 | Paket-Manifest des Kernels | `manifest.yaml` (`name: aios`, `type: kernel`), Version wie `VERSION` |
 | Tests | `tests/run` |
 | Entwickler-Doku | `dev/` (wird nicht installiert) |
