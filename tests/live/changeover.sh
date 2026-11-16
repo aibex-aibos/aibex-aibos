@@ -1,13 +1,15 @@
 #!/bin/bash
-# changeover.sh: live test of the change of packages at the activation (v0.6.1, step 5; V0.6, memos 81, 84, 90):
-# vault A with two projects on worker-yt-dlp 0.1.0 (fits 0.5 only), vault B on 0.1.0 without an entry in
-# workers.yaml, known by the marker of a session; aibos --activate of A on the candidate (VERSION) shows the
-# fetch of each project (B13), sets up 0.1.1 once and keeps 0.1.0 for B (B12); real PyPI
+# changeover.sh: live test of the change of packages at the activation (v0.6.1, step 5; V0.6, memos 81, 84, 90;
+# V0.7, memo 32: FL37): vault A with two projects on skill-video-analyse 0.3.0 and worker-yt-dlp 0.1.1, the last
+# versions for AIBOS 0.6 (requires.aios <0.7), vault B on 0.1.1 without an entry in workers.yaml, known by the
+# marker of a session; aibos --activate of A on the candidate (VERSION) switches each project to the versions
+# for 0.7 (spec 06, Umstieg auf v0.7; B13), sets up the new worker-yt-dlp once and keeps 0.1.1 for B (B12);
+# the versions for 0.7 come from the tags of the repos, a candidate as test release in the sandbox hub; real PyPI
 
    exec </dev/null                                  # nothing waits for input (V0.7, memo 26: H55)
 
    if [ "$*" == "-?" ] || [ "$*" == "--help" ]; then
-      echo '   usage: tests/live/changeover.sh [<repos>]  # activate a vault of 0.5.1 on the candidate with packages'
+      echo '   usage: tests/live/changeover.sh [<repos>]  # activate a vault of 0.6.6 on the candidate with packages'
       echo '                                            # from the tagged repos in <repos> (default: clones of AIBOS_LIVE_HUB)'
       echo '          tests/live/changeover.sh --version  # print version'
       echo '   not part of tests/run: needs network access to PyPI, takes about two minutes'
@@ -20,7 +22,7 @@
 #===============================================================================
 
    if [ "$*" == "--version" ]; then
-      echo "0.1.1"; exit 0
+      echo "0.2.0"; exit 0
    fi
 
 #===============================================================================
@@ -59,9 +61,9 @@
          printf '  - name: %s\n    type: %s\n    description: %s\n' "$P" "${P%%-*}" "$P" >> "$H/aibos-index/index.yaml"
       done
       G -C "$H/aibos-index" init -q && G -C "$H/aibos-index" add -A && G -C "$H/aibos-index" commit -q -m index
-      for T in $(G -C "$H/skill-video-analyse" tag -l 'v0.3*' 'v0.4*' 'v1*'); do   # the test is about 0.2.0 -> 0.2.1;
-         G -C "$H/skill-video-analyse" tag -d "$T" >/dev/null                    # later releases stay out (v0.6.6)
-      done
+      release "$H/skill-video-analyse" "$H/skill-5-8-zusammenfassung" "$H/skill-memo" "$H/worker-yt-dlp" "$H/worker-deno" || exit 1
+      OV=0.3.0; OY=0.1.1                            # the versions for AIBOS 0.6 (fixed: released, F283)
+      NV="$(tagver "$H/skill-video-analyse")"; NY="$(tagver "$H/worker-yt-dlp")"   # the versions for 0.7 (FL37)
       mkdir -p "$SB/home/bin" "$SB/opt" "$SB/fake"
       export HOME="$SB/home" AIBOS_PREFIX="$SB/opt" AIBOS_CLAUDE_DIR="$SB/home/.claude"
       export AIBOS_SUDO="$SB/fake/no-sudo" AIBOS_PIP=true
@@ -78,15 +80,15 @@
       [ "$RC" == "0" ] || printf '%s\n' "$OUT"
       check "kernel $K installed" [ "$RC" == "0" ] && [ -x "$HOME/.aibos/versions/v$K/bin/aibos" ]
 
-      VA="$SB/§Alpha"; VB="$SB/§Beta"               # two vaults of 0.5.1, each project on worker-yt-dlp 0.1.0
+      VA="$SB/§Alpha"; VB="$SB/§Beta"               # two vaults of 0.6.6, each project on the versions for 0.6
       for P in "$VA/PA-Eins" "$VA/PA-Zwei" "$VB/PB-Alt"; do
          V="$(dirname "$P")"; mkdir -p "$V/@" "$V/.aibos" "$P/@"
-         [ -f "$V/.aibos/config.yaml" ] || printf 'aibos: 0.5.1\n' > "$V/.aibos/config.yaml"
-         OUT="$("$A_" --fetch 'worker-yt-dlp==0.1.0' --to "$P" --yes 2>&1)" && \
-         OUT="$("$A_" --fetch 'skill-video-analyse==0.2.0' --to "$P" --yes 2>&1)"; RC=$?
+         [ -f "$V/.aibos/config.yaml" ] || printf 'aibos: 0.6.6\n' > "$V/.aibos/config.yaml"
+         OUT="$("$A_" --fetch "worker-yt-dlp==$OY" --to "$P" --yes 2>&1)" && \
+         OUT="$("$A_" --fetch "skill-video-analyse==$OV" --to "$P" --yes 2>&1)"; RC=$?
          [ "$RC" == "0" ] || printf '%s\n' "$OUT"
-         check "$(basename "$P"): skill-video-analyse 0.2.0, worker-yt-dlp 0.1.0" \
-            [ "$(VER "$P" skill-video-analyse) $(VER "$P" worker-yt-dlp)" == "0.2.0 0.1.0" ] && [ -d "$WK/worker-yt-dlp/v0.1.0" ]
+         check "$(basename "$P"): skill-video-analyse $OV, worker-yt-dlp $OY" \
+            [ "$(VER "$P" skill-video-analyse) $(VER "$P" worker-yt-dlp)" == "$OV $OY" ] && [ -d "$WK/worker-yt-dlp/v$OY" ]
       done
       python3 - "$WY" "$VB" <<'EOF'                 # B: written before workers.yaml knew it (B12)
 import sys, yaml
@@ -109,11 +111,11 @@ EOF
          check "plan: packages for AIBOS $K: $P (B13)" has "$OUT" "packages for AIBOS $K: $VA/$P"
          check "plan: lock.yaml of $P among the substeps" has "$OUT" "$VA/$P/.aibos/lock.yaml"
       done
-      check "plan: packages: skill-video-analyse 0.2.0 -> 0.2.1" has "$OUT" "$VA/PA-Eins: packages: skill-video-analyse 0.2.0 -> skill-video-analyse 0.2.1"
-      check "plan: upgrade skill-video-analyse among the substeps" has "$OUT" "upgrade 0.2.0 -> 0.2.1 skill-video-analyse 0.2.1"
-      check "plan: setup worker-yt-dlp 0.1.1 once" [ "$(count "$OUT" "setup      worker-yt-dlp 0.1.1")" == "1" ]
-      check "plan: 0.1.0 stays for B (B12)" has "$OUT" "worker-yt-dlp 0.1.0 stays, used by $VB/PB-Alt"
-      check "plan: 0.1.0 not removed" hasnt "$OUT" "remove     worker-yt-dlp 0.1.0"
+      check "plan: packages: skill-video-analyse $OV -> $NV" has "$OUT" "$VA/PA-Eins: packages: skill-video-analyse $OV -> skill-video-analyse $NV"
+      check "plan: upgrade skill-video-analyse among the substeps" has "$OUT" "upgrade $OV -> $NV skill-video-analyse $NV"
+      check "plan: setup worker-yt-dlp $NY once" [ "$(count "$OUT" "setup      worker-yt-dlp $NY")" == "1" ]
+      check "plan: $OY stays for B (B12)" has "$OUT" "worker-yt-dlp $OY stays, used by $VB/PB-Alt"
+      check "plan: $OY not removed" hasnt "$OUT" "remove     worker-yt-dlp $OY"
       check "plan: no changeover from v0.4" hasnt "$OUT" "changeover from v0.4"
 
       OUT="$("$A_" --activate "v$K" "$VA" --yes 2>&1)"; RC=$?
@@ -121,15 +123,15 @@ EOF
       check "activate: exit 0" [ "$RC" == "0" ]
       check "activate: A bound to $K" has "$(cat "$VA/.aibos/config.yaml")" "aibos: $K"
       for P in PA-Eins PA-Zwei; do
-         check "activate: $P on skill-video-analyse 0.2.1, worker-yt-dlp 0.1.1" \
-            [ "$(VER "$VA/$P" skill-video-analyse) $(VER "$VA/$P" worker-yt-dlp)" == "0.2.1 0.1.1" ]
+         check "activate: $P on skill-video-analyse $NV, worker-yt-dlp $NY" \
+            [ "$(VER "$VA/$P" skill-video-analyse) $(VER "$VA/$P" worker-yt-dlp)" == "$NV $NY" ]
       done
-      check "activate: 0.1.1 set up" [ -d "$WK/worker-yt-dlp/v0.1.1" ]
-      check "activate: 0.1.0 still there for B" [ -d "$WK/worker-yt-dlp/v0.1.0" ]
+      check "activate: $NY set up" [ -d "$WK/worker-yt-dlp/v$NY" ]
+      check "activate: $OY still there for B" [ -d "$WK/worker-yt-dlp/v$OY" ]
       check "activate: B noted in workers.yaml" has "$(cat "$WY")" "$VB/PB-Alt"
-      check "forwarder in A takes 0.1.1" has "$(cd "$VA/PA-Eins" && "$BIN/yt-dlp" ---which 2>&1)" "version=0.1.1"
-      check "forwarder in B takes 0.1.0" has "$(cd "$VB/PB-Alt" && "$BIN/yt-dlp" ---which 2>&1)" "version=0.1.0"
-      check "B untouched: bound to 0.5.1" has "$(cat "$VB/.aibos/config.yaml")" "aibos: 0.5.1"
+      check "forwarder in A takes $NY" has "$(cd "$VA/PA-Eins" && "$BIN/yt-dlp" ---which 2>&1)" "version=$NY"
+      check "forwarder in B takes $OY" has "$(cd "$VB/PB-Alt" && "$BIN/yt-dlp" ---which 2>&1)" "version=$OY"
+      check "B untouched: bound to 0.6.6" has "$(cat "$VB/.aibos/config.yaml")" "aibos: 0.6.6"
 
       echo "=> $PASS passed, $FAIL failed (sandbox $SB)"
       [ "$FAIL" == "0" ] || exit 1

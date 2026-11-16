@@ -1,7 +1,8 @@
 #!/bin/bash
-# fresh.sh: AIBOS v0.6.0 in the smallest environment (V0.6, plan step 12): fresh HOME, python3 3.11 without
-# PyYAML, PATH without the user's folders, kernel from a sandbox clone with the local tag v0.6.0; packages from
-# a local hub of the package repos, the real hub only read; no Claude session, no tokens
+# fresh.sh: AIBOS in the smallest environment (since V0.6, plan step 12): fresh HOME, python3 3.11 without
+# PyYAML, PATH without the user's folders, kernel from a sandbox clone with the local tag v<VERSION>; packages from
+# a local hub of the package repos, the real hub only read; no Claude session, no tokens; v0.7: the version of
+# assistant-gaertner from the tags of its repo, the real hub only once it is reachable (V0.7, memo 32: FL37)
 
    exec </dev/null                                  # nothing waits for input (V0.7, memo 26: H55)
 
@@ -20,7 +21,7 @@
 #===============================================================================
 
    if [ "$*" == "--version" ]; then
-      echo "0.1.0"; exit 0
+      echo "0.2.0"; exit 0
    fi
 
 #===============================================================================
@@ -57,6 +58,7 @@
          printf '  - name: %s\n    type: %s\n    description: %s\n' "$P" "${P%%-*}" "$P" >> "$H/aibos-index/index.yaml"
       done
       G -C "$H/aibos-index" init -q && G -C "$H/aibos-index" add -A && G -C "$H/aibos-index" commit -q -m index
+      GV="$(tagver "$H/assistant-gaertner")"         # candidate or release (FL37)
 
       "$PY311" -m venv "$SB/py" || exit 1           # python3 3.11 without PyYAML
       mkdir -p "$SB/home" "$SB/opt" "$SB/fake"
@@ -101,17 +103,22 @@
       check "outside: aibos --skill says no A/W" [ "$RC" == "1" ] && has "$OUT" "Kein AIBOS-Workspace: $HOME/tmp"
       check "outside: the session hook prints nothing" [ -z "$(cd "$HOME/tmp" && echo '{}' | aibos --context --session 2>&1)" ]
 
-      OUT="$(cd "$P" && AIBOS_HUBS="$LOCAL" aibos --fetch assistant-gaertner --yes 2>&1)"; RC=$?
+      OUT="$(cd "$P" && AIBOS_HUBS="$LOCAL" aibos --fetch "assistant-gaertner==$GV" --yes 2>&1)"; RC=$?
       [ "$RC" == "0" ] || printf '%s\n' "$OUT"
-      check "local hub: fetch assistant-gaertner 0.3.1" [ "$RC" == "0" ] && has "$(cat "$P/.aibos/lock.yaml")" "0.3.1"
+      check "local hub: fetch assistant-gaertner $GV" [ "$RC" == "0" ] && has "$(cat "$P/.aibos/lock.yaml")" "version: $GV"
       check "local hub: package in @!Package" [ -f "$P/@/@!Package/assistant-gaertner/manifest.yaml" ]
 
-      OUT="$(cd "$P" && aibos --library 2>&1)"; RC=$?
-      [ "$RC" == "0" ] || printf '%s\n' "$OUT"
-      check "real hub: library readable" [ "$RC" == "0" ] && has "$OUT" "assistant-astronom"
-      OUT="$(cd "$P" && aibos --fetch assistant-astronom --plan 2>&1)"; RC=$?
-      printf '%s\n' "$OUT" | sed 's/^/      | /'
-      check "real hub: nothing published fits 0.6 yet" [ "$RC" != "0" ]
+      REAL="https://github.com/aibex-aibos/aibos-index"   # exists after the rename of the organisation (F279)
+      if git ls-remote -q "$REAL" >/dev/null 2>&1; then
+         OUT="$(cd "$P" && aibos --library 2>&1)"; RC=$?
+         [ "$RC" == "0" ] || printf '%s\n' "$OUT"
+         check "real hub: library readable" [ "$RC" == "0" ] && has "$OUT" "assistant-astronom"
+         OUT="$(cd "$P" && aibos --fetch assistant-astronom --plan 2>&1)"; RC=$?
+         printf '%s\n' "$OUT" | sed 's/^/      | /'
+         check "real hub: nothing published fits 0.7 yet" [ "$RC" != "0" ]
+      else
+         echo "skip real hub: $REAL not reachable (before the rename of the organisation, F279)"
+      fi
 
       echo "=> $PASS passed, $FAIL failed (sandbox $SB)"
       [ "$FAIL" == "0" ] || exit 1

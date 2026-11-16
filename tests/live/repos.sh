@@ -17,3 +17,25 @@
       done
       echo "$DIR"
    }
+
+# tagver <repo>: the highest tag of a package repo without v, a candidate below its release
+# (v0.2.0-rc1 < v0.2.0); the live tests take their versions from here, not fixed (V0.7, memo 32: FL37)
+
+   tagver() {
+      git -C "$1" -c versionsort.suffix=-rc tag -l 'v[0-9]*' --sort=-v:refname | head -1 | sed 's/^v//'
+   }
+
+# release <clone>...: a candidate as its release, only in the clone of the sandbox hub (S5): a commit with
+# version: <x.y.z> and the tag v<x.y.z>; a fetch without == takes no candidate (spec 06, Versionen und
+# Bereiche). Nothing happens if the highest tag is a release already
+
+   release() {
+      local C V R
+      for C in "$@"; do
+         V="$(tagver "$C")"; case "$V" in *-rc*) ;; *) continue;; esac
+         R="${V%-rc*}"
+         sed -i.bak "s/^version: .*$/version: $R/" "$C/manifest.yaml" && rm "$C/manifest.yaml.bak" || return 1
+         git -C "$C" -c user.name=live -c user.email=live@test commit -q -am "$(basename "$C") $R (test release of $V)" &&
+            git -C "$C" tag "v$R" || return 1
+      done
+   }

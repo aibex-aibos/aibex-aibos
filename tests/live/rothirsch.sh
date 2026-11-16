@@ -1,6 +1,6 @@
 #!/bin/bash
-# rothirsch.sh: live test of the distribution Rothirsch 1.1 in a sandbox (V0.5, step 13; V0.6, step 11; v0.6.1,
-# step 5): the candidate of distribution-rothirsch with the kernel of VERSION from a sandbox clone of this
+# rothirsch.sh: live test of the distribution Rothirsch in a sandbox (V0.5, step 13; V0.6, step 11; v0.6.1,
+# step 5; V0.7, memo 32: versions from the manifest of the distribution and the tags of the repos, FL37): the candidate of distribution-rothirsch with the kernel of VERSION from a sandbox clone of this
 # repo with the local tag (F59); local hub aibex-local of the package repos, real PyPI
 
    exec </dev/null                                  # nothing waits for input (V0.7, memo 26: H55)
@@ -11,7 +11,7 @@
       echo '          tests/live/rothirsch.sh --version  # print version'
       echo '   not part of tests/run: needs network access to PyPI, takes about two minutes;'
       echo '   the test versions distribution-rothirsch <candidate>-rc8 (if the release wants another kernel),'
-      echo '   <candidate>-rc9 and worker-yt-dlp 0.1.9 exist only in the'
+      echo '   <candidate>-rc9 and worker-yt-dlp <x.y>.9 exist only in the'
       echo '   clones of the sandbox hub, never in the package repos (S5)'
       echo '   see also: tests/live/workers.sh, aibos --install distribution-<name>'
       exit 1
@@ -22,7 +22,7 @@
 #===============================================================================
 
    if [ "$*" == "--version" ]; then
-      echo "0.3.2"; exit 0
+      echo "0.4.0"; exit 0
    fi
 
 #===============================================================================
@@ -63,6 +63,11 @@
       done
       G -C "$H/aibos-index" init -q && G -C "$H/aibos-index" add -A && G -C "$H/aibos-index" commit -q -m index
       D0="$H/distribution-rothirsch"; KV="$(sed -n 's/^kernel: *"==\(.*\)"/\1/p' "$D0/manifest.yaml")"
+      PIN() { sed -n "s/^  $1: *\"==\(.*\)\"/\1/p" "$D0/manifest.yaml"; }   # versions of the distribution (FL37)
+      VV="$(PIN skill-video-analyse)"; AV="$(PIN assistant-anja)"
+      ZV="$(tagver "$H/skill-5-8-zusammenfassung")"; MV="$(tagver "$H/skill-memo")"   # by the resolver: the highest
+      YV="$(tagver "$H/worker-yt-dlp")"; NV="$(tagver "$H/worker-deno")"               # version, candidate or release
+      YT="$(echo "${YV%-rc*}" | sed 's/\.[0-9]*$/.9/')"   # test version of worker-yt-dlp in the range of the skill
       if [ "$KV" != "$K" ]; then                    # the release wants another kernel (v0.6.2: 1.1.0 stays, F92):
          DV="${DV%-rc*}-rc8"                        # test version with the candidate, only in the sandbox hub (S5)
          sed -i.bak -e "s/^version: .*$/version: $DV/" -e "s/^kernel: .*$/kernel: \"==$K\"/" "$D0/manifest.yaml" && rm "$D0/manifest.yaml.bak"
@@ -86,12 +91,12 @@
       OUT="$(I distribution-rothirsch==$DV --plan)"
       check "plan: install distribution-rothirsch $DV (kernel $K)" has "$OUT" "=> install distribution-rothirsch $DV into $V (kernel $K)"
       check "plan: kernel from the sandbox clone" has "$OUT" "install AIBOS v$K from $S"
-      check "plan: setup worker-deno" has "$OUT" "setup      worker-deno 0.1.1 -> $WK/worker-deno/v0.1.1"
-      check "plan: setup worker-yt-dlp" has "$OUT" "setup      worker-yt-dlp 0.1.1 -> $WK/worker-yt-dlp/v0.1.1"
+      check "plan: setup worker-deno" has "$OUT" "setup      worker-deno $NV -> $WK/worker-deno/v$NV"
+      check "plan: setup worker-yt-dlp" has "$OUT" "setup      worker-yt-dlp $YV -> $WK/worker-yt-dlp/v$YV"
       check "plan: worker-deno before worker-yt-dlp" [ "$(line "$OUT" "setup      worker-deno")" -lt "$(line "$OUT" "setup      worker-yt-dlp")" ]
       check "plan: machine part before the vault part" [ "$(line "$OUT" "machine part")" -lt "$(line "$OUT" "vault part")" ]
       check "plan: binding of the vault root" has "$OUT" "create $V/.aibos/config.yaml with aibos: $K"
-      for P in "skill-video-analyse 0.2.1" "assistant-anja 0.2.1" "skill-5-8-zusammenfassung 1.2.2" "skill-memo 6.0.2"; do
+      for P in "skill-video-analyse $VV" "assistant-anja $AV" "skill-5-8-zusammenfassung $ZV" "skill-memo $MV"; do
          check "plan: new $P" has "$OUT" "new        $P"
       done
 
@@ -107,20 +112,20 @@
       check "yt-dlp finds deno" has "$(cd "$V" && "$BIN/yt-dlp" -v 2>&1)" "JS runtimes: deno-2.9.8"
 
       W1="$H/worker-yt-dlp"                         # test versions only in the clones (S5), released after 1.0.0
-      sed -i.bak 's/^version: .*$/version: 0.1.9/' "$W1/manifest.yaml" && rm "$W1/manifest.yaml.bak"
-      G -C "$W1" commit -q -am "worker-yt-dlp 0.1.9 (test version)" && G -C "$W1" tag v0.1.9
+      sed -i.bak "s/^version: .*$/version: $YT/" "$W1/manifest.yaml" && rm "$W1/manifest.yaml.bak"
+      G -C "$W1" commit -q -am "worker-yt-dlp $YT (test version)" && G -C "$W1" tag "v$YT"
       D1="$H/distribution-rothirsch"
       sed -i.bak -e "s/^version: $DV\$/version: $DT/" "$D1/manifest.yaml" && rm "$D1/manifest.yaml.bak"
-      printf '  worker-yt-dlp: "==0.1.9"\n' >> "$D1/manifest.yaml"
+      printf '  worker-yt-dlp: "==%s"\n' "$YT" >> "$D1/manifest.yaml"
       G -C "$D1" commit -q -am "distribution-rothirsch $DT (test version)" && G -C "$D1" tag v$DT
 
       OUT="$(echo y | I distribution-rothirsch==$DT)"; RC=$?
       [ "$RC" == "0" ] || printf '%s\n' "$OUT"
       check "upgrade: $DV -> $DT" has "$OUT" "=> upgrade distribution-rothirsch $DV -> $DT into $V"
-      check "upgrade: setup worker-yt-dlp 0.1.9" has "$OUT" "setup      worker-yt-dlp 0.1.9 -> $WK/worker-yt-dlp/v0.1.9"
-      check "upgrade: old version removed" has "$OUT" "remove     worker-yt-dlp 0.1.1 -> $WK/worker-yt-dlp/v0.1.1 (removed: no known project uses it)"
-      check "upgrade: forwarder takes 0.1.9" has "$(cd "$V" && "$BIN/yt-dlp" ---which)" "package=worker-yt-dlp version=0.1.9"
-      check "upgrade: 0.1.1 gone" [ ! -e "$WK/worker-yt-dlp/v0.1.1" ]
+      check "upgrade: setup worker-yt-dlp $YT" has "$OUT" "setup      worker-yt-dlp $YT -> $WK/worker-yt-dlp/v$YT"
+      check "upgrade: old version removed" has "$OUT" "remove     worker-yt-dlp $YV -> $WK/worker-yt-dlp/v$YV (removed: no known project uses it)"
+      check "upgrade: forwarder takes $YT" has "$(cd "$V" && "$BIN/yt-dlp" ---which)" "package=worker-yt-dlp version=$YT"
+      check "upgrade: $YV gone" [ ! -e "$WK/worker-yt-dlp/v$YV" ]
 
       echo "=> $PASS passed, $FAIL failed (sandbox $SB)"
       [ "$FAIL" == "0" ] || exit 1

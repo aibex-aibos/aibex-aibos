@@ -1,6 +1,7 @@
 #!/bin/bash
 # workers.sh: live test of the companion workhorses worker-deno and worker-yt-dlp against the real
-# PyPI (spec 07, Tests; V0.5, step 8; V0.6, step 11: vault bound to 0.6, versions 0.1.1); no call of YouTube
+# PyPI (spec 07, Tests; V0.5, step 8; V0.6, step 11; V0.7, memo 32: vault bound to 0.7, versions from the tags
+# of the repos, FL37); no call of YouTube
 
    exec </dev/null                                  # nothing waits for input (V0.7, memo 26: H55)
 
@@ -18,7 +19,7 @@
 #===============================================================================
 
    if [ "$*" == "--version" ]; then
-      echo "0.2.0"; exit 0
+      echo "0.3.0"; exit 0
    fi
 
 #===============================================================================
@@ -42,35 +43,36 @@
          git clone -q "$REPOS/$P" "$H/$P" || exit 1
          printf '  - name: %s\n    type: worker\n    description: %s\n' "$P" "$P" >> "$H/aibos-index/index.yaml"
       done
+      YV="$(tagver "$H/worker-yt-dlp")"; DV="$(tagver "$H/worker-deno")"   # candidates or releases (FL37)
       git -C "$H/aibos-index" init -q && git -C "$H/aibos-index" add -A &&
          git -C "$H/aibos-index" -c user.name=live -c user.email=live@test commit -q -m index || exit 1
       export HOME="$SB/home" AIBOS_PREFIX="$SB/opt-none" AIBOS_HUBS="live=file://$H"
       V="$SB/§Live"; P="$V/P-Projekt"; mkdir -p "$V/.aibos" "$V/@" "$P/@"
-      printf 'aibos: 0.6.0\n' > "$V/.aibos/config.yaml"
+      printf 'aibos: 0.7.0\n' > "$V/.aibos/config.yaml"
       A() { (cd "$P" && "$REPO/bin/aibos" "$@" 2>&1); }
       W="$HOME/.aibos/workers"; BIN="$HOME/.aibos/bin"
 
-      OUT="$(A --fetch worker-yt-dlp --plan)"
-      check "plan: setup of worker-deno" has "$OUT" "setup      worker-deno 0.1.1 -> $W/worker-deno/v0.1.1"
-      check "plan: setup of worker-yt-dlp" has "$OUT" "setup      worker-yt-dlp 0.1.1 -> $W/worker-yt-dlp/v0.1.1"
+      OUT="$(A --fetch "worker-yt-dlp==$YV" --plan)"
+      check "plan: setup of worker-deno" has "$OUT" "setup      worker-deno $DV -> $W/worker-deno/v$DV"
+      check "plan: setup of worker-yt-dlp" has "$OUT" "setup      worker-yt-dlp $YV -> $W/worker-yt-dlp/v$YV"
       check "plan: worker-deno first (depends)" [ "$(printf '%s\n' "$OUT" | grep -n 'setup      worker-deno' | cut -d: -f1)" \
          -lt "$(printf '%s\n' "$OUT" | grep -n 'setup      worker-yt-dlp' | cut -d: -f1)" ]
       check "plan: 11 packages of yt-dlp[default]" has "$OUT" "11 packages from worker/requirements.lock:"
       check "plan: yt-dlp==2026.10.21" has "$OUT" "| yt-dlp==2026.10.21"
       check "plan: deno==2.9.8" has "$OUT" "| deno==2.9.8"
-      OUT="$(A --fetch worker-yt-dlp --yes)"; RC=$?
+      OUT="$(A --fetch "worker-yt-dlp==$YV" --yes)"; RC=$?
       [ "$RC" == "0" ] || printf '%s\n' "$OUT"
       check "fetch with setup from PyPI" [ "$RC" == "0" ]
       check "deno over its forwarder" has "$(cd "$P" && "$BIN/deno" --version 2>&1)" "deno 2.9.8"
       check "yt-dlp over its forwarder" [ "$(cd "$P" && "$BIN/yt-dlp" --version 2>&1)" == "2026.10.21" ]
       check "yt-dlp finds deno as JS runtime (F28)" has "$(cd "$P" && "$BIN/yt-dlp" -v 2>&1)" "JS runtimes: deno-2.9.8"
-      check "installations read-only" [ ! -w "$W/worker-deno/v0.1.1" ] && [ ! -w "$W/worker-yt-dlp/v0.1.1" ]
+      check "installations read-only" [ ! -w "$W/worker-deno/v$DV" ] && [ ! -w "$W/worker-yt-dlp/v$YV" ]
       OUT="$(A --worker)"
-      check "--worker: both checked" has "$OUT" "worker-yt-dlp 0.1.1  $W/worker-yt-dlp/v0.1.1  programs yt-dlp  check ok"
+      check "--worker: both checked" has "$OUT" "worker-yt-dlp $YV  $W/worker-yt-dlp/v$YV  programs yt-dlp  check ok"
       OUT="$(cd "$SB" && "$BIN/yt-dlp" --version 2>&1)"; RC=$?
       check "outside the chain: exit 127" [ "$RC" == "127" ]
       OUT="$(A --fetch --remove worker-yt-dlp --yes)"
-      check "remove: both versions and forwarders gone" [ ! -e "$W/worker-yt-dlp/v0.1.1" ] && [ ! -e "$W/worker-deno/v0.1.1" ] \
+      check "remove: both versions and forwarders gone" [ ! -e "$W/worker-yt-dlp/v$YV" ] && [ ! -e "$W/worker-deno/v$DV" ] \
          && [ ! -e "$BIN/yt-dlp" ] && [ ! -e "$BIN/deno" ]
 
       echo "=> $PASS passed, $FAIL failed (sandbox $SB)"
