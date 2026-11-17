@@ -194,6 +194,7 @@ def activate(version, path=None):
     p = target(path)
     known = install.installations()
     if config.vault_root(p) == p and tag in known and known[tag][0].is_dir():
+        migrate.precheck07(p, changeover.projects(p), tag[1:])   # packages for 0.7 first (B52)
         steps = changeover.plan(p, tag[1:])         # own plan first: the next one sees .aibos/ (FL32)
         if steps:
             first = Plan()

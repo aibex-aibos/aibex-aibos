@@ -14,6 +14,7 @@ import shutil
 from pathlib import Path
 
 from . import config, deploy, hub, integrity, resolver, semver, ui, worker
+from . import legacy as names
 from .install import make_writable
 from .ui import Abort, say, warn
 
@@ -167,13 +168,13 @@ def fits(d, kernel):
 class Change04:
     """Changeover of one project to v0.5: renamed packages, versions that fit v0.5, @Data/."""
 
-    def __init__(self, project, source, hubs, kernel):
+    def __init__(self, project, source, hubs, kernel, wanted=None, locked=None):
         from . import fetch
         self.project, self.kernel, self.built = project, kernel, None
         self.entries, self.lines_, self.conflicts, self.data = {}, [], [], []
         r = resolver.Resolver(source, hubs, kernel)
-        locked = locked_versions(project)
-        for name, entry in fetch.wanted(project).items():
+        locked = locked_versions(project) if locked is None else locked
+        for name, entry in (fetch.wanted(project) if wanted is None else wanted).items():
             new = RENAMES.get(name, name)
             if new == name and fits(fetch.package_dir(project, name), kernel):
                 continue                            # runs with the new kernel: unchanged
@@ -247,6 +248,39 @@ class Change04:
             self.fetch.run(self.built)
         finally:
             ui.MODE = mode
+
+
+def precheck07(root, projects, kernel):
+    """Before the changeover to v0.7 (spec 06, Paketwechsel bei der Aktivierung, Umstieg auf v0.7;
+    V0.7, memo 46: B52): every package of the projects that still have .aios/ needs a version for
+    kernel; packages: and lock.yaml are read from .aios/. Abort before anything is written."""
+    todo = []
+    for p in projects:                              # only projects with packages: (no PyYAML without them)
+        old = p / names.OLD_DIR
+        try:
+            c = config.read(old / "config.yaml") if (old / "config.yaml").is_file() else {}
+        except config.ConfigError as e:
+            raise Abort(f"{e}; fix the file first")
+        wanted = (c or {}).get("packages") or {}
+        if isinstance(wanted, dict) and wanted:
+            todo.append((p, wanted))
+    if not todo:
+        return
+    import yaml
+    hubs = hub.hub_list(config.load(root))
+    source = hub.GitSource(hubs)
+    conflicts = []
+    for p, wanted in todo:
+        f = p / names.OLD_DIR / "lock.yaml"
+        try:
+            lock = yaml.safe_load(f.read_text(encoding="utf-8")) if f.is_file() else {}
+        except yaml.YAMLError as e:
+            raise Abort(f"{f}: {e}")
+        locked = {n: str(e.get("version")) for n, e in ((lock or {}).get("packages") or {}).items()}
+        conflicts += Change04(p, source, [h.name for h in hubs], kernel, wanted, locked).conflicts
+    if conflicts:
+        raise Abort("the changeover to AIBOS " + kernel + " is not possible:\n   "
+                    + "\n   ".join(conflicts) + "\n   nothing is changed")
 
 
 def plan04(path, plan_, kernel):

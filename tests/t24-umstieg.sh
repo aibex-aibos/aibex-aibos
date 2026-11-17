@@ -252,3 +252,25 @@ for p in ('P-Gamma', 'P-Delta'): changeover.change(Path('$W') / p, Path('$W'), '
    assert_eq "$(git -C "$W/P-Delta" log -1 --format=%s)" "AIBOS: auf AIBOS v0.7 umgestellt" "P-Delta: one commit"
    assert_contains "$(git -C "$W/P-Delta" show --stat HEAD)" ".gitignore" "P-Delta: the .gitignore is in the commit"
    [ -f "$W/P-Delta/.aibos/registry" ] && ok || fail "P-Delta: registry moved into .aibos/"
+
+#===============================================================================
+# step 6c: a package without a version for 0.7 stops the binding before the changeover writes
+# anything, already in the plan (spec 06, Paketwechsel bei der Aktivierung; V0.7, memos 45, 46: B52)
+#===============================================================================
+
+   X="$SANDBOX/work/§Ohne07"; mkdir -p "$X/P-Eps"
+   at "$SANDBOX" "$HOME/.aios/bin/aios" --activate v0.6.6 "$X" --yes >/dev/null
+   at "$X/P-Eps" "$HOME/.aios/bin/aios" --init --yes >/dev/null
+   printf 'packages:\n  skill-gibtsnicht: "~=1.0"\n' > "$X/P-Eps/.aios/config.yaml"
+   K="$X/P-Eps/@/@!Package/skill-gibtsnicht"            # fetched by 0.6.6: requires.aios <0.7
+   mk "$K/manifest.yaml" $'name: skill-gibtsnicht\nversion: 1.0.0\ntype: skill\ndescription: x\nrequires:\n  aios: ">=0.6,<0.7"\n'
+   printf 'name: skill-gibtsnicht\nversion: 1.0.0\nhub: aibex-aios\n' > "$K/.aios-deploy"
+   G -C "$X/P-Eps" add -A; G -C "$X/P-Eps" commit -q -m "packages of 0.6.6"
+   for M in --plan --yes; do
+      OUT="$(AIBOS_HUBS="aibex-aibos=file://$SANDBOX/hubs/aibex-aibos" at "$SANDBOX" "$HOME/.aibos/bin/aibos" --activate v0.7.0 "$X" $M 2>&1)"; RC=$?
+      [ "$RC" != "0" ] && ok || fail "$M: the binding stops (B52)"
+      assert_contains "$OUT" "P-Eps: skill-gibtsnicht has no version that runs with AIBOS 0.7.0" "$M: the package is named (B52)"
+      assert_not_contains "$OUT" "change over" "$M: no plan of the changeover (B52)"
+   done
+   [ -d "$X/.aios" ] && [ -d "$X/P-Eps/.aios" ] && [ ! -e "$X/.aibos" ] && [ ! -e "$X/P-Eps/.aibos" ] && ok || fail "nothing changed over (B52)"
+   assert_eq "$(git -C "$X/P-Eps" log -1 --format=%s)" "packages of 0.6.6" "no commit of the changeover (B52)"
