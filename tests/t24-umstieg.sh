@@ -274,3 +274,32 @@ for p in ('P-Gamma', 'P-Delta'): changeover.change(Path('$W') / p, Path('$W'), '
    done
    [ -d "$X/.aios" ] && [ -d "$X/P-Eps/.aios" ] && [ ! -e "$X/.aibos" ] && [ ! -e "$X/P-Eps/.aibos" ] && ok || fail "nothing changed over (B52)"
    assert_eq "$(git -C "$X/P-Eps" log -1 --format=%s)" "packages of 0.6.6" "no commit of the changeover (B52)"
+
+#===============================================================================
+# step 6d: a project whose .aios/ holds only ignored files is changed over on A; computer B follows
+# the commit of the changeover instead of changing it over a second time (FL7; V0.7, memos 47, 48: B53)
+#===============================================================================
+
+   Z="$SANDBOX/work/§Zwei"; mkdir -p "$Z/P-Zeta"
+   at "$SANDBOX" "$HOME/.aios/bin/aios" --activate v0.6.6 "$Z" --yes >/dev/null
+   at "$Z/P-Zeta" "$HOME/.aios/bin/aios" --init --yes >/dev/null
+   [ -f "$Z/P-Zeta/.aios/registry" ] && [ -z "$(git -C "$Z/P-Zeta" ls-files .aios)" ] && ok || fail "P-Zeta: .aios/ with only ignored files"
+   for P in "$Z" "$Z/P-Zeta"; do
+      N="zwei-$(basename "$P")"; G init -q --bare "$RM/$N.git"
+      G -C "$P" add -A; G -C "$P" commit -q -m "state of A"; G -C "$P" remote add origin "$RM/$N.git"; G -C "$P" push -q -u origin main
+   done
+   ZB="$SANDBOX/b2/§Zwei"; G clone -q "$RM/zwei-§Zwei.git" "$ZB"; G clone -q "$RM/zwei-P-Zeta.git" "$ZB/P-Zeta"
+   mkdir -p "$ZB/P-Zeta/.aios"; printf 'x\n' > "$ZB/P-Zeta/.aios/registry"     # ignored, written by the registration on B
+   OUT="$(PY "$SANDBOX" "from aibos import changeover; from pathlib import Path
+changeover.change(Path('$Z/P-Zeta'), Path('$Z'), '0.7.0')" 2>&1)"
+   G -C "$Z/P-Zeta" push -q
+   assert_eq "$(git -C "$Z/P-Zeta" ls-tree --name-only HEAD .aibos/)" "" "A: no tracked .aibos/ in P-Zeta"
+   OUT="$(PY "$SANDBOX" "from aibos import changeover; from pathlib import Path
+print('\n'.join(t for t, _ in changeover.plan(Path('$ZB'), '0.7.0')))")"
+   assert_contains "$OUT" "bring $ZB/P-Zeta forward to its upstream" "B: P-Zeta follows the commit of the changeover (B53)"
+   assert_not_contains "$OUT" "P-Zeta)" "B: P-Zeta is not changed over a second time (B53)"
+   PY "$SANDBOX" "from aibos import changeover; from pathlib import Path
+for t, a in changeover.plan(Path('$ZB'), '0.7.0'):
+    if 'P-Zeta forward' in t: a()" >/dev/null 2>&1
+   assert_eq "$(git -C "$ZB/P-Zeta" rev-parse HEAD)" "$(git -C "$Z/P-Zeta" rev-parse HEAD)" "B: P-Zeta at the commit of A, no own commit (B53)"
+   [ -f "$ZB/P-Zeta/.aibos/registry" ] && [ ! -e "$ZB/P-Zeta/.aios" ] && ok || fail "B: registry carried into .aibos/ (B53)"

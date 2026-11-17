@@ -40,14 +40,17 @@ def rewrite(text):
 
 
 def upstream_changed(p):
-    """FL7: True if p has an upstream that already holds .aibos/ and p can follow it forward
-    (no local changes, HEAD is an ancestor of the upstream)."""
+    """FL7: True if p has an upstream that already holds .aibos/, or the commit of the changeover
+    when .aibos/ holds only ignored files (B53), and p can follow it forward (no local changes,
+    HEAD is an ancestor of the upstream)."""
     if not (p / ".git").exists() or project.git(p, "rev-parse", "--abbrev-ref", "@{u}").returncode:
         return False
     project.git(p, "fetch", "-q", "origin")
     tree = project.git(p, "ls-tree", "--name-only", "@{u}", legacy.NEW_DIR + "/")
-    if tree.returncode or not tree.stdout.strip():
-        return False
+    if tree.returncode or not tree.stdout.strip():          # .aibos/ with only ignored files: the commit (B53)
+        done = project.git(p, "log", "-1", "--format=%H", "--fixed-strings", f"--grep={MESSAGE}", "HEAD..@{u}")
+        if done.returncode or not done.stdout.strip():
+            return False
     if project.git(p, "status", "--porcelain").stdout.strip():
         return False
     return project.git(p, "merge-base", "--is-ancestor", "HEAD", "@{u}").returncode == 0

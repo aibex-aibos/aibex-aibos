@@ -17,7 +17,7 @@
 #===============================================================================
 
    if [ "$*" == "--version" ]; then
-      echo "0.6.0"; exit 0
+      echo "0.6.1"; exit 0
    fi
 
 #===============================================================================
@@ -36,7 +36,7 @@
       printf '# 02 Zaun\n\n**Datum:** 2026-09-10\n**Status:** Notiz\n\n## Ergebnis\nZaun gebaut.\n' > "$G/@Memo/02 Zaun.md"
       export AIBOS_HUBS="$("$REPO/tests/hub/build" "$SB/hubs")"   # packages from the test hub (spec 04)
       export GIT_AUTHOR_NAME=live GIT_AUTHOR_EMAIL=live@test GIT_COMMITTER_NAME=live GIT_COMMITTER_EMAIL=live@test
-      printf '.DS_Store\n.claude/skills/\n.claude/worktrees/\n.agents/\n.aibos/registry\n.aibos/backup/\n' > "$G/.gitignore"; git -C "$G" init -q   # Garten complete (S1-S4): no PROJECT-INCOMPLETE
+      printf '.DS_Store\n.claude/skills/\n.claude/worktrees/\n.agents/\n.aibos/registry\n.aibos/backup/\n.aibos/workspace.local.yaml\n@Secret/\n' > "$G/.gitignore"; git -C "$G" init -q   # Garten complete (S1-S4): no PROJECT-INCOMPLETE
       (cd "$G" && "$FWD" --register --yes >/dev/null 2>&1)   # wrappers of the kernel skills in Garten and the vault root (V0.6, F18)
       HOOKS="$(hooks)"
       ask() {                                       # ask <dir> <prompt>

@@ -581,7 +581,7 @@ Der Umstieg eines Rechners mit v0.6 läuft in zwei Schritten, jeder mit Plan und
 
 **Pakete vor dem Umstieg (B52):** Bevor Schritt 2 etwas schreibt, prüft `aibos --activate` mit `packages:` und `lock.yaml` aus `.aios/` jedes Projekts, ob jedes Paket eine Version für den Zielkernel hat (Spec 06, *Paketwechsel bei der Aktivierung*). Fehlt eine, bricht der Befehl ab, auch mit `--plan`, nennt jedes Paket und stellt nichts um (V0.7, Memos 45, 46).
 
-**Zweiter Rechner (FL7):** Ist ein Workspace am Remote schon umgestellt (`.aibos/` im Stand von `origin`), holt Schritt 2 zuerst diesen Stand, nur vorwärts und ohne lokale Änderungen, und benennt danach nur um, was noch fehlt. Lokale Änderungen sind ein Hindernis im Plan; sie werden vorher mit `sync` des Kernels 0.6 gesichert.
+**Zweiter Rechner (FL7):** Ist ein Workspace am Remote schon umgestellt (`.aibos/` im Stand von `origin`, oder der Commit „AIBOS: auf AIBOS v0.7 umgestellt“, wenn `.aibos/` dort nur ignorierte Dateien hätte; V0.7, Memos 47, 48: B53), holt Schritt 2 zuerst diesen Stand, nur vorwärts und ohne lokale Änderungen, und benennt danach nur um, was noch fehlt. Lokale Änderungen sind ein Hindernis im Plan; sie werden vorher mit `sync` des Kernels 0.6 gesichert.
 
 **Kernel 0.6.x an einem umgestellten Vault (FL8):** findet keine `.aios/config.yaml` mehr und behandelt den Vault als ungebunden (Spec 01, I4): Hooks geben nichts aus, `sync` und andere Befehle brechen ab, ohne zu schreiben. Deshalb steigen Rechner, die einen Workspace teilen, zeitnah um.
 
