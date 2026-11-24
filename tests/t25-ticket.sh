@@ -35,6 +35,8 @@
 
    OUT="$(A "$V/PA")"
    assert_contains "$OUT" "Tickets §V — $(date +%F)" "header with vault and date"
+   assert_contains "$OUT" "Mailbox: $V/@/@!Ticket/" "B68: the folder of the mailbox"
+   assert_contains "$OUT" "Mailbox until 0.8: $V/@/@!Improve/" "B68: the old folder while it holds tickets"
    assert_contains "$OUT" "Result: 6 open tickets (1 aibos, 1 assistant-gaertner, 4 skill-memo)" "six open tickets, counted per package"
    assert_not_contains "$OUT" "Erledigt" "a ticket with status is not open"
    assert_contains "$OUT" "Element" "column Element when a ticket has an element"
@@ -86,7 +88,7 @@
 #===============================================================================
 
    SESS() { printf '{"session_id":"s-%s","hook_event_name":"SessionStart","source":"%s","cwd":"%s"}' "$2" "$2" "$1" | (cd "$SANDBOX" && "$SRC/bin/aibos" --context --session 2>&1); }
-   LINE="AIBOS-TICKET: open tickets for this session: 4 for skill-memo. List them with $HOME/.aibos/bin/aibos --ticket [<package>] when they matter for the work."
+   LINE="AIBOS-TICKET: open tickets for this session: 4 for skill-memo, in the mailbox $(cd "$V" && pwd -P)/@/@!Ticket/ (until 0.8 also $(cd "$V" && pwd -P)/@/@!Improve/). List them with $HOME/.aibos/bin/aibos --ticket [<package>] when they matter for the work."
    mk "$V/PA/.gitignore" $'.DS_Store\n'
    for SRCE in startup resume clear compact; do
       assert_contains "$(SESS "$V/PA" "$SRCE")" "$LINE" "PA, source $SRCE: tickets for skill-memo (lock.yaml)"
@@ -96,7 +98,7 @@
    assert_not_contains "$OUT" "for aibos" "tickets to the kernel do not count (FL65)"
    mk "$V/PA/.aibos/config.yaml" $'assistant: gaertner\n'
    mk "$V/PA/@/@!Assistant/gaertner/ASSISTANT.md" $'---\nname: gaertner\ntitle: Gärtner\nversion: 0.1.0\ndescription: Gärtner\n---\n\nNur Äpfel.\n'
-   assert_contains "$(SESS "$V/PA" startup)" "open tickets for this session: 1 for assistant-gaertner, 4 for skill-memo." "local blueprint gaertner counts as assistant-gaertner"
+   assert_contains "$(SESS "$V/PA" startup)" "open tickets for this session: 1 for assistant-gaertner, 4 for skill-memo, in the mailbox" "local blueprint gaertner counts as assistant-gaertner"
    rm -r "$V/PA/@/@!Assistant" "$V/PA/.aibos/config.yaml"
    mk "$V/PB/@/.gitkeep" ""
    assert_not_contains "$(SESS "$V/PB" startup)" "AIBOS-TICKET" "PB without lock.yaml and assistant: no line (tickets to aibos do not count, FL65)"

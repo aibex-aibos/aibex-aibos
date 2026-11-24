@@ -255,10 +255,10 @@ Die letzte Zeile steht, wenn das Projekt der Session oder ein Projekt darüber i
 Gibt es im Postfach `<vault-root>/@/@!Ticket/` (bis 0.8 auch `@/@!Improve/`) offene Tickets an die **Pakete der Session**, meldet der SessionStart-Hook bei jedem `source` nach dem Kontext des Assistenten (ab v0.7.1; V0.7, Memos 68, 73, 75: W1, W6, F386, F392):
 
 ```
-AIBOS-TICKET: open tickets for this session: <n> for <paket>, <m> for <paket>. List them with <weiterleiter> --ticket [<paket>] when they matter for the work.
+AIBOS-TICKET: open tickets for this session: <n> for <paket>, <m> for <paket>, in the mailbox <vault-root>/@/@!Ticket/. List them with <weiterleiter> --ticket [<paket>] when they matter for the work.
 ```
 
-Pakete der Session sind das Paket, das den Assistenten der Session liefert (bei einem lokalen Blueprint `assistant-<name>`), und die Pakete in `lock.yaml` der Projekte der Kette von `cwd` (Spec 06). Tickets an andere Pakete zählen nicht. Ohne offene Tickets fehlt die Zeile. Weil der Hook auch nach einer Compaction läuft, steht die Zeile danach wieder im Kontext (V0.99, Memo 34). Der Hook liest dafür nur die Frontmatter der Dateien; ein Fehler beim Lesen gilt wie unter *Hooks* (Log) und unterdrückt nur diese Zeile.
+Pakete der Session sind das Paket, das den Assistenten der Session liefert (bei einem lokalen Blueprint `assistant-<name>`), und die Pakete in `lock.yaml` der Projekte der Kette von `cwd` (Spec 06). Tickets an andere Pakete zählen nicht. Ohne offene Tickets fehlt die Zeile. Die Zeile nennt den Ordner des Postfachs mit absolutem Pfad, liegen gezählte Tickets noch in `@/@!Improve/`, folgt `(until 0.8 also <vault-root>/@/@!Improve/)` (V0.7, Memos 95, 96: B68, F412). Weil der Hook auch nach einer Compaction läuft, steht die Zeile danach wieder im Kontext (V0.99, Memo 34). Der Hook liest dafür nur die Frontmatter der Dateien; ein Fehler beim Lesen gilt wie unter *Hooks* (Log) und unterdrückt nur diese Zeile.
 
 In einem ausgelagerten Teilbaum (V0.6, Memo 170: F168):
 

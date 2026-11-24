@@ -414,6 +414,7 @@ Eine Datei ohne Frontmatter oder ohne `type` oder `package` ist kein Ticket; `ai
 
 ```
 Tickets §AIBOS — 2026-11-24
+Mailbox: /…/§AIBOS/@/@!Ticket/
 
 File                                          Type         Package         Version  Date        Author  Project
 2026-11-23-0523 Postfach lesen ohne Rückfr…   improvement  aibos           0.7.0    2026-11-23  iHux    M-Module/MA-Assistants/MAA-Anja-AIBOS-Expert
@@ -425,7 +426,7 @@ Notes
 Result: 2 open tickets (1 aibos, 1 assistant-anja)
 ```
 
-Die Spalte *File* zeigt den Namen ohne `.md`, gekürzt auf 45 Zeichen mit `…`. Eine Spalte *Element* steht nach *Package* nur, wenn ein Ticket der Liste ein `element` hat; sonst fehlt sie.
+Unter dem Kopf steht der Ordner des Postfachs mit absolutem Pfad (`Mailbox: …`), solange Dateien in `@/@!Improve/` liegen auch `Mailbox until 0.8: …` (V0.7, Memos 95, 96: B68, F412). Die Spalte *File* zeigt den Namen ohne `.md`, gekürzt auf 45 Zeichen mit `…`. Eine Spalte *Element* steht nach *Package* nur, wenn ein Ticket der Liste ein `element` hat; sonst fehlt sie.
 
 **Übergang von v0.7.0** (F393): Bis 0.8 liest AIBOS zusätzlich `<vault-root>/@/@!Improve/`, den Ordner der Pakete `skill-improve` 0.1.0 und `assistant-anja` 0.6.0. Seine Dateien gelten als Tickets; `aibos --ticket` nennt sie mit dem Ordner in *File* und unter *Notes* `note: @/@!Improve/ is the folder of AIBOS 0.7.0; move its files to @/@!Ticket/`. AIBOS verschiebt sie nicht selbst.
 

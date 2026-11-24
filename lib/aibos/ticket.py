@@ -166,19 +166,32 @@ def session_message(vault, packages, forwarder):
     if vault is None or not packages:
         return ""
     tickets, _ = open_tickets(Path(vault))
-    counts = {}
+    counts, old = {}, False
     for t in tickets:
         if t.get("package") in packages:
             counts[t.get("package")] = counts.get(t.get("package"), 0) + 1
+            old = old or t.old
     if not counts:
         return ""
     detail = ", ".join(f"{n} for {p}" for p, n in sorted(counts.items()))
-    return (f"AIBOS-TICKET: open tickets for this session: {detail}. "
+    where = mailbox_text(Path(vault), old)
+    return (f"AIBOS-TICKET: open tickets for this session: {detail}, in the mailbox {where}. "
             f"List them with {forwarder} --ticket [<package>] when they matter for the work.")
+
+
+def mailbox_text(vault, old=False):
+    """The folder of the mailbox, with the folder of AIBOS 0.7.0 while it holds tickets (B68, F412)."""
+    text = f"{Path(vault) / '@' / FOLDER}/"
+    if old:
+        text += f" (until 0.8 also {Path(vault) / '@' / OLD_FOLDER}/)"
+    return text
 
 
 def report(vault, tickets, problems, cfg, path):
     print(f"Tickets {vault.name} — {datetime.date.today().isoformat()}")
+    print(f"Mailbox: {vault / '@' / FOLDER}/")       # B68 (F412): where the files are
+    if any(t.old for t in tickets) or any(old for _, old, _ in problems):
+        print(f"Mailbox until 0.8: {vault / '@' / OLD_FOLDER}/")
     print()
     with_element = any(t.get("element") for t in tickets)
     head = ["File", "Type", "Package"] + (["Element"] if with_element else []) \
