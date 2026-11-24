@@ -1,7 +1,7 @@
 ---
 name: aibos-package
-description: Paketmanager von AIbex AIBOS für Anwender - installiert (holt), entfernt und aktualisiert Pakete, Apps, Assistenten und Wissenspakete aus den Hubs, sucht Pakete, zeigt, was installiert ist, und pflegt die Hub-Liste. Verwenden bei "/aibos-package", "installiere ...", "hole ...", "entferne ...", "deinstalliere ...", "aktualisiere ...", "welche Pakete gibt es?", "welche Apps gibt es?", "was ist installiert?", "Hub hinzufügen", "install ...", "remove ...", "update ...", "list packages".
-allowed-tools: Bash(aibos --fetch *), Bash(aibos --deploy *), Bash(aibos --library *), Bash(aibos --hubs *), Bash(aibos --install distribution-*)
+description: Paketmanager von AIbex AIBOS für Anwender - installiert (holt), entfernt und aktualisiert Pakete, Apps, Assistenten, Wissenspakete und Mods aus den Hubs, meldet Mods bei Claude Code an und ab, sucht Pakete, zeigt, was installiert ist, und pflegt die Hub-Liste. Verwenden bei "/aibos-package", "installiere ...", "hole ...", "entferne ...", "deinstalliere ...", "aktualisiere ...", "installiere den Mod ...", "deinstalliere den Mod ...", "welche Mods gibt es?", "welche Pakete gibt es?", "welche Apps gibt es?", "was ist installiert?", "Hub hinzufügen", "install ...", "remove ...", "update ...", "list packages".
+allowed-tools: Bash(aibos --fetch *), Bash(aibos --deploy *), Bash(aibos --library *), Bash(aibos --hubs *), Bash(aibos --install distribution-*), Bash(aibos --mod *)
 ---
 
 # Pakete
@@ -22,6 +22,7 @@ Ein AIBOS-Skill von AIbex AIBOS (Spec 03, *Pakete*; Spec 06). Er versteht Wünsc
 | „füge den Hub … hinzu", „entferne den Hub …" | `aibos --hubs add <name> [<url>]` bzw. `remove <name>` mit `--plan`, Rückfrage, `--yes`; mit `--vault`, wenn der Hub für den ganzen Vault gelten soll (fragen) |
 | nur einen Teil eines Pakets nutzen | `/aibos-deploy` |
 | „stelle eine Distribution zusammen" | `/aibos-distribution` |
+| „installiere den Mod …", „deinstalliere den Mod …", „welche Mods gibt es?", ein Paket `mod-…` | *Mods* (unten) |
 
 ## Paket finden
 
@@ -50,3 +51,15 @@ Eine Distribution erkennst du am Namen `distribution-<name>` bzw. am Typ `distri
 4. **Fehler:** Meldungen wie `one distribution with kernel: per vault`, `overridden only with only:` oder `the machine part failed` dem User nennen und beenden. „distributions need AIBOS 0.5 or later" heißt: erst `aibos --install v0.5.<n>`.
 
 Aktualisieren ist derselbe Befehl ohne Version (`upgrade a -> b`); entfernen wie `/aibos-fetch --remove distribution-<name> --to <vault-root>`.
+
+## Mods
+
+Eine Mod ist eine Erweiterung von Claude Code (Paket `mod-<name>`, Spec 06, *Mods*). Holen allein meldet sie nicht an; das tut erst `aibos --mod install`. Sie wirkt dann für **alle Sessions dieses Rechners**, nicht nur für dieses Projekt.
+
+| Wunsch | Vorgehen |
+|---|---|
+| „installiere den Mod …", „installiere mod-…" | Paket finden (oben, mit `aibos --library mod-`), dann `aibos --mod install mod-<name> --plan`; den Plan zeigen (er holt das Paket bei Bedarf und nennt die beiden Befehle `claude plugin …`), sagen, dass die Mod für den ganzen Rechner wirkt, fragen, nach Ja mit `--yes` |
+| „deinstalliere den Mod …", „entferne den Mod …" | `aibos --mod uninstall mod-<name> --plan`, zeigen, fragen, `--yes`. Bei „entferne" danach auch `/aibos-fetch --remove mod-<name>` mit eigenem Plan und eigener Frage |
+| „welche Mods gibt es?", „welche Mods sind installiert?" | `aibos --library mod-` für den Hub, `aibos --mod` für die geholten Mods mit `installed`, `installed elsewhere`, `not installed` |
+
+Nach dem Anmelden sagst du: Die Mod erscheint nach `/reload-plugins` oder im nächsten Chat. Meldet `aibos --fetch --remove`, dass die Mod noch angemeldet ist, meldest du sie erst ab. Meldet `aibos --mod`, dass `claude` fehlt, nennst du das und beendest; anmelden lässt sich eine Mod dann nicht.

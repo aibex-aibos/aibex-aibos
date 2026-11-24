@@ -176,7 +176,7 @@ keep the assistant a chat started with.
 A **package** is a git repo with a `manifest.yaml` (name, version, type,
 dependencies, contents) and version tags `v<x.y.z>`. Its name says its type:
 `skill-memo`, `assistant-gaertner`, `knowledge-orion`, `app-taschenrechner`,
-`worker-yt-dlp`, `distribution-rothirsch`.
+`worker-yt-dlp`, `distribution-rothirsch`, since 0.7.1 `mod-token-status` (a mod of Claude Code).
 A **hub** is a place for packages, a GitHub organization or any git server;
 the **hub list** (`hubs:` in `~/.aibos/config.yaml` and at the vault root)
 says where AIBOS looks, by default `aibex-aibos`.
@@ -188,6 +188,8 @@ says where AIBOS looks, by default `aibex-aibos`.
   aibos --fetch --upgrade                       # choose the highest versions anew
   aibos --hubs add aibex-hub --vault            # a second hub for the vault
   aibos --worker                                # workhorses on the machine and who uses them
+  aibos --ticket                                # open tickets in the mailbox @/@!Ticket (0.7.1)
+  aibos --mod install mod-token-status          # install a mod in Claude Code, for this computer (0.7.1)
 ```
 
 `aibos --fetch` copies the package without `.git` to `@/@!Package/<name>/`,
@@ -253,6 +255,8 @@ The tutorials (German) walk through a demo vault:
 | `aibos --install distribution-<name> [<vault>] [--from <repo>]` | install or upgrade a distribution: kernel, workhorses, packages |
 | `aibos --activate v<version> [<vault-root>]`, `--deactivate [<vault-root>]`, `--config [<path>]` | bind a vault (only at its root) to a version, show the configuration |
 | `aibos --init`, `--integrity`, `--register` | projects and their skills |
+| `aibos --ticket [<package>] [--type <type>]` | open tickets in the mailbox `@/@!Ticket` of the vault (0.7.1) |
+| `aibos --mod [install <mod> \| uninstall <mod>]` | mods of Claude Code: show, install, uninstall (0.7.1) |
 | `aibos --library`, `--hubs`, `--fetch`, `--deploy` | packages: search, hub list, fetch, deployed elements |
 | `aibos --worker [<package> setup]`, `--run`, `--contribute`, `--workspace` | workhorses (state, repair), commands of packages, contributions, workspaces |
 | `aibos --assistant <name\|none\|inherit> [--to <project>]`, `--gui [--html] [--aibos] [--apps]` | assignment of the assistant, surfaces |
@@ -308,7 +312,10 @@ state of the implementation.
 
 ## Status
 
-Version **0.7.0** (`STATUS.md`) is the development state and not yet released:
+Version **0.7.1** (`STATUS.md`) is the development state and not yet released: a patch
+with tickets in the mailbox `@/@!Ticket` (`aibos --ticket`, the line `AIBOS-TICKET`),
+a note when a distribution pins a version, two notes in `aibos --integrity` and the
+package type `mod` (`aibos --mod install|uninstall`). Version **0.7.0** is released:
 AIbex AIOS becomes **AIbex AIBOS** — the command `aibos`, `~/.aibos`, `.aibos/` in
 vaults, the kernel skills `aibos-*`, the keys `aibos:` and `requires.aibos`, the
 organisation `aibex-aibos` — with a changeover from 0.6 and the old names as a

@@ -355,6 +355,7 @@ Alle festen Orte lassen sich über Umgebungsvariablen umlenken, damit Tests in e
 | `AIBOS_PREPARE_PATH` | `PATH` für die Prüfung der Grund- und Entwicklerausstattung in `aibos --prepare` und `aibos --install` (V0.5, Memo 49) | `PATH` |
 | `AIBOS_MANAGED_SETTINGS` | Managed Settings für `aibos --context --permit` (Spec 02, *Freigabe*), statt der Standardorte | — |
 | `AIBOS_TEST_UID` | eigene uid bei der Prüfung des Eigentümers von Projekten aus `/opt/aibos/workers.yaml` (*`aibos --install`*, Schritt 7); damit wirken Vaults im Sandkasten fremd (V0.6, Memos 153, 154: F151) | eigene uid |
+| `AIBOS_CLAUDE` | Programm `claude` für `aibos --mod` (Spec 06, *Mods*; ab v0.7.1, FL96) | `claude` aus dem `PATH` |
 | `AIBOS_PIP_FIND_LINKS` | Ordner mit Wheels für das setup von Arbeitspferden: `pip` läuft dann mit `--no-index --find-links <ordner>`, nie ohne `--no-index` (Spec 07) | — |
 
 Tests rufen damit nie das echte `sudo` auf und greifen nie auf das Netzwerk zu.
