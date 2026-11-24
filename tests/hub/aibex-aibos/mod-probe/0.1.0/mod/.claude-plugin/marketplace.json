@@ -1,0 +1,5 @@
+{
+  "name": "mod-probe",
+  "owner": { "name": "AIbex KG" },
+  "plugins": [{ "name": "probe", "source": "./" }]
+}

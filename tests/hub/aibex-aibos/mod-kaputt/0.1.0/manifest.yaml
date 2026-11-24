@@ -1,0 +1,6 @@
+name: mod-kaputt
+version: 0.1.0
+type: mod
+description: Test-Mod (v0.7.1, spec 06, Mods)
+requires:
+  aibos: ">=0.7.1,<0.8"

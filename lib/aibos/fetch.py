@@ -308,10 +308,17 @@ class Fetch:
             plan.add(f"{why:<10} {name} {p.version} ({where}) -> {dst}",
                      lambda src=src, dst=dst, fields=fields: mirror(src, dst, fields))
             moved.append(dst)
+            if mark is None and getattr(p.manifest, "type", None) == "mod":    # v0.7.1 (spec 06, Mods; FL74)
+                from .mod import NOTE
+                plan.add(NOTE.format(pkg=name))
         installs = self.workers(plan if machine is None else machine, picks, machine is not None)
         base = package_dir(self.project, "")
         for d in sorted(base.iterdir()) if base.is_dir() else []:
             if d.name not in picks and legacy.marker_file(d) is not None:
+                if d.name.startswith("mod-"):          # v0.7.1: never remove a mod Claude Code uses (FL73)
+                    from .mod import REMOVE_STOP, installed_here
+                    if installed_here(d):
+                        raise Abort(REMOVE_STOP.format(pkg=d.name))
                 plan.add(f"remove     {d.name} -> {d}", lambda d=d: d.exists() and (make_writable(d), shutil.rmtree(d)))
                 moved.append(d)
         if packages != self.packages:

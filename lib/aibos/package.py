@@ -16,8 +16,8 @@ from . import legacy
 from .install import frontmatter
 
 NAME = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")
-TYPES = ("kernel", "app", "assistant", "skill", "knowledge", "tutorial", "distribution", "worker")
-MODULE_TYPES = ("kernel", "app", "assistant", "skill", "worker")
+TYPES = ("kernel", "app", "assistant", "skill", "knowledge", "tutorial", "distribution", "worker", "mod")
+MODULE_TYPES = ("kernel", "app", "assistant", "skill", "worker", "mod")      # mod: v0.7.1 (spec 06, Mods)
 RESERVED = ("aibos", "gui", "none", "inherit")      # besides the prefix aibos-
 CONTENT_LISTS = ("skills", "assistants", "commands", "hooks")
 WORKER_KINDS = ("python", "script")                 # spec 07; binary comes later
@@ -55,7 +55,9 @@ class Manifest:
     def elements(self):
         """Names of the elements that can be deployed: skills, assistants and commands by
         their names, the knowledge as 'knowledge' (spec 06, N2). Hooks have no effect in v0.5;
-        a worker has no elements (spec 06, L8)."""
+        a worker has no elements (spec 06, L8); a mod has the one element mod (v0.7.1, F403)."""
+        if self.type == "mod":
+            return ["mod"]
         names = []
         for kind in ("skills", "assistants", "commands"):
             names += list(self.contents.get(kind) or [])
@@ -210,6 +212,8 @@ def parse(data, where="manifest.yaml", kernel=False):
             raise ManifestError(f"{where}: a worker has no elements (contents), spec 06")
     elif "worker" in data:
         raise ManifestError(f"{where}: worker: is only allowed for type: worker")
+    if kind == "mod" and (names or contents.get("knowledge") or contents.get("gui") or contents["hooks"]):
+        raise ManifestError(f"{where}: a mod has no contents; its files lie in mod/ (spec 06, Mods)")
     return Manifest(name, version, kind, str(data["description"]), req, depends, contents, worker,
                     kernel_range, str(data.get("license") or ""), data.get("userdata"), warnings,
                     requires_key=req_key)
@@ -258,4 +262,41 @@ def check_tree(folder, m):
             elif key == "requirements":
                 problems += [f"worker: {m.worker[key]}: {x}"
                              for x in requirements_problems(f.read_text(encoding="utf-8"))]
+    if m.type == "mod":
+        problems += mod_problems(folder, m.name)
     return problems
+
+
+def mod_identity(folder):
+    """(plugin, marketplace) of the mod in folder/mod/.claude-plugin/ (spec 06, Mods; FL70), or raises
+    ManifestError with the problem."""
+    import json
+    base = Path(folder) / "mod" / ".claude-plugin"
+    out = []
+    for f in ("plugin.json", "marketplace.json"):
+        try:
+            data = json.loads((base / f).read_text(encoding="utf-8"))
+        except FileNotFoundError:
+            raise ManifestError(f"mod: mod/.claude-plugin/{f} is missing")
+        except (OSError, UnicodeDecodeError, ValueError) as e:
+            raise ManifestError(f"mod: mod/.claude-plugin/{f} is not readable: {e}")
+        if not isinstance(data, dict) or not str(data.get("name") or "").strip():
+            raise ManifestError(f"mod: mod/.claude-plugin/{f} has no name")
+        out.append(data)
+    plugin, market = out
+    names = [str(x.get("name")) for x in (market.get("plugins") or []) if isinstance(x, dict)]
+    if names != [plugin["name"]]:
+        raise ManifestError(f"mod: marketplace.json must name the mod {plugin['name']} as its only plugin")
+    return str(plugin["name"]), str(market["name"])
+
+
+def mod_problems(folder, package):
+    """Problems of the folder mod/ of a package of type mod (spec 06, Mods, Prüfung beim Holen)."""
+    try:
+        plugin, _ = mod_identity(folder)
+    except ManifestError as e:
+        return [str(e)]
+    want = package[len("mod-"):] if package.startswith("mod-") else package
+    if plugin != want:
+        return [f"mod: plugin.json names {plugin}, the package {package} needs {want}"]
+    return []

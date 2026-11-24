@@ -140,6 +140,8 @@ for d in sorted(pathlib.Path('$SRC/tests/hub').glob('*/*/*/manifest.yaml')):
         continue
     m = package.load(d.parent)
     problems = package.check_tree(d.parent, m)
+    if d.parent.parent.name == 'mod-kaputt':            # v0.7.1: broken on purpose (t26)
+        problems = [x for x in problems if 'marketplace.json is missing' not in x]
     if problems or m.name != d.parent.parent.name or str(m.version) != d.parent.name:
         print(d.parent, problems)
 " 2>&1)"

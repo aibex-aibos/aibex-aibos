@@ -3,12 +3,12 @@
 import subprocess
 import sys
 
-from . import activate, aibosinit, assign, contribute, deploy, fetch, gui, hub, install, integrity, paths, registry, resolver, skills, ticket, ui, worker, workspace
+from . import activate, aibosinit, assign, contribute, deploy, fetch, gui, hub, install, integrity, mod, paths, registry, resolver, skills, ticket, ui, worker, workspace
 
 USAGE = ("usage: aibos --prepare [--dev] | --install [v<version>] [--system] | --install distribution-<name> [<vault>] | --versions | --vaults | --remove-version v<version>"
          " | --uninstall | --activate v<version> [<vault-root>] | --deactivate [<vault-root>] | --config [<path>]"
          " | --register [<path>] | --init [<path>] [--assistant <value>] [--name <name>] [--accept-name]"
-         " | --integrity [<path>] | --ticket [<package>] [--type <type>] | --assistant <name|none|inherit> [--to <project>] [--session <id>]"
+         " | --integrity [<path>] | --ticket [<package>] [--type <type>] | --mod [install <mod> [--to <project>] | uninstall <mod>] | --assistant <name|none|inherit> [--to <project>] [--session <id>]"
          " | --gui [--session <id>] [--html] [--aibos] [--apps] [--skill <surface>]"
          " | --skill <name> [--session <id>] | --library [<word>|<package>]"
          " | --hubs [add <name> [<url>] | remove <name>] [--vault]"
@@ -107,6 +107,8 @@ def main(argv):
             return integrity.run(*args)
         if cmd == "--ticket":
             return ticket.command(args)
+        if cmd == "--mod":
+            return mod.command(args)
         if cmd == "--register" and len(args) <= 1:
             return registry.register(args[0] if args else paths.cwd())
         if cmd in LATER:
