@@ -80,3 +80,23 @@
    assert_exit 1 bash -c "cd '$SANDBOX/work/draussen' && '$SRC/bin/aibos' --ticket"
    mk "$SANDBOX/work/§Alt/.aibos/config.yaml" $'legacy: ai-brain\n'
    assert_contains "$(A "$SANDBOX/work/§Alt")" "Kein AIBOS-Workspace" "legacy vault: no A/W"
+
+#===============================================================================
+# v0.7.1 step 2 - AIBOS-TICKET in the SessionStart hook: packages of the session, every source (spec 02, Ausgabe; F386, FL65)
+#===============================================================================
+
+   SESS() { printf '{"session_id":"s-%s","hook_event_name":"SessionStart","source":"%s","cwd":"%s"}' "$2" "$2" "$1" | (cd "$SANDBOX" && "$SRC/bin/aibos" --context --session 2>&1); }
+   LINE="AIBOS-TICKET: open tickets for this session: 4 for skill-memo. List them with $HOME/.aibos/bin/aibos --ticket [<package>] when they matter for the work."
+   mk "$V/PA/.gitignore" $'.DS_Store\n'
+   for SRCE in startup resume clear compact; do
+      assert_contains "$(SESS "$V/PA" "$SRCE")" "$LINE" "PA, source $SRCE: tickets for skill-memo (lock.yaml)"
+   done
+   OUT="$(SESS "$V/PA" startup)"
+   assert_not_contains "$OUT" "assistant-gaertner" "no assistant in the session: tickets to assistant-gaertner do not count"
+   assert_not_contains "$OUT" "for aibos" "tickets to the kernel do not count (FL65)"
+   mk "$V/PA/.aibos/config.yaml" $'assistant: gaertner\n'
+   mk "$V/PA/@/@!Assistant/gaertner/ASSISTANT.md" $'---\nname: gaertner\ntitle: Gärtner\nversion: 0.1.0\ndescription: Gärtner\n---\n\nNur Äpfel.\n'
+   assert_contains "$(SESS "$V/PA" startup)" "open tickets for this session: 1 for assistant-gaertner, 4 for skill-memo." "local blueprint gaertner counts as assistant-gaertner"
+   rm -r "$V/PA/@/@!Assistant" "$V/PA/.aibos/config.yaml"
+   mk "$V/PB/@/.gitkeep" ""
+   assert_not_contains "$(SESS "$V/PB" startup)" "AIBOS-TICKET" "PB without lock.yaml and assistant: no line (tickets to aibos do not count, FL65)"

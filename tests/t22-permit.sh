@@ -158,6 +158,28 @@ echo x"; do
 # forwarder: --permit below 0.6 and in a legacy vault quiet (V0.6, memo 47)
 #===============================================================================
 
+#===============================================================================
+# Read tool: tickets in the mailbox @/@!Ticket and until 0.8 @/@!Improve of the vault (R2; v0.7.1, F392, FL66)
+#===============================================================================
+
+   echo '{}' > "$S"
+   TALLOW='{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "allow", "permissionDecisionReason": "AIBOS: ticket in the mailbox of this vault"}}'
+   mk "$D/@/@!Ticket/w1.md" $'---\ntype: improvement\npackage: skill-memo\n---\n'
+   mk "$D/@/@!Improve/w0.md" $'---\ntype: improvement\npackage: skill-memo\n---\n'
+   mk "$D/@/@Rule/r.md" $'# Regel\n'
+   mk "$SANDBOX/work/§Zwei/.aibos/config.yaml" $'aibos: 0.6.0\n'; mk "$SANDBOX/work/§Zwei/@/@!Ticket/w2.md" $'# x\n'
+   assert_eq "$(READ "$D/P" "$D/@/@!Ticket/w1.md")" "$TALLOW" "R2: ticket in the mailbox, from a project"
+   assert_eq "$(READ "$D" "$D/@/@!Ticket/w1.md")" "$TALLOW" "R2: ticket in the mailbox, at the vault root"
+   assert_eq "$(READ "$D/P" "$D/@/@!Improve/w0.md")" "$TALLOW" "R2: old folder @!Improve until 0.8"
+   assert_eq "$(READ "$D/P" "$D/@/@Rule/r.md")" "" "R2: other files of the masterspace not"
+   assert_eq "$(READ "$D/P" "$D/@/@!Ticket")" "" "R2: the mailbox folder itself not"
+   assert_eq "$(READ "$D/P" "$D/@/@!Ticket/../@Rule/r.md")" "" "R2: .. out of the mailbox"
+   assert_eq "$(READ "$D/P" "$SANDBOX/work/§Zwei/@/@!Ticket/w2.md")" "" "R2: the mailbox of another vault not"
+   assert_eq "$(READ "$N" "$N/@/@!Ticket/w1.md")" "" "R1: vault without binding"
+   printf '{"permissions": {"deny": ["Read(//%s/**)"]}}' "${D#/}/@" > "$S"
+   assert_eq "$(READ "$D/P" "$D/@/@!Ticket/w1.md")" "" "R3: a deny rule of the user wins"
+   echo '{}' > "$S"
+
    mkdir -p "$HOME/bin" "$AIBOS_PREFIX/v0.5.1/bin"
    cp "$SRC/templates/forwarder" "$HOME/bin/aibos"; chmod +x "$HOME/bin/aibos"
    printf '#!/bin/bash\necho "old kernel $*" >&2; exit 1\n' > "$AIBOS_PREFIX/v0.5.1/bin/aibos"; chmod +x "$AIBOS_PREFIX/v0.5.1/bin/aibos"

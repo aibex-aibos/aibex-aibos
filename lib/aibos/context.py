@@ -576,7 +576,29 @@ def session(ctx, source="startup", sid=None):
     name, origin = assistant_of_session(ctx, source, sid)
     if name != "none":
         out += assistant_lines(ctx, name, origin)
+    msg = ticket_message(ctx, name)                 # v0.7.1: every source, also compact (F386)
+    if msg:
+        out.append(msg)
     return "\n".join(out)
+
+
+def ticket_message(ctx, name):
+    """AIBOS-TICKET: open tickets in the mailbox for the packages of the session (spec 02, Ausgabe);
+    an error only suppresses the line (it goes to the log)."""
+    from . import assistant, ticket
+    from .ui import Abort
+    try:
+        folder = None
+        if name != "none":
+            try:
+                name, (folder, _) = assistant.resolve(ctx, name)
+            except Abort:
+                folder = None
+        packages = ticket.session_packages(ctx.cwd, folder, name)
+        return ticket.session_message(ctx.cfg.vault, packages, paths.forwarder())
+    except Exception as e:                          # noqa: BLE001 - a hook never fails the session
+        paths.log("--session", ctx.cwd, f"aibos --context --session: AIBOS-TICKET failed: {e}")
+        return ""
 
 
 # ---------------------------------------------------------------------------

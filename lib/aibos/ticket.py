@@ -138,6 +138,45 @@ def open_tickets(vault, package=None, kind=None):
     return out, problems
 
 
+def session_packages(path, assistant_dir=None, assistant_name=None):
+    """Packages of the session (spec 02, Ausgabe; FL65): the package that delivers the assistant of the
+    session (a local blueprint counts as assistant-<name>) and the packages in lock.yaml of the chain."""
+    import yaml
+    out = set()
+    if assistant_name and assistant_name != "none":
+        parts = Path(assistant_dir).parts if assistant_dir else ()
+        if "@!Package" in parts and parts.index("@!Package") + 1 < len(parts):
+            out.add(parts[parts.index("@!Package") + 1])
+        else:
+            out.add(f"assistant-{assistant_name}")
+    for d in config.chain_dirs(path):
+        f = d / ".aibos" / "lock.yaml"
+        if not f.is_file():
+            continue
+        try:
+            data = yaml.safe_load(f.read_text(encoding="utf-8")) or {}
+        except (OSError, UnicodeDecodeError, yaml.YAMLError):
+            continue
+        out.update(str(k) for k in (data.get("packages") or {}))
+    return out
+
+
+def session_message(vault, packages, forwarder):
+    """Line AIBOS-TICKET of the SessionStart hook, or "" without open tickets for the packages."""
+    if vault is None or not packages:
+        return ""
+    tickets, _ = open_tickets(Path(vault))
+    counts = {}
+    for t in tickets:
+        if t.get("package") in packages:
+            counts[t.get("package")] = counts.get(t.get("package"), 0) + 1
+    if not counts:
+        return ""
+    detail = ", ".join(f"{n} for {p}" for p, n in sorted(counts.items()))
+    return (f"AIBOS-TICKET: open tickets for this session: {detail}. "
+            f"List them with {forwarder} --ticket [<package>] when they matter for the work.")
+
+
 def report(vault, tickets, problems, cfg, path):
     print(f"Tickets {vault.name} — {datetime.date.today().isoformat()}")
     print()

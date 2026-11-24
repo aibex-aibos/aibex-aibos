@@ -3,8 +3,8 @@
 
 Standard library only. In an A/W a single command of the forwarder is allowed without a question
 (E1-E3), unless a deny or ask rule of the user matches it (E4); so is the Skill tool for a registered
-wrapper of the kernel (S1-S3) and the Read tool for a part file under ~/.aibos/cache or the doc/
-of the bound installation (R1-R3). Otherwise,
+wrapper of the kernel (S1-S3) and the Read tool for a part file under ~/.aibos/cache, the doc/
+of the bound installation or, since v0.7.1, a ticket in the mailbox of the vault (R1-R3). Otherwise,
 and on every error, the hook prints nothing and the host asks as usual.
 """
 
@@ -151,6 +151,13 @@ def doc_dir(cwd):
     return entry[0] / "doc" if entry else None
 
 
+def mailboxes(cwd):
+    """R2 (v0.7.1): @/@!Ticket/ and until 0.8 @/@!Improve/ of the vault of cwd (spec 06, Tickets)."""
+    from . import ticket
+    vault = config.load(cwd).vault
+    return ticket.folders(vault) if vault else []
+
+
 def hits_read(rule, file_path):
     """R3: Read, Read(~/<glob>), Read(//<glob>); a pattern with [ ] ? counts as a hit; other forms
     are relative to a project or a settings file and cannot cover ~/.aibos/cache or an installation."""
@@ -179,6 +186,8 @@ def read_decision(cwd, file_path):
         reason = "AIBOS: part file of the master context"
     elif below(doc_dir(cwd), file_path):
         reason = "AIBOS: documentation of the bound version of AIBOS"
+    elif any(below(d, file_path) for d, _ in mailboxes(cwd)):                   # R2, v0.7.1 (F392)
+        reason = "AIBOS: ticket in the mailbox of this vault"
     else:
         return None
     if any(hits_read(r, file_path) for r in rules(cwd)):                         # R3
