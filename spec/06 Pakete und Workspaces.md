@@ -1,8 +1,8 @@
 ---
 title: "Pakete und Workspaces"
-date: 2026-11-24
+date: 2026-11-25
 author: iHux
-status: Spec
+status: Entwurf
 tags: [spec, aibos, v0.7, pakete, workspaces]
 number: 06
 related:
@@ -17,6 +17,7 @@ related:
   - "Memos 79–84 (AA-AIbex-AIOS, @Memo/V0.6): v0.6.1"
   - "Memos 01–15 (AA-AIbex-AIOS, @Memo/V0.7): Umbenennung in AIBOS"
   - "Memos 68–76 (AA-AIbex-AIBOS, @Memo/V0.7): v0.7.1, Tickets, W4, W5"
+  - "Memos 105, 106 (AA-AIbex-AIBOS, @Memo/V0.7): v0.7.2, aibos --ticket --paths"
 ---
 
 # Pakete und Workspaces
@@ -427,6 +428,13 @@ Result: 2 open tickets (1 aibos, 1 assistant-anja)
 ```
 
 Unter dem Kopf steht der Ordner des Postfachs mit absolutem Pfad (`Mailbox: …`), solange Dateien in `@/@!Improve/` liegen auch `Mailbox until 0.8: …` (V0.7, Memos 95, 96: B68, F412). Die Spalte *File* zeigt den Namen ohne `.md`, gekürzt auf 45 Zeichen mit `…`. Eine Spalte *Element* steht nach *Package* nur, wenn ein Ticket der Liste ein `element` hat; sonst fehlt sie.
+
+**`aibos --ticket [<paket>] [--type <typ>] --paths`** (ab v0.7.2; V0.7, Memo 105: F418) gibt statt des Berichts nur die absoluten Pfade der offenen Tickets aus, eine Zeile je Ticket, in der Reihenfolge der Tabelle, ohne Kopf, *Notes* und *Result*. Die Filter wirken wie beim Bericht; Dateien, die keine Tickets sind, und Tickets mit `status` fehlen. Ohne offene Tickets ist die Ausgabe leer, mit Exit 0; außerhalb eines A/W wie oben. Die Ausgabe ist für Skills: Sie lesen jedes Ticket mit Read über diesen Pfad (Spec 02, *Freigabe*, R2) und müssen das Postfach nicht mit `ls` auflisten, wofür der Host fragt (V0.7, Memo 97: H86, H87).
+
+```
+/…/§AIBOS/@/@!Ticket/2026-11-23-0523 Postfach lesen ohne Rückfrage.md
+/…/§AIBOS/@/@!Ticket/2026-11-22-0924 Evals vor dem Abnahmetest.md
+```
 
 **Übergang von v0.7.0** (F393): Bis 0.8 liest AIBOS zusätzlich `<vault-root>/@/@!Improve/`, den Ordner der Pakete `skill-improve` 0.1.0 und `assistant-anja` 0.6.0. Seine Dateien gelten als Tickets; `aibos --ticket` nennt sie mit dem Ordner in *File* und unter *Notes* `note: @/@!Improve/ is the folder of AIBOS 0.7.0; move its files to @/@!Ticket/`. AIBOS verschiebt sie nicht selbst.
 

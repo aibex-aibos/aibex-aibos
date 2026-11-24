@@ -1,8 +1,8 @@
 ---
 title: "Installation und Konfiguration"
-date: 2026-11-24
+date: 2026-11-25
 author: iHux
-status: Spec
+status: Entwurf
 tags: [spec, aibos, v0.7, installation, konfiguration]
 number: 04
 related:
@@ -422,7 +422,7 @@ Die Weiterleiter lesen nur kleine Dateien und greifen nie auf das Netzwerk zu.
 | `aibos --gui [--session <id>] [--html]` | Rumpf des Oberflächen-Skills des aktiven Assistenten bzw. mit `--html` das HTML-Fragment (Spec 03, *Oberflächen*); `aibos --gui --aibos` für die AIBOS-Oberfläche, `aibos --gui --apps` für die Liste der Oberflächen ausgerollter Apps, `aibos --gui --skill <oberfläche> [--html]` für die Oberfläche einer App |
 | `aibos --init [<pfad>] [--assistant <wert>] [--name <name>] [--accept-name]` | Ordner zum Projekt machen oder ein Projekt ergänzen (Spec 05) |
 | `aibos --integrity [<pfad>]` | Integrität des Projekts und aller Unterprojekte prüfen, nur lesend (Spec 05) |
-| `aibos --ticket [<paket>] [--type <typ>]` | offene Tickets im Postfach der Vault-Root listen, nur lesend (Spec 06, *Tickets*; ab v0.7.1) |
+| `aibos --ticket [<paket>] [--type <typ>] [--paths]` | offene Tickets im Postfach der Vault-Root listen, nur lesend; mit `--paths` nur ihre absoluten Pfade, eine Zeile je Ticket (Spec 06, *Tickets*; ab v0.7.1, `--paths` ab v0.7.2) |
 | `aibos --mod [install <mod> [--to <projekt>] \| uninstall <mod>]` | geholte Mods zeigen bzw. auf Wunsch des Users bei Claude Code an- und abmelden (Spec 06, *Mods*; ab v0.7.1) |
 
 Alle schreibenden Befehle zeigen zuerst einen Plan und fragen `[Y/n]` (I7). Für Skills, die im Bash-Werkzeug keine Rückfrage beantworten können, gibt es zwei Schalter: `--plan` zeigt nur den Plan und schreibt nichts (Exit 0), `--yes` überspringt die Frage. Ein Skill zeigt den Plan, fragt im Chat und ruft erst nach Ja mit `--yes` auf; ohne Eingabe auf stdin wird nie geschrieben. Mit `--yes` gibt ein Befehl nur noch das Ergebnis in wenigen Zeilen und Fehler aus. **Ohne gültiges Arbeitsverzeichnis** (der Ordner der Shell wurde gelöscht oder ausgelagert): Nennt der Aufruf einen absoluten Pfad, arbeiten Weiterleiter und `aibos` mit ihm weiter und lesen das Arbeitsverzeichnis nicht. Ohne Pfad, oder mit relativem Pfad, enden sie mit Exit 1 und `*** aibos: the current directory no longer exists; change to an existing one (e.g. cd ~) or give an absolute path`, ohne Python-Fehler (Weiterleiter 0.4.3; V0.6, Memo 204: H34). Hooks schreiben in diesem Fall nur ins Log (Spec 02). **Sprache:** Alle Ausgaben von `aibos` auf stdout und stderr sind englisch, auch Berichte und Aufstellungen; deutsch bleiben nur die Commit-Nachrichten, die AIBOS schreibt, die Meldung `Kein AIBOS-Workspace` sowie die Rümpfe der Kernel-Skills (V0.3, Memo 53, 54). Claude spricht mit dem User in dessen Sprache. `bin/aibos` und die Weiterleiter sind Bash-Skripte nach der Bash-Konvention (Help-, Version- und Dispatch-Blöcke, Fallback); die Logik hinter `aibos` läuft in Python im venv der Installation (`python/`). `--prepare`, `--install`, `--versions`, `--remove-version` und `--uninstall` verwenden nur die Standardbibliothek, weil sie aus einem Klon mit dem `python3` des Systems laufen, bevor eine venv existiert. Voraussetzung ist die **Grundausstattung**: `python3` ≥ 3.11 mit den Modulen `venv` und `pip`, `git`. `aibos --install` prüft sie selbst (unten).
