@@ -13,5 +13,5 @@ v0.7.0 ist abgeschlossen (Tag `v0.7.0`, Abnahme in Memo 56, Veröffentlichung in
 | 4 | **Integrität:** verwaiste Ausschlüsse, veraltete Registrierung als Hinweise | | 05 | ☐ |
 | 5 | **Mods:** Typ `mod`, Prüfung beim Holen, Element `mod`, `aibos --mod [install\|uninstall]`, Abbruch von `--remove`; Test `t26-mod.sh` mit Attrappe `claude` | | 01, 04, 06 | ☐ |
 | 6 | **Kernel-Skill und Doku:** `/aibos-package` mit Mods; README, Tutorials | | 03 | ☐ |
-| 7 | **Pakete:** `skill-improve`, `assistant-anja` (Postfach `@/@!Ticket/`), `mod-token-statuszeile` 0.1.0 als Kandidaten `-rc1` | | 06 | ☐ |
+| 7 | **Pakete:** `skill-improve`, `assistant-anja` (Postfach `@/@!Ticket/`), `mod-token-status` 0.1.0 als Kandidaten `-rc1` | | 06 | ☐ |
 | 8 | **Kandidat** `0.7.1-rc1`, Live-Tests, Probe-Vault `§Probe-Ticket` | | 01 | ☐ |
