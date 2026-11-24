@@ -21,7 +21,7 @@ related:
   - "Memos 01–36 (AA-AIbex-AIOS, @Memo/V0.6), Soll-Bild Memo 34, Skizze Memo 35"
   - "Memos 79–84 (AA-AIbex-AIOS, @Memo/V0.6), v0.6.1, Skizze Memo 84"
   - "Memos 01–15 (AA-AIbex-AIOS, @Memo/V0.7), v0.7: Soll-Bild Memo 13, Skizze Memo 14"
-  - "Memos 68–76 (AA-AIbex-AIBOS, @Memo/V0.7), v0.7.1: Umfang Memos 72, 75, Spec-Entwurf Memo 76"
+  - "Memos 68–79 (AA-AIbex-AIBOS, @Memo/V0.7), v0.7.1: Umfang Memos 72, 75, 77, 78, Spec-Entwurf Memos 76, 79"
 ---
 
 # AIbex AIBOS v0.7 — Überblick
@@ -112,6 +112,7 @@ Die Begründungen stehen in den Memos der Konzeptprojekte unter `§AIBOS/A-AIOS/
 | **Lokal-Drive**, **Cloud-Drive**, **AIBOS-Drive**, **Netz-Drive** | die vier Arten, einen A/W über Rechner zu führen: nur auf diesem Rechner; repliziert von einem Cloud-Dienst (Vault-Root in einem Cloud-Ordner); abgeglichen von AIBOS über Git-Remotes (`workspace.yaml`); eine einzige Kopie auf einem Netzlaufwerk (Spec 06, *Arten der Führung*; V0.6, Memo 224) |
 | **Fremd-Repo** | Repo eines Workspace ohne `@/`, z. B. ein Paket-Repo; kein Projekt und kein Container (Spec 06) |
 | **Lock** | `.aibos/lock.yaml`: aufgelöste Pakete und eingefrorener Stand eines Workspace |
+| **Mod** | Erweiterung von Claude Code (Plugin mit Hooks und Modul) als Paket `type: mod`; wirkt nach `aibos --mod install` für alle Sessions des Rechners (ab v0.7.1, Spec 06) |
 | **Ticket**, **Postfach** | Anliegen an ein Paket oder an AIBOS als Datei mit Typ, Paket und Status; das Postfach ist `@/@!Ticket/` der Vault-Root (ab v0.7.1, Spec 06) |
 | **Demo-Assistent** | Assistent als Paket zum Ausprobieren und für Tutorials (`assistant-gaertner`, `assistant-astronom`) |
 | **Paket-Skill** | ausgerollter Skill aus einem geholten Paket in `@!Package/` |
@@ -164,7 +165,8 @@ v0.7.1 ist ein Patch für die Wünsche aus der Abnahme von Anja 0.6.0 und `skill
 | Hook `PreToolUse` gibt Read im Postfach des Vaults frei (Spec 02, *Freigabe*, R2) | 70, 75 (F380, F392) |
 | Zeile `AIBOS-TICKET` beim Start und nach jeder Compaction (Spec 02, *Hooks*, *Ausgabe*) | 70, 73 (F380, F386); V0.99, Memo 34 |
 | Hinweis bei `==` aus einer Distribution im Resolver; Liste der festgelegten Pakete im Plan von `aibos --activate` (Spec 04, 06) | 72, 73 (F383, F387) |
-| `aibos --integrity`: verwaiste Ausschlüsse und veraltete Registrierung als Hinweise (Spec 05) | 72, 75, 76 (F383, F390) |
+| `aibos --integrity`: verwaiste Ausschlüsse und veraltete Registrierung als Hinweise (Spec 05) | 72, 75, 76 (F383, F390, F394) |
+| Pakettyp `mod` mit Ordner `mod/`; `aibos --mod install\|uninstall` meldet eine Mod auf Wunsch des Users bei Claude Code an bzw. ab; `/aibos-package` versteht „installiere/deinstalliere den Mod …“ (Spec 03, 04, 06) | 77, 78 (F399–F403) |
 
 Nicht in v0.7.1: lesende `git`-Befehle und zusammengesetzte Befehle in der Freigabe (Memo 70, F381); die Vault-Root als zusätzliches Verzeichnis (Memos 69, 71, 72: F382). Für 0.7.5 sind B57 und H83 vorgesehen, für 0.7.9 B54, B55, H59, H62, H64, H65, H69, H70, H76, H79–H82 und die Verweise auf alte Projektnamen (Memos 65–67, 72).
 
@@ -198,12 +200,12 @@ AIBOS hält diese Regeln in jedem Befehl ein (für Pakete zusätzlich P1–P8, S
 | I10 | Ein Weiterleiter oder Skill löst nie ein setup aus; fehlt ein Arbeitspferd, meldet er das und nennt höchstens `aibos --fetch` (Spec 07). |
 | I11 | Ein Plan mit „alles oder nichts" (Paket laden, Distribution installieren) stellt bei einem Fehler den Stand vor dem Plan wieder her (Sicherung, Spec 06); registriert wird erst nach erfolgreichem setup. |
 | I12 | Liegt das Arbeitsverzeichnis außerhalb eines A/W, geben die Hooks von AIBOS nichts aus und geben keinen Befehl frei; Fehler stehen nur im Log `~/.aibos/log/context.log` (Spec 02). |
-| I13 | AIBOS schreibt außerhalb von `~/.aibos` und Vaults nur die eigenen Hook-Einträge in `~/.claude/settings.json` und entfernt beim Umstieg die Hüllen früherer Versionen in `~/.claude/skills/`; es ändert keine Startdateien der Shell und keine Regeln in `permissions`. Beim Umstieg auf v0.7 verschiebt es `~/.aios` nach `~/.aibos` und legt `~/.aios` als Verweis an; dabei bleiben die installierten Versionen unverändert (I5). Nach `/opt/aibos` schreibt es nur mit `aibos --install --system` (Spec 04). |
+| I13 | AIBOS schreibt außerhalb von `~/.aibos` und Vaults nur die eigenen Hook-Einträge in `~/.claude/settings.json` und entfernt beim Umstieg die Hüllen früherer Versionen in `~/.claude/skills/`; es ändert keine Startdateien der Shell und keine Regeln in `permissions`. Ab v0.7.1 meldet `aibos --mod install|uninstall` nach Plan und Ja eine Mod über die CLI `claude plugin` an bzw. ab; was Claude Code dabei unter `~/.claude/` schreibt, schreibt Claude Code (Spec 06, *Mods*). Beim Umstieg auf v0.7 verschiebt es `~/.aios` nach `~/.aibos` und legt `~/.aios` als Verweis an; dabei bleiben die installierten Versionen unverändert (I5). Nach `/opt/aibos` schreibt es nur mit `aibos --install --system` (Spec 04). |
 | I14 | Eine Bindung `aibos:` und eine Markierung `legacy:` gelten nur an der Vault-Root; in einem Projekt werden sie mit Warnung übergangen (Spec 04). |
 
 ## Abnahmetest
 
-Der Abnahmetest von v0.7.1 läuft auf dem letzten Kandidaten `v0.7.1-rc<n>` des Kernels und den Kandidaten von `skill-improve` und `assistant-anja` (V0.7, Memo 76). Die Schritte 2–9 laufen in einem **Probe-Vault** `§Probe-Ticket` im Scratchpad, in einem Sandkasten-Rechner (eigenes `HOME`, `AIBOS_PREFIX`, `AIBOS_CLAUDE_DIR`) mit einem Test-Hub unter `file://` (`AIBOS_HUBS`): `skill-memo` 6.0.2 und 6.1.0, `distribution-probe` 0.1.0 mit `skill-memo: "==6.0.2"` (ohne `kernel:`). Projekte: die Vault-Root mit `distribution-probe`, `PA-Alpha` mit `skill-memo` und einem Unterprojekt `PAA-Kind`, `PB-Beta` ohne Pakete. Postfach `§Probe-Ticket/@/@!Ticket/` mit drei Tickets (zwei an `skill-memo`, eines davon mit `version: 6.0.0`; eines an `assistant-gaertner`), einer Datei ohne `package` und `§Probe-Ticket/@/@!Improve/` mit einem Ticket an `skill-memo`. Schritte im Chat laufen headless (`claude -p`, Modell sonnet, `--permission-mode default`). Jeder Schritt nach außen hat eine eigene Rückfrage.
+Der Abnahmetest von v0.7.1 läuft auf dem letzten Kandidaten `v0.7.1-rc<n>` des Kernels und den Kandidaten von `skill-improve`, `assistant-anja` und `mod-token-statuszeile` (V0.7, Memos 76, 78). Die Schritte 2–9 laufen in einem **Probe-Vault** `§Probe-Ticket` im Scratchpad, in einem Sandkasten-Rechner (eigenes `HOME`, `AIBOS_PREFIX`, `AIBOS_CLAUDE_DIR`) mit einem Test-Hub unter `file://` (`AIBOS_HUBS`): `skill-memo` 6.0.2 und 6.1.0, `distribution-probe` 0.1.0 mit `skill-memo: "==6.0.2"` (ohne `kernel:`), `mod-probe` 0.1.0 (Mod mit einer Zeile in der Statuszeile) und ein Paket `mod-kaputt` ohne `marketplace.json`. Projekte: die Vault-Root mit `distribution-probe`, `PA-Alpha` mit `skill-memo` und einem Unterprojekt `PAA-Kind`, `PB-Beta` ohne Pakete. Postfach `§Probe-Ticket/@/@!Ticket/` mit drei Tickets (zwei an `skill-memo`, eines davon mit `version: 6.0.0`; eines an `assistant-gaertner`), einer Datei ohne `package` und `§Probe-Ticket/@/@!Improve/` mit einem Ticket an `skill-memo`. Schritte im Chat laufen headless (`claude -p`, Modell sonnet, `--permission-mode default`). Jeder Schritt nach außen hat eine eigene Rückfrage.
 
 | # | Wer, wo | Schritt | erwartet |
 |---|---|---|---|
@@ -216,10 +218,12 @@ Der Abnahmetest von v0.7.1 läuft auf dem letzten Kandidaten `v0.7.1-rc<n>` des 
 | 7 | Sandkasten | `aibos --fetch "skill-memo>=6.1" --to <vault-root> --plan`; `aibos --activate v0.7.1-rc<n> <vault-root> --plan` | Konflikt mit der Zeile `note: distribution-probe 0.1.0 pins skill-memo to ==6.0.2; …`; Plan von `--activate` mit `note: distribution-probe 0.1.0 pins skill-memo ==6.0.2` und „nichts zu tun“ |
 | 8 | Sandkasten | Zeilen `/PZ-Weg/` und `/PY-Entfernt/` in die `.gitignore` von `PA-Alpha`, beide ohne Ordner; eine `workspace.yaml` an der Vault-Root mit `PA-Alpha/PY-Entfernt` in `removed`; eine Hülle in `PA-Alpha/.claude/skills/` löschen; `aibos --integrity <vault-root>` | Hinweis `PA-Alpha: exclusion /PZ-Weg/ in .gitignore has no folder; remove the line`; kein Hinweis zu `/PY-Entfernt/`; Hinweis `PA-Alpha: registration out of date (1 wrappers); …`; Ergebnis integer wie vorher |
 | 9 | Sandkasten, Kandidaten der Pakete | `skill-improve` und `assistant-anja` als `-rc<n>` holen; Chat headless in `PAA-Kind`: „Ich hab einen Verbesserungsvorschlag für dich: …“ und neuer Chat „Hallo“ | neues Ticket in `@/@!Ticket/` mit `type: improvement`; Anja zählt zu Beginn ihre Tickets über `aibos --ticket` ohne Eintrag in `permission_denials` |
+| 9a | Sandkasten (eigenes `HOME` mit Claude Code), `PA-Alpha` | `aibos --fetch mod-kaputt --plan`; `aibos --fetch mod-probe`; `aibos --mod`; `aibos --mod install mod-probe --plan`, dann `--yes`; `claude plugin list`; `aibos --fetch --remove mod-probe --plan`; `aibos --mod uninstall mod-probe --yes`; erneut `--remove` | `mod-kaputt` nicht geholt; Plan von `--fetch` mit dem Hinweis, dass die Mod rechnerweit wirkt, ohne Anmeldung; `--mod` zeigt `not installed`, nach `install` `installed` und `claude plugin list` die Mod; `--remove` bricht ab, solange sie angemeldet ist, danach gelingt es |
 | 10 | Arbeitsrechner | Bestandslauf mit `aibos --activate v0.7.1-rc<n> <vault> --plan` für jeden Vault aus `aibos --vaults`; dann installieren und `§AIBOS`, `§Hugo` umbinden | keine Konflikte; der Plan nennt die Pakete, die `distribution-capricorn` festlegt |
+| 10a | Chat auf dem Arbeitsrechner | „installiere den Mod token-statuszeile“ in einem Projekt von `§AIBOS`, dann „deinstalliere den Mod token-statuszeile“ | `/aibos-package` zeigt den Plan mit den `claude`-Befehlen, meldet nach Ja an bzw. ab; die Statuszeile erscheint nach `/reload-plugins` und verschwindet nach dem Abmelden |
 | 11 | Arbeitsrechner, `§AIBOS` | `aibos --ticket`; Umzug der Dateien von `@/@!Improve/` nach `@/@!Ticket/` mit eigener Rückfrage; erneut `aibos --ticket` | vorher alle Tickets mit dem Hinweis zu `@/@!Improve/`, danach ohne; Zahl gleich |
-| 12 | — | Abnahme-Memo | Schritte 1–11 bestanden |
-| 13 | nach Freigabe | `VERSION` 0.7.1, Tags `v0.7.1` im Kernel, in `skill-improve` und `assistant-anja`; veröffentlichen, jeder Schritt mit eigener Rückfrage | Bindung `aibos: 0.7.1` |
+| 12 | — | Abnahme-Memo | Schritte 1–11 mit 9a und 10a bestanden |
+| 13 | nach Freigabe | `VERSION` 0.7.1, Tag `v0.7.1` im Kernel, die Tags der neuen Versionen von `skill-improve`, `assistant-anja` und `mod-token-statuszeile` (ohne `-rc<n>`); veröffentlichen, jeder Schritt mit eigener Rückfrage | Bindung `aibos: 0.7.1` |
 
 Die Abnahmetests von v0.7.0, v0.6.6, v0.6.4 (mit zweitem Benutzer und Notebook), v0.6.3, v0.6.2, v0.6.1, v0.6.0 und v0.5 stehen in dieser Spec in den Tags `v0.7.0`, `v0.6.6`, `v0.6.4`, `v0.6.3`, `v0.6.2`, `v0.6.1`, `v0.6.0` bzw. `v0.5.1`.
 

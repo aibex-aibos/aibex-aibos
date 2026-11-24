@@ -1,8 +1,8 @@
 ---
 title: "Skills und Assistenten"
-date: 2026-11-16
+date: 2026-11-24
 author: iHux
-status: Spec
+status: Entwurf
 tags: [spec, aibos, v0.7, skills, assistenten]
 number: 03
 related:
@@ -19,6 +19,7 @@ related:
   - "Memos 05, 07, 12, 17, 34, 35 (AA-AIbex-AIOS, @Memo/V0.5)"
   - "Memos 12, 23, 25–30 (AA-AIbex-AIOS, @Memo/V0.6)"
   - "Memos 01–15 (AA-AIbex-AIOS, @Memo/V0.7): Umbenennung in AIBOS"
+  - "Memos 77, 78 (AA-AIbex-AIBOS, @Memo/V0.7): v0.7.1, Mods in /aibos-package"
 ---
 
 # Skills und Assistenten
@@ -135,11 +136,13 @@ Skills und Assistenten kommen als **Pakete** in ein Projekt: Ein Paket wird vom 
 
 | Skill | Rolle | Auslöser | ruft auf |
 |---|---|---|---|
-| `/aibos-package` | **Paketmanager** für Anwender: holen, entfernen, aktualisieren, suchen, zeigen, was geholt ist, Hub-Liste pflegen; bedient sich der beiden Hilfs-Skills | „/aibos-package", „installiere …", „hole …", „lade …", „entferne …", „deinstalliere …", „aktualisiere …", „welche Pakete bzw. Apps gibt es?", „was ist installiert?", „Hub hinzufügen"; englisch *install*, *remove*, *update*, *list packages* | `aibos --library`, `aibos --hubs`, `/aibos-fetch`, `/aibos-deploy`; bei einer Distribution `aibos --install distribution-<name>` |
+| `/aibos-package` | **Paketmanager** für Anwender: holen, entfernen, aktualisieren, suchen, zeigen, was geholt ist, Hub-Liste pflegen, Mods an- und abmelden; bedient sich der beiden Hilfs-Skills | „/aibos-package", „installiere …", „hole …", „lade …", „entferne …", „deinstalliere …", „aktualisiere …", „welche Pakete bzw. Apps gibt es?", „was ist installiert?", „Hub hinzufügen", „installiere den Mod …", „deinstalliere den Mod …", „welche Mods gibt es?"; englisch *install*, *remove*, *update*, *list packages* | `aibos --library`, `aibos --hubs`, `/aibos-fetch`, `/aibos-deploy`; bei einer Distribution `aibos --install distribution-<name>`; bei einer Mod `aibos --mod` |
 | `/aibos-fetch` | Hilfs-Skill: ein Paket laden (holen, Arbeitspferde einrichten, registrieren), abgleichen, `--upgrade`, `--remove`; zeigt im Plan das setup der Arbeitspferde (Spec 07) | „/aibos-fetch", „Paket holen", „Paket laden" | `aibos --fetch` |
 | `/aibos-deploy` | Hilfs-Skill: Elemente eines geholten Pakets ausrollen (`--only`, `--all`) oder zeigen | „/aibos-deploy", „ausrollen", „freischalten" | `aibos --deploy` |
 
 `/aibos-package` versteht unscharfe Namen („installiere mir den Rechner"): Es sucht mit `aibos --library` in Namen und Beschreibungen der Pakete der Hub-Liste und fragt bei mehreren Treffern nach. Einen vollen Paketnamen `<hub>/<paket>` gibt es unverändert weiter. Meldet `aibos --fetch`, dass ein Name in mehreren Hubs liegt, fragt es, welcher gemeint ist. Es fragt nach dem Ziel und schlägt das Root-Projekt vor. Wie jeder schreibende Skill holt es den Plan mit `--plan`, fragt im Chat und ruft erst nach Ja mit `--yes` auf (Spec 01, I7). Nach dem Holen sagt es, dass neue Skills ab dem nächsten Chat verfügbar sind, und nennt bei einer App ihre Oberfläche (*Oberflächen*).
+
+**Mods** (ab v0.7.1; V0.7, Memo 78: F402): „installiere den Mod …“ bzw. „deinstalliere den Mod …“ führt `/aibos-package` über `aibos --mod install` bzw. `aibos --mod uninstall` aus (Spec 06, *Mods*), mit Plan und Ja wie oben. Es sagt dazu, dass die Mod für alle Sessions des Rechners wirkt und nach `/reload-plugins` oder im nächsten Chat erscheint. „Installiere“ allein bei einem Paket `mod-…` heißt anmelden, nicht nur holen; „entferne“ meldet zuerst ab und entfernt dann mit `aibos --fetch --remove`. „Welche Mods gibt es?“ beantwortet es mit `aibos --mod` und `aibos --library mod-`.
 
 **Pakete der Grundausstattung** (für v0.7 je eine Minor-Version mit `requires.aibos: ">=0.7,<0.8"`; V0.7, Memo 10: F283, F284; die Versionen in der Tabelle sind die von v0.6):
 

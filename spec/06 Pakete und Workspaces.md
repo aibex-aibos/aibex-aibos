@@ -29,7 +29,7 @@ Ein **Paket** ist eine versionierte Einheit aus einem oder mehreren Elementen, d
 
 Jedes Paket liegt in einem eigenen Git-Repo in einem Hub. Eine Version ist ein Tag `v<version>` in diesem Repo, und `version` in `manifest.yaml` des getaggten Stands muss übereinstimmen. Der Kernel von AIBOS ist ebenfalls ein Paket (`type: kernel`, Name `aibos`, Repo `aibex-aibos/aibex-aibos`), wird aber mit `aibos --install` installiert, nicht geholt (Spec 04).
 
-**Paketnamen:** `<typ>-<name>`, die Art gleich dem Typ: `app-`, `assistant-`, `skill-`, `knowledge-`, `tutorial-`, `distribution-`, `worker-`; der Kernel heißt `aibos` (V0.5, Memos 05, 15). AIBOS wertet nur `type` aus; das Schema ist eine Konvention, die die Pakete von AIbex einhalten.
+**Paketnamen:** `<typ>-<name>`, die Art gleich dem Typ: `app-`, `assistant-`, `skill-`, `knowledge-`, `tutorial-`, `distribution-`, `worker-`, ab v0.7.1 `mod-`; der Kernel heißt `aibos` (V0.5, Memos 05, 15). AIBOS wertet nur `type` aus; das Schema ist eine Konvention, die die Pakete von AIbex einhalten.
 
 Für Pakete gelten drei Verben (V0.4, Memos 23, 24):
 
@@ -51,6 +51,7 @@ Für Pakete gelten drei Verben (V0.4, Memos 23, 24):
 ├── knowledge/                      Wissen, mit Klassen wie ein Masterspace (Spec 02)
 ├── commands/<name>                 Befehle (ausführbar)
 ├── worker/                         Datei mit Hashes bzw. Skripte eines Arbeitspferds (nur type: worker, Spec 07)
+├── mod/                            Mod von Claude Code mit .claude-plugin/ (nur type: mod, *Mods*)
 ├── contrib/<user>/…                Rückflüsse (aibos --contribute)
 ├── STATUS.md                       optional: Schritte des Implementierungsplans mit ☐/☑
 └── README.md                       optional
@@ -80,7 +81,7 @@ license: MIT
 |---|---|---|
 | `name` | ja | Kleinbuchstaben, Ziffern, Bindestriche, höchstens 64 Zeichen; gleich dem Namen des Repos in seinem Hub; nicht `aibos` (Kernel), `aibos-…`, `gui`, `none`, `inherit` |
 | `version` | ja | SemVer `MAJOR.MINOR.PATCH`, optional mit Vorabkennung (`0.4.0-rc1`) |
-| `type` | ja | `kernel`, `app`, `assistant`, `skill`, `knowledge`, `tutorial`, `distribution`, `worker`; unbekannte Werte werden mit Warnung als `knowledge` behandelt |
+| `type` | ja | `kernel`, `app`, `assistant`, `skill`, `knowledge`, `tutorial`, `distribution`, `worker`, ab v0.7.1 `mod`; unbekannte Werte werden mit Warnung als `knowledge` behandelt |
 | `description` | ja | ein Satz |
 | `requires` | ja | `aibos: "<bereich>"`, Bereich der AIBOS-Version, in der das Paket läuft |
 | `depends` | nein | Name → Bereich anderer Pakete; `aibos` ist hier nicht erlaubt, dafür gibt es `requires` |
@@ -90,13 +91,38 @@ license: MIT
 | `license` | nein | SPDX-Kennung oder Freitext |
 | `userdata` | nein | beliebige Daten; AIBOS wertet sie nicht aus |
 
-`manifest.yaml` wird mit PyYAML gelesen. Ein Paket ist ein **Modul**, wenn `type` `kernel`, `app`, `assistant`, `skill` oder `worker` ist oder `contents` mindestens einen Skill, Assistenten, Befehl oder Hook nennt. Pakete vom Typ `knowledge`, `tutorial` und `distribution` ohne solche Inhalte sind keine Module (V0.4, Memo 04). Ein `worker` ist ein Modul ohne Elemente: Ausrollen, `only` und Registrieren wirken nicht (V0.5, Memo 30).
+`manifest.yaml` wird mit PyYAML gelesen. Ein Paket ist ein **Modul**, wenn `type` `kernel`, `app`, `assistant`, `skill`, `worker` oder `mod` ist oder `contents` mindestens einen Skill, Assistenten, Befehl oder Hook nennt. Pakete vom Typ `knowledge`, `tutorial` und `distribution` ohne solche Inhalte sind keine Module (V0.4, Memo 04). Ein `worker` ist ein Modul ohne Elemente: Ausrollen, `only` und Registrieren wirken nicht (V0.5, Memo 30).
 
 **Elemente** eines Pakets und ihre Namen beim Ausrollen: jeder Skill und jeder Assistent unter seinem Namen, jeder Befehl unter seinem Namen und das Wissen als `knowledge`. Die Namen sind innerhalb eines Pakets eindeutig.
 
 **Prüfung beim Holen:** Jeder in `contents` genannte Name muss als Ordner bzw. Datei vorhanden sein, jeder Skill braucht eine gültige `version` (Spec 03), `gui` muss in `skills` stehen, Elementnamen dürfen sich nicht wiederholen. Bei `type: worker` gelten die Regeln von Spec 07 (`kind`, `programs`, Datei mit Hashes bzw. Skripte), bei `type: distribution` exakte Versionen (`==`) in `kernel` und `depends`. Ein Paket mit dem Feld `workers:` aus v0.4 wird abgelehnt, mit Hinweis auf `type: worker` (V0.5, Memo 30, L9). Ein Paket, das die Prüfung nicht besteht, wird nicht geholt.
 
-**Hooks** (`contents.hooks`) sind im Format vorgesehen, in v0.7 aber ohne Wirkung: `aibos --fetch` meldet sie und holt das Paket ohne sie.
+**Hooks** (`contents.hooks`) sind im Format vorgesehen, in v0.7 aber ohne Wirkung: `aibos --fetch` meldet sie und holt das Paket ohne sie. Hooks einer Mod liegen in ihrem Ordner `mod/` und gehören nicht zu `contents.hooks` (*Mods*).
+
+### Mods
+
+Eine **Mod** ist eine Erweiterung von Claude Code (Plugin mit Hooks, Modul, Oberflächenteilen), verpackt als AIBOS-Paket `type: mod`, Name `mod-<name>` (ab v0.7.1; V0.7, Memos 77, 78: F399–F403; `B-Basics/BM-Mods-In-Claude`, Memos 03, 05, 06). Sie ist ein Modul.
+
+| Punkt | Regel |
+|---|---|
+| Aufbau | Ordner `mod/` in der Form von Claude Code: `mod/.claude-plugin/plugin.json` mit `name` gleich `<name>` (Paketname ohne `mod-`), `mod/.claude-plugin/marketplace.json`, der die Mod als einziges Plugin nennt, dazu ihre Dateien (`hooks/`, Modul, `types/`) |
+| Manifest | `type: mod`, kein `contents` und kein `worker` (wie bei `type: worker` bestimmt der Typ den Inhalt) |
+| Prüfung beim Holen | beide Dateien unter `mod/.claude-plugin/` vorhanden und lesbar, `name` passt; sonst wird das Paket nicht geholt |
+| Element | genau eines, `mod`; `aibos --deploy` zeigt es, `only` ändert an der Wirkung nichts |
+| Ort | jedes Projekt, auch über eine Distribution (`depends` mit `==`); der Plan von `aibos --fetch` sagt: `note: mod-<name> acts for all sessions of this computer once installed with aibos --mod install mod-<name>` |
+| Wirkung | Holen meldet die Mod **nicht** bei Claude Code an; das tut nur `aibos --mod install` auf Wunsch des Users |
+| andere Hosts | Codex kennt keine Mods; dort ist das Paket nur geholt |
+
+**`aibos --mod install <mod> [--to <projekt>] [--plan|--yes]`** meldet eine Mod für den Rechner bei Claude Code an. Fehlt das Paket im Projekt (bzw. in `--to`), holt der Plan es zuerst wie `aibos --fetch`. Danach ruft es mit dem Ordner `<projekt>/@/@!Package/mod-<name>/mod` und dem Namen `<marketplace>` aus dessen `marketplace.json`:
+
+```
+claude plugin marketplace add "<ordner>" --scope user
+claude plugin install <name>@<marketplace> --scope user
+```
+
+**`aibos --mod uninstall <mod> [--plan|--yes]`** meldet sie wieder ab: `claude plugin uninstall <name>@<marketplace> --scope user`, dann `claude plugin marketplace remove <marketplace>`. Das Paket bleibt geholt; entfernen bleibt `aibos --fetch --remove`. **`aibos --mod`** ohne weitere Argumente listet die geholten Mods des Projekts mit dem Zustand `installed` (von diesem Ordner aus angemeldet), `installed elsewhere` (unter gleichem Namen aus einem anderen Ordner) oder `not installed`, nach `claude plugin list --json`.
+
+Beide schreibenden Formen zeigen den Plan mit den `claude`-Befehlen und fragen (I7); der Skill `/aibos-package` versteht „installiere den Mod …“ und „deinstalliere den Mod …“ (Spec 03). Fehlt `claude` im `PATH`, bricht der Befehl mit `*** aibos --mod: claude not found` ab. Neue Versionen der Mod, die `aibos --fetch --upgrade` in denselben Ordner holt, wirken nach `/reload-plugins` ohne neue Anmeldung. Entfernt `aibos --fetch --remove` ein Paket, dessen Mod von seinem Ordner aus angemeldet ist, bricht `--remove` ab mit `*** aibos --fetch: mod-<name> is installed in Claude Code from this folder; run aibos --mod uninstall mod-<name> first` und ändert nichts. Dasselbe gilt für ein Paket, das ein Upgrade aus `lock.yaml` entfernen würde.
 
 ## Versionen und Bereiche
 
