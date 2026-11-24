@@ -19,6 +19,7 @@ FOLDER = "@!Ticket"                                 # spec 06, Tickets
 OLD_FOLDER = "@!Improve"                            # AIBOS 0.7.0, read until 0.8 (F393)
 WIDTH = 45                                          # column File, shortened with …
 OLD_NOTE = "note: @/@!Improve/ is the folder of AIBOS 0.7.0; move its files to @/@!Ticket/"
+PATHS_NOTE = "note: full paths: aibos --ticket [<package>] --paths"   # B70, F423: where the full names are
 
 
 @dataclass
@@ -176,7 +177,8 @@ def session_message(vault, packages, forwarder):
     detail = ", ".join(f"{n} for {p}" for p, n in sorted(counts.items()))
     where = mailbox_text(Path(vault), old)
     return (f"AIBOS-TICKET: open tickets for this session: {detail}, in the mailbox {where}. "
-            f"List them with {forwarder} --ticket [<package>] when they matter for the work.")
+            f"List them with {forwarder} --ticket [<package>] when they matter for the work, "
+            f"and read them by the paths from {forwarder} --ticket [<package>] --paths.")
 
 
 def mailbox_text(vault, old=False):
@@ -211,6 +213,8 @@ def report(vault, tickets, problems, cfg, path):
         n = older(t, cfg, path)
         if n:
             notes.append(f"- {t.name}: {n}")
+    if any(t.shown.endswith("…") for t in tickets):
+        notes.append(f"- {PATHS_NOTE}")
     if any(t.old for t in tickets) or any(old for _, old, _ in problems):
         notes.append(f"- {OLD_NOTE}")
     for f, old, why in problems:

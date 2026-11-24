@@ -94,6 +94,8 @@ $RV/@/@!Improve/2026-11-16-1200 Alter Ordner.md"
    ok
    assert_contains "$(A "$V/PA" a b --paths)" "usage: aibos --ticket [<package>] [--type <type>] [--paths]" "usage names --paths"
    assert_contains "$(A "$V/PA")" "Result: 6 open tickets" "the report without --paths is unchanged"
+   assert_contains "$(A "$V/PA")" "- note: full paths: aibos --ticket [<package>] --paths" "B70: a shortened name: the note names --paths (F423)"
+   assert_not_contains "$(A "$V/PA" assistant-gaertner)" "full paths" "B70: no shortened name: no note"
 
 #===============================================================================
 # read only, no mailbox, outside an A/W
@@ -115,7 +117,7 @@ $RV/@/@!Improve/2026-11-16-1200 Alter Ordner.md"
 #===============================================================================
 
    SESS() { printf '{"session_id":"s-%s","hook_event_name":"SessionStart","source":"%s","cwd":"%s"}' "$2" "$2" "$1" | (cd "$SANDBOX" && "$SRC/bin/aibos" --context --session 2>&1); }
-   LINE="AIBOS-TICKET: open tickets for this session: 4 for skill-memo, in the mailbox $(cd "$V" && pwd -P)/@/@!Ticket/ (until 0.8 also $(cd "$V" && pwd -P)/@/@!Improve/). List them with $HOME/.aibos/bin/aibos --ticket [<package>] when they matter for the work."
+   LINE="AIBOS-TICKET: open tickets for this session: 4 for skill-memo, in the mailbox $(cd "$V" && pwd -P)/@/@!Ticket/ (until 0.8 also $(cd "$V" && pwd -P)/@/@!Improve/). List them with $HOME/.aibos/bin/aibos --ticket [<package>] when they matter for the work, and read them by the paths from $HOME/.aibos/bin/aibos --ticket [<package>] --paths."
    mk "$V/PA/.gitignore" $'.DS_Store\n'
    for SRCE in startup resume clear compact; do
       assert_contains "$(SESS "$V/PA" "$SRCE")" "$LINE" "PA, source $SRCE: tickets for skill-memo (lock.yaml)"
