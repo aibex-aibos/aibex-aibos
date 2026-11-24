@@ -2,7 +2,7 @@
 title: "Master-Kontext"
 date: 2026-11-24
 author: iHux
-status: Entwurf
+status: Spec
 tags: [spec, aibos, v0.7, master-kontext]
 number: 02
 related:

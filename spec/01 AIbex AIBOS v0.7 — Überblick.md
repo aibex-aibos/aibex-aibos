@@ -2,7 +2,7 @@
 title: "AIbex AIBOS v0.7 — Überblick"
 date: 2026-11-24
 author: iHux
-status: Entwurf
+status: Spec
 tags: [spec, aibos, v0.7]
 number: 01
 related:
