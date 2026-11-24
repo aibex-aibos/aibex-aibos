@@ -2,7 +2,7 @@
 # aibos --install installiert, nicht geholt; beim Installieren wird version
 # mit der Version des Tags überschrieben (Spec 04).
 name: aibos
-version: 0.7.1-rc1
+version: 0.7.1-rc2
 type: kernel
 description: Kernel von AIbex AIBOS mit CLI, Hooks und AIBOS-Skills
 requires:
