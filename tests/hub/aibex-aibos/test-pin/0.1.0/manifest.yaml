@@ -1,0 +1,8 @@
+name: test-pin
+version: 0.1.0
+type: knowledge
+description: Testpaket, das eine Distribution festlegt (W4, v0.7.1)
+requires:
+  aibos: ">=0.5,<0.8"
+contents:
+  knowledge: true

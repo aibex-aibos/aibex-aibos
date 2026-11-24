@@ -97,6 +97,35 @@ def distribution_notes(root, version):
     return notes
 
 
+DIST_DEPEND = re.compile(r"""^\s+([a-z0-9][a-z0-9-]*):\s*["']?(==\s*[^"'\s#]+)""")
+
+
+def pin_notes(root):
+    """v0.7.1 (spec 04, aibos --activate, Distribution; W4, F387, FL67): per distribution in the vault
+    root the packages it pins with ==, always shown in the plan, also with nothing to do. Standard
+    library only, like the rest of the activation (no PyYAML before the venv)."""
+    notes = []
+    for d in sorted((Path(root) / "@" / "@!Package").glob("distribution-*")):
+        try:
+            text = (d / "manifest.yaml").read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            continue
+        pins, inside = [], False
+        for line in text.splitlines():
+            if not line.strip() or line.lstrip().startswith("#"):
+                continue
+            if not line[0].isspace():
+                inside = line.split(":")[0].strip() == "depends"
+                continue
+            m = DIST_DEPEND.match(line) if inside else None
+            if m:
+                pins.append(f"{m.group(1)} {m.group(2).replace(' ', '')}")
+        v = DIST_VERSION.search(text)
+        if pins:
+            notes.append(f"note: {d.name} {v.group(1) if v else '?'} pins " + ", ".join(sorted(pins)))
+    return notes
+
+
 def vault_projects(root):
     """The vault root and all projects below it (as /aibos-integrity finds them), without the
     vaults inside it: a §-folder below root is a vault root of its own (V0.6, memos 111, 120: H7).
@@ -208,10 +237,15 @@ def activate(version, path=None):
     bound = plan_activation(tag, p, plan)
     registers = config.is_aibos(tag[1:]) and plan_registration(p, plan)
     templates = config.is_aibos(tag[1:]) and plan_templates(p, plan)
+    pins = pin_notes(p) if config.vault_root(p) == p else []
     if not bound and not registers and not templates:
         say(f"=> {effective(p)}, nothing to do")
+        for note in pins:
+            say(f"   {note}")
         offer_old_wrappers(tag, p)
         return 0
+    for note in pins:
+        plan.add(note)
     due = old_wrappers_due(tag, p)
     if due:
         plan.add(f"then with its own question: remove {len(due)} wrappers of earlier versions in {due[0].parent}")

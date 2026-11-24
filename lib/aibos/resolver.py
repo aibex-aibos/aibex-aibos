@@ -49,7 +49,25 @@ class Conflict(ResolveError):
         lines = []
         for name, ranges, reason in conflicts:
             lines.append(f"- {name}: {reason}; " + "; ".join(f"{r} ({o})" for r, o in ranges))
+        lines += pin_notes(conflicts)
         super().__init__("no versions fulfil all ranges:\n" + "\n".join(lines))
+
+
+def pin_notes(conflicts):
+    """v0.7.1 (spec 06, Resolver, step 5; W4, F387, FL67): a note per range == that comes from a
+    distribution, with the next step."""
+    out = []
+    for name, ranges, _ in conflicts:
+        for r, origin in ranges:
+            text, parts = str(r).strip(), str(origin).split()
+            if not text.startswith("==") or len(parts) != 2 or not parts[0].startswith("distribution-"):
+                continue
+            dist, ver = parts
+            note = (f"note: {dist} {ver} pins {name} to {text}; a newer {name} needs a new version of {dist}, "
+                    f"or remove it with aibos --fetch --remove {dist}")
+            if note not in out:
+                out.append(note)
+    return out
 
 
 @dataclass

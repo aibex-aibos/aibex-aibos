@@ -1,0 +1,8 @@
+name: distribution-pin
+version: 0.1.0
+type: distribution
+description: "Testdistribution ohne Kernel, legt test-pin fest (W4, v0.7.1)"
+requires:
+  aibos: ">=0.5,<0.8"
+depends:
+  test-pin: "==0.1.0"

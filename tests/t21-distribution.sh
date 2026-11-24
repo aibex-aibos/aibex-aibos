@@ -92,6 +92,26 @@
    cp "$SANDBOX/config.keep" "$V/.aibos/config.yaml"
 
 #===============================================================================
+# v0.7.1 step 3 (W4): a version pinned by a distribution - note in the conflict and in the plan of --activate (F387, FL67)
+#===============================================================================
+
+   OUT="$(cd "$V" && "$S/bin/aibos" --fetch "skill-test-nutzer>=0.2" --plan 2>&1)"
+   OUT="$(I "$V" distribution-pin --yes)"; RC=$?
+   assert_eq "$RC" "0" "W4: distribution-pin (test-pin ==0.1.0) next to the others"
+   OUT="$(cd "$V" && "$S/bin/aibos" --fetch "test-pin>=0.2" --plan 2>&1)"
+   assert_contains "$OUT" "no versions fulfil all ranges" "W4: conflict of the resolver"
+   assert_contains "$OUT" "==0.1.0 (distribution-pin 0.1.0)" "W4: the conflict names the distribution"
+   assert_contains "$OUT" "note: distribution-pin 0.1.0 pins test-pin to ==0.1.0; a newer test-pin needs a new version of distribution-pin, or remove it with aibos --fetch --remove distribution-pin" "W4: note on the pinning distribution"
+   assert_eq "$(grep -c 'note: distribution-pin 0.1.0 pins test-pin' <<< "$OUT")" "1" "W4: the note once"
+   OUT="$(cd "$V" && "$S/bin/aibos" --fetch "skill-test-nutzer>=0.2" --plan 2>&1)"
+   assert_not_contains "$OUT" "note: distribution-demo" "W4: no note when no version exists at all (first round)"
+   OUT="$(cd "$V" && "$S/bin/aibos" --activate v0.6.0 "$V" --plan 2>&1)"
+   assert_contains "$OUT" "note: distribution-demo 1.0.1 pins skill-test-nutzer ==0.1.0, test-befehl ==0.1.0" "W4: --activate --plan lists what a distribution pins"
+   assert_contains "$OUT" "note: distribution-sammlung 1.0.0 pins test-befehl ==0.1.0" "W4: also a distribution without kernel:"
+   assert_contains "$OUT" "note: distribution-pin 0.1.0 pins test-pin ==0.1.0" "W4: every distribution of the vault root"
+   assert_contains "$OUT" "nothing to do" "W4: the notes also with nothing to do"
+
+#===============================================================================
 # failures: kernel without tag, failing machine part, vault bound to 0.4 (changeover), --from
 #===============================================================================
 
