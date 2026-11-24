@@ -255,7 +255,7 @@ The tutorials (German) walk through a demo vault:
 | `aibos --install distribution-<name> [<vault>] [--from <repo>]` | install or upgrade a distribution: kernel, workhorses, packages |
 | `aibos --activate v<version> [<vault-root>]`, `--deactivate [<vault-root>]`, `--config [<path>]` | bind a vault (only at its root) to a version, show the configuration |
 | `aibos --init`, `--integrity`, `--register` | projects and their skills |
-| `aibos --ticket [<package>] [--type <type>]` | open tickets in the mailbox `@/@!Ticket` of the vault (0.7.1) |
+| `aibos --ticket [<package>] [--type <type>] [--paths]` | open tickets in the mailbox `@/@!Ticket` of the vault (0.7.1); with `--paths` only their absolute paths, one per line (0.7.2) |
 | `aibos --mod [install <mod> \| uninstall <mod>]` | mods of Claude Code: show, install, uninstall (0.7.1) |
 | `aibos --library`, `--hubs`, `--fetch`, `--deploy` | packages: search, hub list, fetch, deployed elements |
 | `aibos --worker [<package> setup]`, `--run`, `--contribute`, `--workspace` | workhorses (state, repair), commands of packages, contributions, workspaces |

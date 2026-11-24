@@ -8,7 +8,7 @@ from . import activate, aibosinit, assign, contribute, deploy, fetch, gui, hub, 
 USAGE = ("usage: aibos --prepare [--dev] | --install [v<version>] [--system] | --install distribution-<name> [<vault>] | --versions | --vaults | --remove-version v<version>"
          " | --uninstall | --activate v<version> [<vault-root>] | --deactivate [<vault-root>] | --config [<path>]"
          " | --register [<path>] | --init [<path>] [--assistant <value>] [--name <name>] [--accept-name]"
-         " | --integrity [<path>] | --ticket [<package>] [--type <type>] | --mod [install <mod> [--to <project>] | uninstall <mod>] | --assistant <name|none|inherit> [--to <project>] [--session <id>]"
+         " | --integrity [<path>] | --ticket [<package>] [--type <type>] [--paths] | --mod [install <mod> [--to <project>] | uninstall <mod>] | --assistant <name|none|inherit> [--to <project>] [--session <id>]"
          " | --gui [--session <id>] [--html] [--aibos] [--apps] [--skill <surface>]"
          " | --skill <name> [--session <id>] | --library [<word>|<package>]"
          " | --hubs [add <name> [<url>] | remove <name>] [--vault]"

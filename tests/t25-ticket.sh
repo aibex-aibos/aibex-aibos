@@ -1,4 +1,4 @@
-# t25-ticket.sh: v0.7.1 step 1 - tickets in the mailbox @/@!Ticket, aibos --ticket (spec 06, Tickets;
+# t25-ticket.sh: v0.7.1 step 1 - tickets in the mailbox @/@!Ticket, aibos --ticket [--paths] (spec 06, Tickets;
 #                V0.7, memos 74-76, 81: F389, F392, F393, FL62-FL64)
 
    case "$SANDBOX" in */aibos-test.*) ;; *) echo "*** run via tests/run, never directly (it would touch the real HOME)" >&2; exit 1;; esac
@@ -67,6 +67,33 @@
    assert_contains "$(A "$V/PA" assistant-gaertner --type improvement)" "Result: 1 open ticket (1 assistant-gaertner)" "both filters, singular"
    assert_contains "$(A "$V/PA" a b)" "usage: aibos --ticket [<package>] [--type <type>]" "two packages: usage"
    assert_exit 1 bash -c "cd '$V/PA' && '$SRC/bin/aibos' --ticket a b"
+
+#===============================================================================
+# v0.7.2 - aibos --ticket --paths: absolute paths of the open tickets (spec 06, Tickets; V0.7, memos 105-107:
+#          F418, FL106-FL108)
+#===============================================================================
+
+   RV="$(cd "$V" && pwd -P)"
+   ALL="$RV/@/@!Ticket/2026-11-24-0901 Memo kuerzer.md
+$RV/@/@!Ticket/2026-11-24-0902 Memo alt.md
+$RV/@/@!Ticket/2026-11-24-0903 Gaertner freundlicher.md
+$RV/@/@!Ticket/2026-11-24-0905 Kernel.md
+$RV/@/@!Ticket/2026-11-24-0906 Ein sehr langer Titel fuer einen Wunsch an den Memo-Skill.md
+$RV/@/@!Improve/2026-11-16-1200 Alter Ordner.md"
+   assert_eq "$(A "$V/PA" --paths)" "$ALL" "--paths: six absolute paths, unshortened, order of the report, old folder last (FL106, FL107)"
+   assert_eq "$(A "$V/PA" skill-memo --paths)" "$(printf '%s\n' "$ALL" | /usr/bin/grep -E 'Memo|Alter')" "--paths with a package: four paths (FL108)"
+   assert_eq "$(A "$V/PA" --paths skill-memo)" "$(A "$V/PA" skill-memo --paths)" "--paths before the package works the same"
+   assert_eq "$(A "$V/PA" --type improvement --paths)" "$ALL" "--paths with --type (FL108)"
+   assert_eq "$(A "$V/PA" assistant-astronom --paths)" "" "--paths without open tickets: empty (FL107)"
+   assert_exit 0 bash -c "cd '$V/PA' && '$SRC/bin/aibos' --ticket assistant-astronom --paths"
+   OUT="$(A "$V/PA" --paths)"
+   assert_not_contains "$OUT" "Erledigt" "--paths: no ticket with status"
+   assert_not_contains "$OUT" "Ohne Paket" "--paths: no file that is not a ticket"
+   assert_not_contains "$OUT" "Result:" "--paths: no report"
+   while IFS= read -r P; do [ -f "$P" ] || fail "--paths: no file $P"; done <<< "$ALL"
+   ok
+   assert_contains "$(A "$V/PA" a b --paths)" "usage: aibos --ticket [<package>] [--type <type>] [--paths]" "usage names --paths"
+   assert_contains "$(A "$V/PA")" "Result: 6 open tickets" "the report without --paths is unchanged"
 
 #===============================================================================
 # read only, no mailbox, outside an A/W

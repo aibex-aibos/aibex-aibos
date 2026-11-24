@@ -227,11 +227,23 @@ def report(vault, tickets, problems, cfg, path):
     print(f"Result: {len(tickets)} open {word}" + (f" ({detail})" if detail else ""))
 
 
+def print_paths(tickets):
+    """aibos --ticket … --paths (v0.7.2, F418, FL106–FL108): the absolute paths of the open tickets,
+    one per line, in the order of the report, for skills that read them with Read."""
+    for t in tickets:
+        print(t.file)
+
+
 def command(args):
-    """aibos --ticket [<package>] [--type <type>]: list the open tickets, read only, exit 0."""
+    """aibos --ticket [<package>] [--type <type>] [--paths]: list the open tickets, read only, exit 0."""
     package = kind = None
+    only_paths = False
     rest, i = [], 0
     while i < len(args):
+        if args[i] == "--paths":
+            only_paths = True
+            i += 1
+            continue
         if args[i] == "--type" and i + 1 < len(args):
             kind = args[i + 1]
             i += 2
@@ -239,7 +251,7 @@ def command(args):
         rest.append(args[i])
         i += 1
     if len(rest) > 1 or any(r.startswith("-") for r in rest):
-        raise ui.Abort("usage: aibos --ticket [<package>] [--type <type>]")
+        raise ui.Abort("usage: aibos --ticket [<package>] [--type <type>] [--paths]")
     package = rest[0] if rest else None
     path = paths.cwd()
     cfg = config.load(path)
@@ -248,5 +260,8 @@ def command(args):
         return 1
     vault = Path(os.path.realpath(cfg.vault))
     tickets, problems = open_tickets(vault, package, kind)
+    if only_paths:
+        print_paths(tickets)
+        return 0
     report(vault, tickets, problems, cfg, path)
     return 0

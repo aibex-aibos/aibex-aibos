@@ -21,7 +21,7 @@
       echo '          aibos --register [<path>]            # register the wrappers and project skills (spec 03)'
       echo '          aibos --init [<path>]                # make a folder a project (@/, git, .gitignore)'
       echo '          aibos --integrity [<path>]           # integrity of a project and its subprojects'
-      echo '          aibos --ticket [<package>] [--type <type>] # open tickets in the mailbox @/@!Ticket'
+      echo '          aibos --ticket [<package>] [--type <type>] [--paths] # open tickets in the mailbox @/@!Ticket'
       echo '          aibos --mod [install <mod> [--to <project>] | uninstall <mod>] # mods in Claude Code'
       echo '          aibos --assistant <name|none|inherit> # assign the assistant to the project'
       echo '                       [--to <project>] [--session <id>]'
