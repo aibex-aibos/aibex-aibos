@@ -1,8 +1,8 @@
 ---
 title: "Pakete und Workspaces"
-date: 2026-11-16
+date: 2026-11-24
 author: iHux
-status: Spec
+status: Entwurf
 tags: [spec, aibos, v0.7, pakete, workspaces]
 number: 06
 related:
@@ -16,6 +16,7 @@ related:
   - "Memos 05, 07, 08, 11–37 (AA-AIbex-AIOS, @Memo/V0.5)"
   - "Memos 79–84 (AA-AIbex-AIOS, @Memo/V0.6): v0.6.1"
   - "Memos 01–15 (AA-AIbex-AIOS, @Memo/V0.7): Umbenennung in AIBOS"
+  - "Memos 68–76 (AA-AIbex-AIBOS, @Memo/V0.7): v0.7.1, Tickets, W4, W5"
 ---
 
 # Pakete und Workspaces
@@ -197,7 +198,11 @@ Der Resolver bestimmt aus den gewünschten Paketen eines Projekts (`packages:` i
 2. Je Paket die **höchste Version** wählen, die alle Bereiche erfüllt, die bis jetzt dafür gelten (aus `packages:` und aus `depends` bereits gewählter Pakete).
 3. Ihr `manifest.yaml` lesen (aus dem Cache bzw. nach Download): `requires.aibos` gegen die für das Zielprojekt gültige AIBOS-Version prüfen (ohne Vorabkennung), `depends` als neue Bereiche aufnehmen. Eine Abhängigkeit wird **zuerst im Hub des verlangenden Pakets** gesucht, auch wenn dieser nicht in der Hub-Liste steht, dann in der Hub-Liste (V0.4, Memos 21, 26). Mehrere Treffer in der Hub-Liste führen zum Abbruch wie unter *Paket finden*.
 4. Ändert ein neuer Bereich die Wahl eines bereits gewählten Pakets, wird dieses neu gewählt und Schritt 3 wiederholt, bis sich nichts mehr ändert.
-5. Erfüllt keine Version alle Bereiche eines Pakets oder passt `requires.aibos` bei keiner passenden Version: Abbruch mit einer Liste der Konflikte (Paket, Bereiche, Herkunft je Bereich). Es gibt kein Backtracking über ältere Versionen anderer Pakete.
+5. Erfüllt keine Version alle Bereiche eines Pakets oder passt `requires.aibos` bei keiner passenden Version: Abbruch mit einer Liste der Konflikte (Paket, Bereiche, Herkunft je Bereich). Es gibt kein Backtracking über ältere Versionen anderer Pakete. Stammt ein Bereich mit `==` aus einer Distribution (Herkunft `distribution-<name>`), folgt nach der Liste je solcher Distribution eine Zeile (ab v0.7.1; V0.7, Memo 68: W4, Memo 73: F387; MAA, Memo 188: B67):
+
+   ```
+   note: distribution-<name> <version> pins <paket> to ==<v>; a newer <paket> needs a new version of distribution-<name>, or remove it with aibos --fetch --remove distribution-<name>
+   ```
 
 Zyklen in `depends` sind erlaubt, solange die Bereiche erfüllbar sind. Ein Paket, das in `lock.yaml` steht und dessen Version alle Bereiche weiter erfüllt, bleibt bei dieser Version (kein stilles Update). Ein Update gibt es nur mit `aibos --fetch --upgrade [<name>]`.
 
@@ -361,6 +366,42 @@ Die Umstellungen von v0.3 und v0.4 stehen in dieser Spec im Tag `v0.6.6` (V0.7, 
 ## Daten der Pakete — `@Data/`
 
 Daten, die ein Paket im Projekt erzeugt, liegen in `<projekt>/@Data/<paket>/` (F6). Das gilt für jedes Paket, dessen Elemente schreiben: Apps, Assistenten und andere (V0.5, Memo 07); ein Assistent schreibt nach `@Data/assistant-<name>/`. Die Daten eines Arbeitspferds liegen unter `@Data/` des Pakets, das sie erzeugt, nicht unter `@Data/worker-<name>/` (Spec 07, K7). `@Data/` ist ein Schlüsselordner wie `@Memo/`: Er gehört nicht zum Masterspace, wird nicht in den Kontext geladen und ist versioniert. Das Paket legt `@Data/<paket>/` selbst an, wenn sie zum ersten Mal schreibt (V0.4, Memo 18, Q3). `aibos --fetch --remove` lässt `@Data/` unberührt.
+
+## Tickets — `@/@!Ticket/`
+
+Ein **Ticket** ist ein Anliegen an ein Paket oder an AIBOS selbst, abgelegt als eine Markdown-Datei im **Postfach** `<vault-root>/@/@!Ticket/` (ab v0.7.1; V0.7, Memos 68, 74, 75: F389, F392). Es gibt ein Postfach je Vault, im Masterspace der Vault-Root; Projekte haben keines. Als Ordner der Klasse *Verborgen* (Spec 02, *Klassen*) kommt es nie in den Master-Kontext. Ein Ticket ist kein Vorgang eines Ticketsystems: Es hat keine Zuständigen, Prioritäten oder Fristen, nur Typ, Paket und Status.
+
+Tickets legen Skills an (z. B. `improve` aus `skill-improve` mit Typ `improvement`) oder der User; AIBOS liest sie nur (P6). Format (Frontmatter, danach freier Text):
+
+| Feld | Pflicht | Bedeutung |
+|---|---|---|
+| `type` | ja | Art des Tickets; bis jetzt `improvement`; weitere Typen (etwa `bug`, `question`, `task`) brauchen keine Änderung an AIBOS |
+| `package` | ja | Paket, an das sich das Ticket richtet; `aibos` für den Kernel |
+| `element` | nein | Element des Pakets (Skill, Assistent) |
+| `version` | ja | Version des Pakets, mit der das Ticket entstand |
+| `date`, `author`, `project` | ja (`author` darf leer sein) | Datum, Autor, Projekt relativ zur Vault-Root (`.` für die Vault-Root) |
+| `status` | nein | fehlt bei einem offenen Ticket; z. B. `aufgenommen` oder `abgelehnt`, gesetzt vom Skill des Pakets |
+
+Eine Datei ohne Frontmatter oder ohne `type` oder `package` ist kein Ticket; `aibos --ticket` nennt sie unter *Notes* und lässt sie liegen.
+
+**`aibos --ticket [<paket>] [--type <typ>]`** listet die offenen Tickets (ohne `status`) des Postfachs, nur lesend, mit Exit 0, auch wenn es keine gibt. Mit `<paket>` nur die Tickets an dieses Paket, mit `--type` nur diesen Typ. Ein Ticket gilt als **älter**, wenn seine `version` kleiner ist als die Version des Pakets im `lock.yaml` des nächsten Projekts der Kette von `cwd`, das das Paket hält (für `aibos`: die Bindung des Vaults); der Bericht nennt es unter *Notes*. Außerhalb eines A/W: `Kein AIBOS-Workspace: <cwd>`, Exit 1 wie `aibos --skill`.
+
+```
+Tickets §AIBOS — 2026-11-24
+
+File                                          Type         Package         Version  Date        Author  Project
+2026-11-23-0523 Postfach lesen ohne Rückfr…   improvement  aibos           0.7.0    2026-11-23  iHux    M-Module/MA-Assistants/MAA-Anja-AIBOS-Expert
+2026-11-22-0924 Evals vor dem Abnahmetest…    improvement  assistant-anja  0.5.0    2026-11-22  iHux    M-Module/MS-Skills/MSI-Improve
+
+Notes
+- 2026-11-22-0924 Evals vor dem Abnahmetest: version 0.5.0 is older than assistant-anja 0.6.0 in /…/§AIBOS/.aibos/lock.yaml
+
+Result: 2 open tickets (1 aibos, 1 assistant-anja)
+```
+
+Die Spalte *File* zeigt den Namen ohne `.md`, gekürzt auf 45 Zeichen mit `…`. Eine Spalte *Element* steht nach *Package* nur, wenn ein Ticket der Liste ein `element` hat; sonst fehlt sie.
+
+**Übergang von v0.7.0** (F393): Bis 0.8 liest AIBOS zusätzlich `<vault-root>/@/@!Improve/`, den Ordner der Pakete `skill-improve` 0.1.0 und `assistant-anja` 0.6.0. Seine Dateien gelten als Tickets; `aibos --ticket` nennt sie mit dem Ordner in *File* und unter *Notes* `note: @/@!Improve/ is the folder of AIBOS 0.7.0; move its files to @/@!Ticket/`. AIBOS verschiebt sie nicht selbst.
 
 ## Workspaces
 
@@ -567,7 +608,7 @@ Dazu ein Eintrag in `workspace.local.yaml`.
 
 1. **Ziel:** Die Vault-Root lässt sich nicht entfernen; dafür gibt es `detach` (Workspace lösen). Ein ausgelagerter Teilbaum lässt sich entfernen: Statt des Teilbaums kommt der Platzhalter in den Papierkorb, und der Eintrag in `workspace.local.yaml` entfällt (F240).
 2. **Prüfung** wie bei `detach` (*Prüfung*, F165) für jedes Repo im Teilbaum. Verletzt ein Repo eine Bedingung, nennt der Plan jedes Hindernis mit Pfad, und `remove` ändert nichts; der Bericht schlägt `sync` vor.
-3. **Ordner:** Der Teilbaum wandert in den Papierkorb (`~/.Trash/<ordnername> <datum uhrzeit>`), ohne Platzhalter. Die Zeile `/<pfad>/` in der `.gitignore` des Repos darüber bleibt, damit ein Ordner, der auf einem anderen Rechner noch liegt, dort nicht ins Repo darüber gesichert wird.
+3. **Ordner:** Der Teilbaum wandert in den Papierkorb (`~/.Trash/<ordnername> <datum uhrzeit>`), ohne Platzhalter. Die Zeile `/<pfad>/` in der `.gitignore` des Repos darüber bleibt, damit ein Ordner, der auf einem anderen Rechner noch liegt, dort nicht ins Repo darüber gesichert wird. `aibos --integrity` meldet sie deshalb nicht als verwaist, solange der Pfad in `removed` steht (Spec 05, *Integrität*; V0.7, Memo 76).
 4. **Manifest:** Die Einträge des Projekts und aller Unterprojekte wandern von `projects` nach `removed` (mit `since`); AIBOS committet im Wurzelprojekt nur `workspace.yaml` („AIBOS: <pfad> aus dem Workspace entfernt"). `remove` pusht nicht; das tut der nächste `sync` (F239). `remove` und `attach <pfad>` schreiben die `workspace.yaml` dabei neu; Kommentare darin bleiben nicht erhalten (F257).
 
 Der Plan zeigt Prüfung, Papierkorb und Commit; ein Ja. **Andere Rechner** übernehmen das Entfernen beim nächsten `sync` (*sync*, Schritt 1); der Hook beim Start entfernt nichts (Spec 02, *Hooks*).
@@ -648,7 +689,7 @@ Zusätzlich zu Spec 01 (I1–I9):
 | P3 | Skripte und Installationen eines Pakets (setup und remove von Arbeitspferden, Befehle) laufen nie ohne Bestätigung, außer `aibos --run` mit einem Befehl, den der User selbst aufruft; der Plan zeigt bei `kind: python` die Pakete, bei Skripten den Inhalt (Spec 07). |
 | P4 | `aibos --workspace` ändert nie die Geschichte (kein Rebase, kein Zurücksetzen eines Zweigs) und verwirft nie Änderungen: `sync` sichert sie (Drive-Modell, Memo 204), `restore` legt Überschriebenes vorher in den Papierkorb. Es pusht nur den ausgecheckten Zweig, nie Tags, nie mit `--force`, und nie ein Repo mit Geheimnissen in den ausgehenden Commits. `detach` entfernt nur nach der Prüfung und nur in den Papierkorb. |
 | P5 | `aibos --contribute` schreibt nur in einen neuen Zweig; es pusht nie auf den Standardzweig. |
-| P6 | `@Data/<paket>/` wird von keinem Befehl außer dem Paket selbst geändert; `--remove` lässt ihn stehen. |
+| P6 | `@Data/<paket>/` wird von keinem Befehl außer dem Paket selbst geändert; `--remove` lässt ihn stehen. Das Postfach `@/@!Ticket/` (und bis 0.8 `@/@!Improve/`) liest AIBOS nur; es schreibt, verschiebt und löscht dort nichts. |
 | P7 | `aibos --deploy` kopiert nichts; es ändert nur `only` in `packages:`. |
 | P8 | Ein Plan mit „alles oder nichts" legt vor dem ersten Schreiben eine Sicherung unter `.aibos/backup/` an und löscht sie erst nach Erfolg (Spec 01, I11). |
 

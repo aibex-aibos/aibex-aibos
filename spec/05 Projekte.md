@@ -1,8 +1,8 @@
 ---
 title: "Projekte"
-date: 2026-11-16
+date: 2026-11-24
 author: iHux
-status: Spec
+status: Entwurf
 tags: [spec, aibos, v0.7, projekte]
 number: 05
 related:
@@ -15,6 +15,7 @@ related:
   - "Memos 08, 14–18, 21–24, 27, 28 (AA-AIbex-AIOS, @Memo/V0.3)"
   - "Memos 10, 24, 35 (AA-AIbex-AIOS, @Memo/V0.5)"
   - "Memos 01–15 (AA-AIbex-AIOS, @Memo/V0.7): Umbenennung in AIBOS"
+  - "Memos 68, 72–76 (AA-AIbex-AIBOS, @Memo/V0.7): v0.7.1, Hinweise in der Integrität"
 ---
 
 # Projekte
@@ -118,8 +119,10 @@ Ein Projekt ist **integer**, wenn Init und Commit erfüllt sind. **Hinweise** (`
 - **Bindung im Projekt:** Ein `aibos:` oder `legacy:` in der `.aibos/config.yaml` eines Projekts (nicht der Vault-Root) nennt der Bericht als übergangen (Spec 04, *Formate*; V0.6, Memo 16, F4).
 - **`@/` ohne getrackte Datei:** Enthält `@/` im eigenen Repo keine getrackte Datei, fehlt es in jedem Klon; der Bericht empfiehlt, `@/.gitkeep` zu committen (V0.6, Memo 199: B32). `aibos --init` legt `@/` mit `.gitkeep` an.
 - **Bindung und Markierung zugleich:** Stehen `aibos:` und `legacy:` in der `.aibos/config.yaml` der Vault-Root, nennt der Bericht, dass `aibos:` gilt (V0.6, Memo 17, F7).
+- **Verwaister Ausschluss** (ab v0.7.1; V0.7, Memo 68: W5; Memo 76): Eine Zeile `/<name>/` in der `.gitignore` eines geprüften Projekts, deren Ordner `<projekt>/<name>/` fehlt und deren Pfad weder in `projects` noch in `removed` der `workspace.yaml` steht (Spec 06), nennt der Bericht: `<projekt>: exclusion /<name>/ in .gitignore has no folder; remove the line`. Typischer Fall: ein Testprojekt, das von Hand in den Papierkorb kam. Ein Ausschluss nach `aibos --workspace remove` (Pfad in `removed`) und der Platzhalter eines ausgelagerten Teilbaums gelten nicht als verwaist.
+- **Veraltete Registrierung** (ab v0.7.1; V0.7, Memo 68, *Hinweis*; Memo 75: F390): Würde `aibos --register` im Projekt Hüllen der Kernel-Skills oder Projekt-Skills anlegen, ändern oder entfernen (Spec 03, *Registrieren*), nennt der Bericht: `<projekt>: registration out of date (<n> wrappers); run aibos --register "<projekt>"`. Das Ergebnis „integer" bleibt davon unberührt.
 
-Registrierte Skills, geholte Pakete und Blueprints gehören nicht zur Integrität; den Abgleich macht `aibos --fetch` (Spec 06).
+Registrierte Skills, geholte Pakete und Blueprints gehören nicht zur Integrität; den Abgleich macht `aibos --fetch` (Spec 06), die Registrierung `aibos --register` (Spec 03). Die Prüfung meldet eine veraltete Registrierung nur als Hinweis.
 
 **Bericht:**
 

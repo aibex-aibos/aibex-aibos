@@ -1,8 +1,8 @@
 ---
 title: "AIbex AIBOS v0.7 — Überblick"
-date: 2026-11-16
+date: 2026-11-24
 author: iHux
-status: Spec
+status: Entwurf
 tags: [spec, aibos, v0.7]
 number: 01
 related:
@@ -21,6 +21,7 @@ related:
   - "Memos 01–36 (AA-AIbex-AIOS, @Memo/V0.6), Soll-Bild Memo 34, Skizze Memo 35"
   - "Memos 79–84 (AA-AIbex-AIOS, @Memo/V0.6), v0.6.1, Skizze Memo 84"
   - "Memos 01–15 (AA-AIbex-AIOS, @Memo/V0.7), v0.7: Soll-Bild Memo 13, Skizze Memo 14"
+  - "Memos 68–76 (AA-AIbex-AIBOS, @Memo/V0.7), v0.7.1: Umfang Memos 72, 75, Spec-Entwurf Memo 76"
 ---
 
 # AIbex AIBOS v0.7 — Überblick
@@ -111,6 +112,7 @@ Die Begründungen stehen in den Memos der Konzeptprojekte unter `§AIBOS/A-AIOS/
 | **Lokal-Drive**, **Cloud-Drive**, **AIBOS-Drive**, **Netz-Drive** | die vier Arten, einen A/W über Rechner zu führen: nur auf diesem Rechner; repliziert von einem Cloud-Dienst (Vault-Root in einem Cloud-Ordner); abgeglichen von AIBOS über Git-Remotes (`workspace.yaml`); eine einzige Kopie auf einem Netzlaufwerk (Spec 06, *Arten der Führung*; V0.6, Memo 224) |
 | **Fremd-Repo** | Repo eines Workspace ohne `@/`, z. B. ein Paket-Repo; kein Projekt und kein Container (Spec 06) |
 | **Lock** | `.aibos/lock.yaml`: aufgelöste Pakete und eingefrorener Stand eines Workspace |
+| **Ticket**, **Postfach** | Anliegen an ein Paket oder an AIBOS als Datei mit Typ, Paket und Status; das Postfach ist `@/@!Ticket/` der Vault-Root (ab v0.7.1, Spec 06) |
 | **Demo-Assistent** | Assistent als Paket zum Ausprobieren und für Tutorials (`assistant-gaertner`, `assistant-astronom`) |
 | **Paket-Skill** | ausgerollter Skill aus einem geholten Paket in `@!Package/` |
 | **lokaler Skill** | Skill, der im Projekt selbst geschrieben wurde (`@!Skill/`) und aus keinem Paket stammt |
@@ -153,9 +155,22 @@ v0.7.0 baut auf v0.6.6 auf und **benennt AIbex AIOS in AIbex AIBOS um** (V0.7, M
 | `sync`: Gleichheit von Remote-Adressen (B40), erster Push mit Upstream (B41), Hinweis bei einem Projekt ohne Remote (H48) (Spec 06) | 07 (F278) |
 | `tests/run` prüft zu Beginn auf PyYAML (H49) | 07, 11 (F290) |
 
+v0.7.1 ist ein Patch für die Wünsche aus der Abnahme von Anja 0.6.0 und `skill-improve` 0.1.0 (V0.7, Memos 68–76; MAA, Memos 168–189). Er kommt zusammen mit neuen Versionen von `skill-improve` und `assistant-anja`, die das Postfach `@/@!Ticket/` nutzen (F393).
+
+| in v0.7.1 | Memos |
+|---|---|
+| Tickets im Postfach `<vault-root>/@/@!Ticket/` mit Format, Übergang von `@/@!Improve/` bis 0.8 (Spec 06, *Tickets*) | 74, 75 (F389, F392, F393) |
+| `aibos --ticket [<paket>] [--type <typ>]` listet offene Tickets und markiert ältere (Spec 04, 06) | 70, 73, 75 (F380, F385, F392) |
+| Hook `PreToolUse` gibt Read im Postfach des Vaults frei (Spec 02, *Freigabe*, R2) | 70, 75 (F380, F392) |
+| Zeile `AIBOS-TICKET` beim Start und nach jeder Compaction (Spec 02, *Hooks*, *Ausgabe*) | 70, 73 (F380, F386); V0.99, Memo 34 |
+| Hinweis bei `==` aus einer Distribution im Resolver; Liste der festgelegten Pakete im Plan von `aibos --activate` (Spec 04, 06) | 72, 73 (F383, F387) |
+| `aibos --integrity`: verwaiste Ausschlüsse und veraltete Registrierung als Hinweise (Spec 05) | 72, 75, 76 (F383, F390) |
+
+Nicht in v0.7.1: lesende `git`-Befehle und zusammengesetzte Befehle in der Freigabe (Memo 70, F381); die Vault-Root als zusätzliches Verzeichnis (Memos 69, 71, 72: F382). Für 0.7.5 sind B57 und H83 vorgesehen, für 0.7.9 B54, B55, H59, H62, H64, H65, H69, H70, H76, H79–H82 und die Verweise auf alte Projektnamen (Memos 65–67, 72).
+
 | später | |
 |---|---|
-| Wegfall des Übergangs: Verweis `~/.aios`, Alias `aios`, `AIOS_*`, Topics `aios-*`, Lesen von `.aios/`, `aios:` und `requires.aios` | 0.8 |
+| Wegfall des Übergangs: Verweis `~/.aios`, Alias `aios`, `AIOS_*`, Topics `aios-*`, Lesen von `.aios/`, `aios:` und `requires.aios`, Lesen von `@/@!Improve/` | 0.8 |
 | Workflows, Wissen mit Rohwissen und Fassung | 0.8 und später |
 | Wünsche aus V0.99, Memo 19 (Auslagern, Drive für große Dateien, weitere Sync-Dienste, Netz-Drive) | offen |
 
@@ -188,31 +203,25 @@ AIBOS hält diese Regeln in jedem Befehl ein (für Pakete zusätzlich P1–P8, S
 
 ## Abnahmetest
 
-Der Abnahmetest von v0.7.0 läuft auf dem letzten Kandidaten `v0.7.0-rc<n>` des Kernels und den Kandidaten der Pakete mit derselben Nummer (V0.7, Memos 10, 14: FL1). Die Schritte 2–11 laufen in einem **Probe-Workspace** im Scratchpad: zwei Sandkasten-Rechner A und B (je eigenes `HOME`, `AIBOS_PREFIX`, `AIBOS_CLAUDE_DIR`), ein Vault `§Probe-Umstieg` mit Projekten `PA-Alpha` (mit Unterprojekt `PAA-Kind`) und `PB-Beta`, lokale Bare-Repos unter einem Ordner `…/aibex-aios/` als Remotes (über `AIBOS_GITHUB` bzw. `AIOS_GITHUB` umgelenkt), Test-Hub mit `skill-memo` 6.0.2 und 6.1.0-rc<n>. Schritte im Chat dürfen headless laufen (`claude -p`, Spec 03). Jeder Schritt nach außen hat eine eigene Rückfrage.
+Der Abnahmetest von v0.7.1 läuft auf dem letzten Kandidaten `v0.7.1-rc<n>` des Kernels und den Kandidaten von `skill-improve` und `assistant-anja` (V0.7, Memo 76). Die Schritte 2–9 laufen in einem **Probe-Vault** `§Probe-Ticket` im Scratchpad, in einem Sandkasten-Rechner (eigenes `HOME`, `AIBOS_PREFIX`, `AIBOS_CLAUDE_DIR`) mit einem Test-Hub unter `file://` (`AIBOS_HUBS`): `skill-memo` 6.0.2 und 6.1.0, `distribution-probe` 0.1.0 mit `skill-memo: "==6.0.2"` (ohne `kernel:`). Projekte: die Vault-Root mit `distribution-probe`, `PA-Alpha` mit `skill-memo` und einem Unterprojekt `PAA-Kind`, `PB-Beta` ohne Pakete. Postfach `§Probe-Ticket/@/@!Ticket/` mit drei Tickets (zwei an `skill-memo`, eines davon mit `version: 6.0.0`; eines an `assistant-gaertner`), einer Datei ohne `package` und `§Probe-Ticket/@/@!Improve/` mit einem Ticket an `skill-memo`. Schritte im Chat laufen headless (`claude -p`, Modell sonnet, `--permission-mode default`). Jeder Schritt nach außen hat eine eigene Rückfrage.
 
 | # | Wer, wo | Schritt | erwartet |
 |---|---|---|---|
-| 1 | Terminal | `tests/run` einmal ohne und einmal mit `python3` samt PyYAML; alle `tests/live/*.sh` | ohne PyYAML eine Zeile und Abbruch (H49); sonst alle grün |
-| 2 | Rechner A, B | Kernel 0.6.6 aus dem Tag installieren; `§Probe-Umstieg` auf A anlegen, binden, Projekte mit `aios --init`, Remotes, `aios --fetch skill-memo`; `aios --workspace sync --yes`; auf B `aios --workspace attach <remote der Root> <ordner>` | beide Klone mit allen Projekten auf 0.6.6; `status` ohne Abweichung |
-| 3 | Rechner A | `<klon>/bin/aibos --install v0.7.0-rc<n> --plan`, dann `--yes` | Plan nennt Umzug `~/.aios` → `~/.aibos`, Verweis, Weiterleiter `aibos` mit Alias `aios`, drei Hooks; danach ist `~/.aios` ein Verweis, die Hooks rufen `~/.aibos/bin/aibos`; `aios --version` und `aibos --version` antworten |
-| 4 | Rechner A | `aibos --activate v0.7.0-rc<n> §Probe-Umstieg --plan`, dann `--yes` | Plan: `.aios/` → `.aibos/` in 4 Projekten, Hüllen `aibos-*` statt `aios-*`, `aibex-aios` → `aibex-aibos` in `workspace.yaml` und `origin`, Paketwechsel `skill-memo` 6.0.2 → 6.1.0-rc<n>, ein Commit je Projekt; danach Bindung `aibos: 0.7.0-rc<n>` |
-| 5 | Rechner A, `PA-Alpha` | `aibos --context --session`; PreToolUse mit `~/.aibos/bin/aibos --skill aibos-status`; `AIOS_HUBS=… aibos --library` | `<aibos-context>`, Block mit `aibos-*`; `"allow"`; Hub gelesen, Hinweis auf `AIOS_HUBS` |
-| 6 | Rechner A | `aibos --fetch "skill-memo==6.0.2"` | abgelehnt mit `needs a version for AIBOS 0.7.0-rc<n> (requires.aios …)`, nichts geschrieben |
-| 7 | Rechner A | `aibos --workspace sync --yes` | Umbenennungen gepusht |
-| 8 | Rechner B (0.6.6) | `aios --workspace sync --plan` nach `git pull` von Hand in einem Projekt | Vault gilt als ungebunden, nichts geschrieben |
-| 9 | Rechner B | `aibos --install …`; `aibos --activate v0.7.0-rc<n> <vault> --plan`, dann `--yes`; `aibos --workspace sync --yes` | Plan holt zuerst den umgestellten Stand; danach keine doppelten Umbenennungen, `status` ohne Abweichung |
-| 10 | Rechner A | `workspace.yaml` mit `git@github.com:…`, `origin` mit `https://github.com/…`; neues Projekt mit `origin` ohne Push; ein Projekt ohne Remote als Projekt der Session; je `sync --plan` | gleiches Repo erkannt (B40); „erster Push von `main`", nach `--yes` mit Upstream (B41); Satz zum fehlenden Remote (H48) |
-| 11 | Chat auf A, headless | „/aibos-status", „/aibos-sync"; „/aios-status" | Skills laufen; `/aios-status` gibt es nicht |
-| 12 | Terminal | `aibos-installer` 0.2.0: `tests/run`; Lauf B (Terminal) im Sandkasten bis zum Ende | grün; Kernel, Zustimmung und Ergebnis unter `~/.aibos` |
-| 13 | iHux, GitHub | je mit Rückfrage: Organisation umbenennen; Repos `aibex-aibos`, `aibos-index`, `aibos-installer`; Topics; dann `git ls-remote https://github.com/aibex-aios/skill-memo` und `gh api orgs/aibex-aios` | Weiterleitung für `git`, 404 für die API |
-| 14 | Arbeitsrechner | Bestandslauf mit `aibos --activate v0.7.0-rc<n> <vault> --plan` für jeden Vault aus `aibos --vaults`; dann installieren und `§AIBOS`, `§Hugo` umbinden | keine Konflikte; alle Pakete der Locks in einer Version für 0.7 |
-| 15 | neuer Chat in `§AIBOS` | „Wo stehen wir?", `/aibos-sync` | Master-Kontext mit `<aibos-context>`, Plan vor dem Push |
-| 16 | Notebook | installieren, `attach` bzw. `sync` des Workspace `§AIBOS` | wie Schritt 9 am echten Workspace |
-| 17 | iHux | leere Organisation `aibex-aios` anlegen | Weiterleitungen enden; `git ls-remote` auf eine alte Adresse scheitert |
-| 18 | — | Abnahme-Memo | Schritte 1–17 bestanden |
-| 19 | nach Freigabe | `VERSION` 0.7.0, Tags `v0.7.0` im Kernel und in den Paketen; veröffentlichen, jeder Schritt mit eigener Rückfrage | Bindung `aibos: 0.7.0` |
+| 1 | Terminal | `tests/run`; alle `tests/live/*.sh` | alle grün |
+| 2 | Sandkasten | `aibos --install v0.7.1-rc<n>`; `§Probe-Ticket` anlegen, binden, Projekte mit `aibos --init`, Pakete holen | Bindung `aibos: 0.7.1-rc<n>`; `skill-memo` 6.0.2 an der Vault-Root (Distribution), 6.1.0 in `PA-Alpha` |
+| 3 | Sandkasten, `PA-Alpha` | `aibos --ticket`; `aibos --ticket skill-memo`; `aibos --ticket --type improvement`; außerhalb des Vaults `aibos --ticket` | Liste der vier offenen Tickets mit Spalten nach Spec 06, *Tickets*; *Notes* mit dem älteren Ticket (`6.0.0` gegen `6.1.0`), dem Ordner `@/@!Improve/` und der Datei ohne `package`; Filter wirken; außerhalb `Kein AIBOS-Workspace`, Exit 1 |
+| 4 | Sandkasten | `aibos --context --session` in `PA-Alpha` mit `source` `startup` und `compact`; in `PB-Beta`; nach Setzen von `status: aufgenommen` in allen Tickets an `skill-memo` erneut in `PA-Alpha` | `AIBOS-TICKET: open tickets for this session: 3 for skill-memo. …` bei beiden `source`, ohne das Ticket an `assistant-gaertner` (Assistent der Session `none`); in `PB-Beta` dieselbe Zeile über `lock.yaml` der Vault-Root (Kette); danach keine Zeile |
+| 5 | Sandkasten, `PAA-Kind` | `aibos --context --permit` mit Read auf eine Datei in `@/@!Ticket/`, in `@/@!Improve/`, in `@/@Rule/` und im Postfach eines zweiten Vaults | `"allow"` für die beiden ersten, keine Ausgabe für die anderen |
+| 6 | Chat in `PAA-Kind`, headless | „Welche offenen Tickets gibt es an skill-memo? Lies das älteste.“ | Aufruf von `aibos --ticket skill-memo` und Read ohne Eintrag in `permission_denials` |
+| 7 | Sandkasten | `aibos --fetch "skill-memo>=6.1" --to <vault-root> --plan`; `aibos --activate v0.7.1-rc<n> <vault-root> --plan` | Konflikt mit der Zeile `note: distribution-probe 0.1.0 pins skill-memo to ==6.0.2; …`; Plan von `--activate` mit `note: distribution-probe 0.1.0 pins skill-memo ==6.0.2` und „nichts zu tun“ |
+| 8 | Sandkasten | Zeilen `/PZ-Weg/` und `/PY-Entfernt/` in die `.gitignore` von `PA-Alpha`, beide ohne Ordner; eine `workspace.yaml` an der Vault-Root mit `PA-Alpha/PY-Entfernt` in `removed`; eine Hülle in `PA-Alpha/.claude/skills/` löschen; `aibos --integrity <vault-root>` | Hinweis `PA-Alpha: exclusion /PZ-Weg/ in .gitignore has no folder; remove the line`; kein Hinweis zu `/PY-Entfernt/`; Hinweis `PA-Alpha: registration out of date (1 wrappers); …`; Ergebnis integer wie vorher |
+| 9 | Sandkasten, Kandidaten der Pakete | `skill-improve` und `assistant-anja` als `-rc<n>` holen; Chat headless in `PAA-Kind`: „Ich hab einen Verbesserungsvorschlag für dich: …“ und neuer Chat „Hallo“ | neues Ticket in `@/@!Ticket/` mit `type: improvement`; Anja zählt zu Beginn ihre Tickets über `aibos --ticket` ohne Eintrag in `permission_denials` |
+| 10 | Arbeitsrechner | Bestandslauf mit `aibos --activate v0.7.1-rc<n> <vault> --plan` für jeden Vault aus `aibos --vaults`; dann installieren und `§AIBOS`, `§Hugo` umbinden | keine Konflikte; der Plan nennt die Pakete, die `distribution-capricorn` festlegt |
+| 11 | Arbeitsrechner, `§AIBOS` | `aibos --ticket`; Umzug der Dateien von `@/@!Improve/` nach `@/@!Ticket/` mit eigener Rückfrage; erneut `aibos --ticket` | vorher alle Tickets mit dem Hinweis zu `@/@!Improve/`, danach ohne; Zahl gleich |
+| 12 | — | Abnahme-Memo | Schritte 1–11 bestanden |
+| 13 | nach Freigabe | `VERSION` 0.7.1, Tags `v0.7.1` im Kernel, in `skill-improve` und `assistant-anja`; veröffentlichen, jeder Schritt mit eigener Rückfrage | Bindung `aibos: 0.7.1` |
 
-Die Abnahmetests von v0.6.6, v0.6.4 (mit zweitem Benutzer und Notebook), v0.6.3, v0.6.2, v0.6.1, v0.6.0 und v0.5 stehen in dieser Spec in den Tags `v0.6.6`, `v0.6.4`, `v0.6.3`, `v0.6.2`, `v0.6.1`, `v0.6.0` bzw. `v0.5.1`.
+Die Abnahmetests von v0.7.0, v0.6.6, v0.6.4 (mit zweitem Benutzer und Notebook), v0.6.3, v0.6.2, v0.6.1, v0.6.0 und v0.5 stehen in dieser Spec in den Tags `v0.7.0`, `v0.6.6`, `v0.6.4`, `v0.6.3`, `v0.6.2`, `v0.6.1`, `v0.6.0` bzw. `v0.5.1`.
 
 ## Offen
 

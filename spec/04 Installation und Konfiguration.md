@@ -1,8 +1,8 @@
 ---
 title: "Installation und Konfiguration"
-date: 2026-11-16
+date: 2026-11-24
 author: iHux
-status: Spec
+status: Entwurf
 tags: [spec, aibos, v0.7, installation, konfiguration]
 number: 04
 related:
@@ -23,6 +23,7 @@ related:
   - "Memos 02, 03, 06, 07, 12, 14–19, 21, 24, 28–30 (AA-AIbex-AIOS, @Memo/V0.6)"
   - "Memos 79–84 (AA-AIbex-AIOS, @Memo/V0.6): v0.6.1"
   - "Memos 01–15 (AA-AIbex-AIOS, @Memo/V0.7): Umbenennung in AIBOS"
+  - "Memos 68–76 (AA-AIbex-AIBOS, @Memo/V0.7): v0.7.1, Tickets, W4"
 ---
 
 # Installation und Konfiguration
@@ -125,7 +126,8 @@ AIBOS legt nichts in `~/bin`, `~/etc`, `~/tmp` oder `~/git` an und ändert keine
 └── @/                              Root-Masterspace (Klassen, Spec 02)
     ├── @!Skill/<name>/             lokale Blueprints
     ├── @!Assistant/<name>/         lokale Blueprints
-    └── @!Package/<name>/           nach aibos --fetch (Spec 06)
+    ├── @!Package/<name>/           nach aibos --fetch (Spec 06)
+    └── @!Ticket/                   Postfach mit Tickets, nur an der Vault-Root (Spec 06, ab v0.7.1)
 ```
 
 | Pfad | angelegt von | Git |
@@ -138,6 +140,7 @@ AIBOS legt nichts in `~/bin`, `~/etc`, `~/tmp` oder `~/git` an und ändert keine
 | `@/`, `.git/`, `.gitignore` | `aibos --activate` bzw. `aibos --init`, falls fehlend | ja |
 | `@/@!Skill/<name>/`, `@/@!Assistant/<name>/` | User | ja |
 | `@/@!Package/<name>/` | `aibos --fetch` | ja |
+| `@/@!Ticket/<datei>.md` | Skills der Pakete (z. B. `improve`) oder der User; AIBOS liest nur (Spec 06, *Tickets*) | ja |
 
 ### Projekt
 
@@ -418,6 +421,7 @@ Die Weiterleiter lesen nur kleine Dateien und greifen nie auf das Netzwerk zu.
 | `aibos --gui [--session <id>] [--html]` | Rumpf des Oberflächen-Skills des aktiven Assistenten bzw. mit `--html` das HTML-Fragment (Spec 03, *Oberflächen*); `aibos --gui --aibos` für die AIBOS-Oberfläche, `aibos --gui --apps` für die Liste der Oberflächen ausgerollter Apps, `aibos --gui --skill <oberfläche> [--html]` für die Oberfläche einer App |
 | `aibos --init [<pfad>] [--assistant <wert>] [--name <name>] [--accept-name]` | Ordner zum Projekt machen oder ein Projekt ergänzen (Spec 05) |
 | `aibos --integrity [<pfad>]` | Integrität des Projekts und aller Unterprojekte prüfen, nur lesend (Spec 05) |
+| `aibos --ticket [<paket>] [--type <typ>]` | offene Tickets im Postfach der Vault-Root listen, nur lesend (Spec 06, *Tickets*; ab v0.7.1) |
 
 Alle schreibenden Befehle zeigen zuerst einen Plan und fragen `[Y/n]` (I7). Für Skills, die im Bash-Werkzeug keine Rückfrage beantworten können, gibt es zwei Schalter: `--plan` zeigt nur den Plan und schreibt nichts (Exit 0), `--yes` überspringt die Frage. Ein Skill zeigt den Plan, fragt im Chat und ruft erst nach Ja mit `--yes` auf; ohne Eingabe auf stdin wird nie geschrieben. Mit `--yes` gibt ein Befehl nur noch das Ergebnis in wenigen Zeilen und Fehler aus. **Ohne gültiges Arbeitsverzeichnis** (der Ordner der Shell wurde gelöscht oder ausgelagert): Nennt der Aufruf einen absoluten Pfad, arbeiten Weiterleiter und `aibos` mit ihm weiter und lesen das Arbeitsverzeichnis nicht. Ohne Pfad, oder mit relativem Pfad, enden sie mit Exit 1 und `*** aibos: the current directory no longer exists; change to an existing one (e.g. cd ~) or give an absolute path`, ohne Python-Fehler (Weiterleiter 0.4.3; V0.6, Memo 204: H34). Hooks schreiben in diesem Fall nur ins Log (Spec 02). **Sprache:** Alle Ausgaben von `aibos` auf stdout und stderr sind englisch, auch Berichte und Aufstellungen; deutsch bleiben nur die Commit-Nachrichten, die AIBOS schreibt, die Meldung `Kein AIBOS-Workspace` sowie die Rümpfe der Kernel-Skills (V0.3, Memo 53, 54). Claude spricht mit dem User in dessen Sprache. `bin/aibos` und die Weiterleiter sind Bash-Skripte nach der Bash-Konvention (Help-, Version- und Dispatch-Blöcke, Fallback); die Logik hinter `aibos` läuft in Python im venv der Installation (`python/`). `--prepare`, `--install`, `--versions`, `--remove-version` und `--uninstall` verwenden nur die Standardbibliothek, weil sie aus einem Klon mit dem `python3` des Systems laufen, bevor eine venv existiert. Voraussetzung ist die **Grundausstattung**: `python3` ≥ 3.11 mit den Modulen `venv` und `pip`, `git`. `aibos --install` prüft sie selbst (unten).
 
@@ -486,7 +490,7 @@ Ziel der Arbeitspferde ist der Ort nach *Installationen* (Spec 07); der Plan nen
 | Offene Dateien | Der Plan nennt offene Dateien des Vaults, die er ändert oder committet, zusammengefasst je Paketordner wie Spec 06, *Holen*, Schritt 4; er committet sie nicht selbst (V0.6, Memos 02, 81) |
 | Version | mit oder ohne `v` angegeben, geschrieben ohne `v`; steht dieselbe Version schon in der Datei, fehlt nichts von der Struktur, ist die Registrierung aktuell und fehlt keine Zeile der Vorlage: „nichts zu tun", keine Rückfrage |
 | Umstellung | Pakete, die mit der neuen Version nicht laufen, im selben Plan mit allen Unterschritten (Spec 06, *Paketwechsel bei der Aktivierung*) |
-| Distribution | Hält der Vault eine Distribution mit `kernel:`, das die neue Version nicht erfüllt, nennt der Plan sie als Hinweis: `note: distribution-<name> <version> wants kernel <bereich>; update it with aibos --install distribution-<name>`. Umgebunden wird trotzdem; die Distribution wird nicht geändert. Der Hinweis erscheint nur, wenn sich die Bindung ändert, und nicht im Plan von `aibos --install distribution-<name>`, der den Kernel selbst bringt (Spec 06, *Distributionen*; V0.6, Memos 108, 120, 130: H5, F105) |
+| Distribution | Hält der Vault eine Distribution mit `kernel:`, das die neue Version nicht erfüllt, nennt der Plan sie als Hinweis: `note: distribution-<name> <version> wants kernel <bereich>; update it with aibos --install distribution-<name>`. Umgebunden wird trotzdem; die Distribution wird nicht geändert. Der Hinweis erscheint nur, wenn sich die Bindung ändert, und nicht im Plan von `aibos --install distribution-<name>`, der den Kernel selbst bringt (Spec 06, *Distributionen*; V0.6, Memos 108, 120, 130: H5, F105). Ab v0.7.1 nennt der Plan zusätzlich jede Distribution in `packages:` der Vault-Root mit den Paketen, die sie festlegt, auch wenn sich die Bindung nicht ändert und auch bei „nichts zu tun“: `note: distribution-<name> <version> pins <paket> ==<v>, <paket> ==<v>, …`. So zeigt der Bestandslauf vor einem Upgrade, welche Pakete nur mit einer neuen Distribution wechseln können (V0.7, Memo 68: W4; Memo 73: F387) |
 | Hinweis | Master-Kontext und Registrierung gelten ab dem nächsten Chat |
 
 ### `aibos --deactivate [<vault-root>]`

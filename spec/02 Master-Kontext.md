@@ -1,8 +1,8 @@
 ---
 title: "Master-Kontext"
-date: 2026-11-16
+date: 2026-11-24
 author: iHux
-status: Spec
+status: Entwurf
 tags: [spec, aibos, v0.7, master-kontext]
 number: 02
 related:
@@ -17,6 +17,7 @@ related:
   - "Memos 03, 04, 29, 35 (AA-AIbex-AIOS, @Memo/V0.5)"
   - "Memos 12, 14, 15, 17, 21–23, 25, 31, 33 (AA-AIbex-AIOS, @Memo/V0.6)"
   - "Memos 01–15 (AA-AIbex-AIOS, @Memo/V0.7): Umbenennung in AIBOS"
+  - "Memos 68–76 (AA-AIbex-AIBOS, @Memo/V0.7): v0.7.1, Postfach @!Ticket, AIBOS-TICKET"
 ---
 
 # Master-Kontext
@@ -91,7 +92,7 @@ Die Klasse eines Unterverzeichnisses eines Masterspace steht im Namen. Erkannt w
 
 | Präfix | Klasse | Wirkung |
 |---|---|---|
-| `@!` | **Verborgen** | nie Kontext; Blueprints (`@!Skill`, `@!Prompt`, `@!Assistant`) und geholte Pakete (`@!Package`, Ausnahme K6) |
+| `@!` | **Verborgen** | nie Kontext; Blueprints (`@!Skill`, `@!Prompt`, `@!Assistant`), geholte Pakete (`@!Package`, Ausnahme K6) und das Postfach `@!Ticket` der Vault-Root (Spec 06, *Tickets*) |
 | `@@` | **Verfügbar** | verfügbares Wissen: gehört **nicht** zum Master-Kontext und wird nur bei Bedarf gelesen; im Master-Kontext steht sein Inhaltsverzeichnis |
 | `@` | **Laden** | bildet den Master-Kontext; wird zu Beginn des Chats vollständig geladen |
 
@@ -251,6 +252,14 @@ AIBOS-SYNC: <projekt> was removed from the workspace on another computer. Tell t
 
 Die letzte Zeile steht, wenn das Projekt der Session oder ein Projekt darüber in `removed` der `workspace.yaml` steht (Spec 06, *remove*); der Hook holt dann nichts und entfernt nichts (V0.6, Memo 226: F241).
 
+Gibt es im Postfach `<vault-root>/@/@!Ticket/` (bis 0.8 auch `@/@!Improve/`) offene Tickets an die **Pakete der Session**, meldet der SessionStart-Hook bei jedem `source` nach dem Kontext des Assistenten (ab v0.7.1; V0.7, Memos 68, 73, 75: W1, W6, F386, F392):
+
+```
+AIBOS-TICKET: open tickets for this session: <n> for <paket>, <m> for <paket>. List them with <weiterleiter> --ticket [<paket>] when they matter for the work.
+```
+
+Pakete der Session sind das Paket, das den Assistenten der Session liefert (bei einem lokalen Blueprint `assistant-<name>`), und die Pakete in `lock.yaml` der Projekte der Kette von `cwd` (Spec 06). Tickets an andere Pakete zählen nicht. Ohne offene Tickets fehlt die Zeile. Weil der Hook auch nach einer Compaction läuft, steht die Zeile danach wieder im Kontext (V0.99, Memo 34). Der Hook liest dafür nur die Frontmatter der Dateien; ein Fehler beim Lesen gilt wie unter *Hooks* (Log) und unterdrückt nur diese Zeile.
+
 In einem ausgelagerten Teilbaum (V0.6, Memo 170: F168):
 
 ```
@@ -290,7 +299,7 @@ Arbeitskopien unter `.claude/worktrees/` schließt die `.gitignore`-Vorlage aus 
 
 | Hook | Aufruf | Verhalten |
 |---|---|---|
-| **SessionStart** (Start, Resume, Clear, nach Compaction) | `aibos --context --session` | 1. außerhalb eines A/W: nichts. 2. Legacy-Vault: Verhalten von `ai-brain --session`. 3. im A/W: Registrierung der Kernel-Skills und Projekt-Skills ohne Rückfrage (`--sync --yes`), bei Änderungen eine Zeile `AIBOS-SKILLS: … — effective from the next chat` (Spec 03). 4. in einer Arbeitskopie: `AIBOS-WORKTREE` (*Arbeitskopie*). 5. bei nicht initialisiertem Projekt: `PROJECT-UNINITIALIZED`; sonst bei `source` `startup` und nicht in einer Arbeitskopie die Konsistenzprüfung, bei Lücken `PROJECT-INCOMPLETE`. 6. im Workspace mit `sync: auto`, nur bei `source` `startup` und nicht in einer Arbeitskopie: für das Projekt der Session `git fetch` und Zusammenführen (fast-forward oder Merge-Commit), ohne Rückfrage (Spec 01, I7); hat das Projekt lokale Änderungen, gäbe es einen Konflikt oder fehlt der Upstream, ändert der Hook nichts und sichert nichts (V0.6, Memo 204: F230); in beiden Fällen eine Zeile `AIBOS-SYNC` (*Ausgabe*). Liegt `cwd` in einem ausgelagerten Teilbaum (Spec 06, *detach*): `AIBOS-DETACHED`. 7. Master-Kontext mit dem Block der Kernel-Skills inline, wenn er höchstens `inline_limit` Zeichen hat (Standard 9000), sonst `AIBOS-CONTEXT-MANDATORY` mit der Liste der Part-Dateien. 8. Assistent der Session bestimmen und den Merker schreiben (unten); ist es nicht `none`, seinen Kontext ausgeben, inline mit `AIBOS-ASSISTANT` oder bei mehr als `inline_limit` Zeichen `AIBOS-ASSISTANT-MANDATORY` mit Part-Dateien |
+| **SessionStart** (Start, Resume, Clear, nach Compaction) | `aibos --context --session` | 1. außerhalb eines A/W: nichts. 2. Legacy-Vault: Verhalten von `ai-brain --session`. 3. im A/W: Registrierung der Kernel-Skills und Projekt-Skills ohne Rückfrage (`--sync --yes`), bei Änderungen eine Zeile `AIBOS-SKILLS: … — effective from the next chat` (Spec 03). 4. in einer Arbeitskopie: `AIBOS-WORKTREE` (*Arbeitskopie*). 5. bei nicht initialisiertem Projekt: `PROJECT-UNINITIALIZED`; sonst bei `source` `startup` und nicht in einer Arbeitskopie die Konsistenzprüfung, bei Lücken `PROJECT-INCOMPLETE`. 6. im Workspace mit `sync: auto`, nur bei `source` `startup` und nicht in einer Arbeitskopie: für das Projekt der Session `git fetch` und Zusammenführen (fast-forward oder Merge-Commit), ohne Rückfrage (Spec 01, I7); hat das Projekt lokale Änderungen, gäbe es einen Konflikt oder fehlt der Upstream, ändert der Hook nichts und sichert nichts (V0.6, Memo 204: F230); in beiden Fällen eine Zeile `AIBOS-SYNC` (*Ausgabe*). Liegt `cwd` in einem ausgelagerten Teilbaum (Spec 06, *detach*): `AIBOS-DETACHED`. 7. Master-Kontext mit dem Block der Kernel-Skills inline, wenn er höchstens `inline_limit` Zeichen hat (Standard 9000), sonst `AIBOS-CONTEXT-MANDATORY` mit der Liste der Part-Dateien. 8. Assistent der Session bestimmen und den Merker schreiben (unten); ist es nicht `none`, seinen Kontext ausgeben, inline mit `AIBOS-ASSISTANT` oder bei mehr als `inline_limit` Zeichen `AIBOS-ASSISTANT-MANDATORY` mit Part-Dateien. 9. ab v0.7.1, bei jedem `source` (auch `compact`): offene Tickets im Postfach an die Pakete der Session zählen und, wenn es welche gibt, eine Zeile `AIBOS-TICKET` ausgeben (*Ausgabe*) |
 | **UserPromptSubmit** | `aibos --context --advise` | außerhalb eines A/W: nichts. Legacy-Vault: Verhalten von `ai-brain --advise`. Im A/W, für das `cwd` dieses Prompts: `AIBOS-CONTEXT-CHECK: expected id=<id>` mit der Anweisung, bei fehlenden Marken „Lade Master-Kontext" zu sagen, `aibos --context --load "<cwd>"` auszuführen, alle Part-Dateien vollständig zu lesen und „Master-Kontext geladen (id <id>)" zu melden. Ist der Assistent der Session für dieses `cwd` nicht `none` (unten), zusätzlich `AIBOS-ASSISTANT-CHECK`. Fehlen auf dem Rechner Arbeitspferde aus `lock.yaml` der Kette, zusätzlich `AIBOS-WORKERS: missing <paket> <version>, … — run aibos --fetch` (Spec 07; V0.5, Memo 29) |
 | **PreToolUse** (Matcher `Bash|Skill|Read`) | `aibos --context --permit` | außerhalb eines A/W und in einem Legacy-Vault: nichts. Im A/W: Freigabe nach *Freigabe* (unten); im A/W mit Altbindung gibt der Kernel 0.6.x nach seiner Spec frei |
 
@@ -320,7 +329,7 @@ Für das Werkzeug **`Read`** gibt der Hook `permissionDecision: "allow"` aus, we
 | # | Bedingung |
 |---|---|
 | R1 | `cwd` liegt in einem A/W. |
-| R2 | `tool_input.file_path` ist ein absoluter Pfad, der nach dem Auflösen von `..` und Symlinks unter `~/.aibos/cache/` oder unter `<installation>/doc/` liegt (nicht der Ordner selbst). `<installation>` ist das Verzeichnis der Version, an die der Vault des `cwd` gebunden ist (`aibos:` der Vault-Root), wie es `installations.yaml` nennt (`~/.aibos/versions/v<version>/` oder `/opt/aibos/v<version>/`, Spec 04). Ist die gebundene Version nicht installiert, gibt es diesen Ort nicht. Die Dateinamen unter `doc/` nennt `doc/README.md` (Spec 04, *Repo*; B22). `doc/` anderer installierter Versionen und andere Dateien gibt er nicht frei, auch nicht in `~/.aibos/`. |
+| R2 | `tool_input.file_path` ist ein absoluter Pfad, der nach dem Auflösen von `..` und Symlinks unter `~/.aibos/cache/` oder unter `<installation>/doc/` liegt (nicht der Ordner selbst). `<installation>` ist das Verzeichnis der Version, an die der Vault des `cwd` gebunden ist (`aibos:` der Vault-Root), wie es `installations.yaml` nennt (`~/.aibos/versions/v<version>/` oder `/opt/aibos/v<version>/`, Spec 04). Ist die gebundene Version nicht installiert, gibt es diesen Ort nicht. Die Dateinamen unter `doc/` nennt `doc/README.md` (Spec 04, *Repo*; B22). Ab v0.7.1 ebenso eine Datei unter `<vault-root>/@/@!Ticket/` des Vaults von `cwd` (Postfach, Spec 06, *Tickets*), bis 0.8 auch unter `<vault-root>/@/@!Improve/` (V0.7, Memos 68, 72, 75: W1, F380, F392). `doc/` anderer installierter Versionen, das Postfach anderer Vaults und andere Dateien gibt er nicht frei, auch nicht in `~/.aibos/` oder sonst im Masterspace. |
 | R3 | Keine `deny`- oder `ask`-Regel aus den Dateien von E4 trifft die Datei. Ausgewertet werden `Read`, `Read(~/<muster>)` und `Read(//<muster>)` mit `*` und `**`; `Read(**)` und ein Muster mit `[`, `]` oder `?` zählen als Treffer. Andere Formen beziehen sich auf ein Projekt oder den Ordner einer Einstellungsdatei und treffen diese Orte nicht. |
 
 Sonst gibt der Hook nichts aus, und der Host fragt wie gewohnt; ebenso für ein anderes Werkzeug als `Bash`, `Skill` oder `Read` im Hook-JSON. Ein Fehler gibt nie frei. Regeln, die den Weiterleiter mit `~` schreiben, trifft E4 nicht; Claude Code achtet sie selbst (V0.6, Memo 47, F55). Claude Code lässt `deny`- und `ask`-Regeln einem `allow` aus `PreToolUse` ohnehin vorgehen (V0.6, Memo 22); E4 bleibt als zweite Sicherung für Hosts, die das anders handhaben. Befehle in `` !`…` `` eines Skills laufen nicht durch `PreToolUse`; sie gibt das `allowed-tools` der Hülle frei (Spec 03; V0.6, Memo 29).
