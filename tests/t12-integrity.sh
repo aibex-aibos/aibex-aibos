@@ -6,6 +6,7 @@
 # setup: vault §Demo as root project, subprojects with and without gaps, a container
 #===============================================================================
 
+   RUN_PATH="$PATH"                                # PATH of tests/run, with PyYAML (v0.7.1 step 4)
    export PATH="/usr/bin:/bin:/usr/sbin:/sbin"
    export GIT_AUTHOR_NAME=t GIT_AUTHOR_EMAIL=t@t GIT_COMMITTER_NAME=t GIT_COMMITTER_EMAIL=t@t
    D="$SANDBOX/work/§Demo"
@@ -122,3 +123,43 @@
    mkdir -p "$D/.aibos"; cp "$D/.aibos/config.yaml" "$SANDBOX/root.yaml" 2>/dev/null; printf 'aibos: 0.6.0\nlegacy: ai-brain\n' > "$D/.aibos/config.yaml"
    assert_contains "$(A --integrity "$D")" "aibos: and legacy: together in .aibos/config.yaml, aibos: applies" "vault root: aibos: and legacy: together"
    if [ -e "$SANDBOX/root.yaml" ]; then mv "$SANDBOX/root.yaml" "$D/.aibos/config.yaml"; fi
+
+#===============================================================================
+# v0.7.1 step 4: orphaned exclusions and outdated registration as notes (spec 05; W5, F390, F394, FL68)
+#===============================================================================
+
+   PYDIR=""                                        # workspace.yaml and the registration need PyYAML (H81)
+   for P in $(PATH="$RUN_PATH" type -ap python3) /opt/homebrew/bin/python3 /usr/local/bin/python3 /usr/bin/python3; do
+      [ -x "$P" ] && "$P" -c "import yaml" 2>/dev/null && { PYDIR="$(dirname "$P")"; break; }
+   done
+   AY() { PATH="$PYDIR:$PATH" "$SRC/bin/aibos" "$@" 2>&1; }
+   E="$SANDBOX/work/§Ex"
+   mkproj "$E" $'/EA-Da/\n/EB-Weg/\n/EC-Entfernt/\n/ED-Ausgelagert/\n/@Memo/\n/*.tmp/\n'
+   mkproj "$E/EA-Da"
+   mkdir -p "$E/ED-Ausgelagert"; mk "$E/ED-Ausgelagert/DETACHED.md" "# placeholder"$'\n'
+   mk "$E/.aibos/workspace.yaml" $'projects:\n  - path: EA-Da\n    repo: x\nremoved:\n  - path: "EC-Entfernt"\n    since: 2026-11-24\n'
+   OUT="$(AY --integrity "$E")"
+   assert_contains "$OUT" "- §Ex: exclusion /EB-Weg/ in .gitignore has no folder; remove the line" "orphaned exclusion named"
+   assert_not_contains "$OUT" "/EC-Entfernt/ in .gitignore" "path in removed: not orphaned (spec 06, remove)"
+   assert_not_contains "$OUT" "/ED-Ausgelagert/ in .gitignore" "placeholder of a detached subtree: not orphaned"
+   assert_not_contains "$OUT" "/EA-Da/ in .gitignore" "folder exists: not orphaned"
+   assert_not_contains "$OUT" "/@Memo/ in .gitignore" "@-folders are not projects"
+   assert_not_contains "$OUT" "*.tmp" "patterns are not exclusions of a project"
+   rm "$E/.aibos/workspace.yaml"
+   assert_contains "$(A --integrity "$E")" "exclusion /EC-Entfernt/ in .gitignore has no folder" "without workspace.yaml: every missing folder"
+
+   R="$SANDBOX/work/§Reg"
+   mkproj "$R" $'/RA-Proj/\n'; mkproj "$R/RA-Proj"; mk "$R/.aibos/config.yaml" $'aibos: 0.7.1\n'
+   OUT="$(AY --integrity "$R")"
+   assert_contains "$OUT" "- RA-Proj: registration out of date (" "registration out of date: named"
+   assert_contains "$OUT" "wrappers); run aibos --register \"$R/RA-Proj\"" "registration out of date: the command"
+   GOOD_BEFORE="$(grep '^Result:' <<< "$OUT")"
+   (cd "$R" && AY --register "$R/RA-Proj" --yes >/dev/null)
+   (cd "$R" && AY --register "$R" --yes >/dev/null)
+   OUT="$(AY --integrity "$R")"
+   assert_not_contains "$OUT" "registration out of date" "after aibos --register: no note"
+   rm -r "$R/RA-Proj/.claude/skills/aibos-status"
+   OUT="$(AY --integrity "$R")"
+   assert_contains "$OUT" "- RA-Proj: registration out of date (1 wrappers)" "one wrapper removed by hand: named"
+   assert_eq "$(grep '^Result:' <<< "$OUT")" "$GOOD_BEFORE" "the note does not change the result"
+   assert_not_contains "$(A --integrity "$E")" "registration out of date" "vault without binding: no note"

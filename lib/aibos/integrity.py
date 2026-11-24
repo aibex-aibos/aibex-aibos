@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import datetime
 import os
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -149,6 +150,70 @@ def binding_hints(p):
     return []
 
 
+WS_PATH = re.compile(r"""^\s*(?:-\s*)?path:\s*["']?([^"'#\n]+?)["']?\s*(?:#.*)?$""")
+
+
+def workspace_paths(p):
+    """(root, paths) of the nearest workspace.yaml at or above p up to the vault root: every path in
+    projects and removed, read with the standard library (t12 runs without PyYAML)."""
+    from . import config
+    vault = config.vault_root(p)
+    d = Path(os.path.realpath(p))
+    while True:
+        f = d / ".aibos" / "workspace.yaml"
+        if f.is_file():
+            try:
+                lines = f.read_text(encoding="utf-8").splitlines()
+            except (OSError, UnicodeDecodeError):
+                return d, set()
+            return d, {m.group(1).strip().rstrip("/") for m in map(WS_PATH.match, lines) if m}
+        if vault is None or d == vault or d.parent == d:
+            return None, set()
+        d = d.parent
+
+
+def exclusion_hints(p):
+    """v0.7.1 (spec 05, Integrität, Verwaister Ausschluss; W5, F394, FL68): a line /<name>/ in the
+    .gitignore of p whose folder is missing and whose path is neither in projects nor in removed of
+    the workspace.yaml (Spec 06); a placeholder of a detached subtree is a folder and does not count."""
+    f = Path(p) / ".gitignore"
+    try:
+        lines = f.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeDecodeError):
+        return []
+    root, known = workspace_paths(p)
+    hints = []
+    for line in lines:
+        s = line.strip()
+        if not (s.startswith("/") and s.endswith("/")) or len(s) < 3 or any(c in s for c in "*?[]!"):
+            continue
+        name = s[1:-1]
+        if name.split("/")[0].startswith((".", "@")) or (Path(p) / name).exists():
+            continue
+        if root is not None:
+            rel = os.path.relpath(os.path.realpath(Path(p)) + "/" + name, root)
+            if rel in known:
+                continue
+        hints.append(f"exclusion /{name}/ in .gitignore has no folder; remove the line")
+    return hints
+
+
+def registration_hints(p):
+    """v0.7.1 (spec 05, Integrität, Veraltete Registrierung; F390, FL68): wrappers aibos --register
+    would create, change or remove in p; only in an A/W; never changes the result."""
+    try:
+        from . import config, context, registry
+        if config.load(p).kind != "aibos":
+            return []
+        s = registry.Sync(context.Context(p), with_root=False)
+    except Exception:                               # noqa: BLE001 - a hint never breaks the check
+        return []
+    n = len(s.new) + len(s.changed) + len(s.new_k) + len(s.changed_k) + len(s.removed)
+    if not n:
+        return []
+    return [f"registration out of date ({n} wrappers); run aibos --register \"{p}\""]
+
+
 def check(p, depth):
     r = Result(p, depth, gaps=project.check(p), repo=project.own_repo(p))
     if r.gaps:
@@ -158,6 +223,8 @@ def check(p, depth):
         r.hints += push_hints(p)
     r.hints += agents_hints(p)
     r.hints += binding_hints(p)
+    r.hints += exclusion_hints(p)
+    r.hints += registration_hints(p)
     if r.repo and not project.git(p, "ls-files", "@").stdout.strip():
         r.hints.append("@/ holds no tracked file, a clone lacks it; commit @/.gitkeep (B32)")
     name = project.check_name(p)
