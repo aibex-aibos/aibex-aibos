@@ -2,7 +2,7 @@
 title: "Installation und Konfiguration"
 date: 2026-11-25
 author: iHux
-status: Entwurf
+status: Spec
 tags: [spec, aibos, v0.7, installation, konfiguration]
 number: 04
 related:
