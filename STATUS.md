@@ -7,7 +7,7 @@ v0.7.0 ist abgeschlossen (Tag `v0.7.0`, Abnahme in Memo 56, Veröffentlichung in
 | # | Schritt | Ergebnis | Spec | Stand |
 |---|---|---|---|---|
 | 0 | **Repo auf 0.7.1:** `VERSION`, `manifest.yaml` `0.7.1-dev`; `STATUS.md` neu; `CLAUDE.md` mit den Memos von 0.7.1; Ausgangsprüfung | Ausgangsprüfung auf 0.7.0: `tests/run` 1755 grün; Live-Tests alle grün (hooks 9, outside 6, permit 11, skills 9, assistants 13 mit sonnet, workers 14, fresh 24, changeover 26, rothirsch 25). `VERSION` und `manifest.yaml` `0.7.1-dev`; `STATUS.md` neu (0.7.0 im Tag `v0.7.0`); `CLAUDE.md` mit Plan und Memos von 0.7.1, Arbeitsrechner auf 0.7.0. Danach `tests/run` 1755 grün | 01 | ☑ abgeschlossen |
-| 1 | **Tickets:** Postfach, `aibos --ticket [<paket>] [--type <typ>]`, Übergang `@/@!Improve/`; Test `t25-ticket.sh` | | 04, 06 | ☐ |
+| 1 | **Tickets:** Postfach, `aibos --ticket [<paket>] [--type <typ>]`, Übergang `@/@!Improve/`; Test `t25-ticket.sh` | Neues Modul `lib/aibos/ticket.py`: Postfach `@/@!Ticket/` und bis 0.8 `@/@!Improve/` der Vault-Root, Front Matter mit PyYAML, offene Tickets (ohne `status`), ältere Version gegen das nächste `lock.yaml` der Kette bzw. die Bindung, Bericht nach Spec 06; `aibos --ticket` in `cli.py` und in der Hilfe von `bin/aibos`; außerhalb eines A/W `Kein AIBOS-Workspace`, Exit 1. Neuer Test `t25-ticket.sh` (29 Prüfungen). Gelesen am echten `§AIBOS`: 14 offene Tickets. `tests/run` 1784 grün | 04, 06 | ☑ abgeschlossen |
 | 2 | **Hooks:** `AIBOS-TICKET` in `--session` bei jedem `source`; Read im Postfach in `--permit` (R2) | | 02 | ☐ |
 | 3 | **Distributionen (W4):** `note: distribution-… pins …` im Resolver und im Plan von `--activate` | | 04, 06 | ☐ |
 | 4 | **Integrität:** verwaiste Ausschlüsse, veraltete Registrierung als Hinweise | | 05 | ☐ |
