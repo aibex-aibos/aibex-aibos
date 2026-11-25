@@ -1,5 +1,7 @@
 # Stand der Umsetzung AIBOS v0.7.1
 
+v0.7.2 ist ein Patch ohne eigenen Implementierungsplan (F422): `aibos --ticket --paths` (Konzept-Repo V0.7, Memos 105–107), umgesetzt in `158bde2`, B70 in `8122f41`, abgenommen auf `0.7.2-rc2` (Memos 108–112). Die Tabelle unten bleibt der Stand von v0.7.1.
+
 v0.7.1 ist ein Patch für die Wünsche aus der Abnahme von Anja 0.6.0 und `skill-improve` 0.1.0: Tickets im Postfach `@/@!Ticket/` mit `aibos --ticket` und der Zeile `AIBOS-TICKET`, Read im Postfach, Hinweis bei `==` aus Distributionen, Hinweise in `aibos --integrity` und der Pakettyp `mod` mit `aibos --mod install|uninstall`. Kurzer Implementierungsplan: Memo 81 in `AIBOS-AA-AIbex-AIBOS/@Memo/V0.7/`, freigegeben in Memo 82 (Spec freigegeben in Memo 80, Code `d12d7a9`). Jeder Schritt wird im selben Commit `v0.7.1 Schritt N: …` abgehakt, der ihn abschließt.
 
 v0.7.0 ist abgeschlossen (Tag `v0.7.0`, Abnahme in Memo 56, Veröffentlichung in Memo 58 von V0.7); sein Stand steht in `STATUS.md` des Tags `v0.7.0`, frühere in den Tags `v0.6.6`, `v0.6.3`, `v0.6.2`, `v0.6.1` und `v0.6.0`.
